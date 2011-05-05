@@ -1,0 +1,12 @@
+see https://gist.github.com/369171
+
+Thread:             # node must be matched
+  K::               # node must be matched, the :: means that children are ordered
+    -Spawn:         # node must be matched, the - means that this node will be removed
+      Statement: S  # makes S a variable that is a Statement tree (because it's a matched node)
+    *               # wildcard (put one at the beginning as well if rule doesn't have to happen at top of stack)
+  Env:E
++Thread:            # node not matched against, the + means this node will be added
+  K::
+    Statement:S     # references the variable S (because it's inside a new node)
+  Env:E
