@@ -1,12 +1,21 @@
 see https://gist.github.com/369171
 
-Thread:             # node must be matched
-  K::               # node must be matched, the :: means that children are ordered
-    -Spawn:         # node must be matched, the - means that this node will be removed
-      Statement: S  # makes S a variable that is a Statement tree (because it's a matched node)
-    *               # wildcard (put one at the beginning as well if rule doesn't have to happen at top of stack)
+Thread:      # node must be matched
+  K::        # node must be matched, the :: means that children are ordered (default is unordered)
+    -Spawn:  # node must be matched, the - means that this node will be removed
+      *: S   # makes S a variable that is any kind of node (makes a variable because it's a matched node)
+    *        # wildcard (put one at the beginning as well if rule doesn't have to happen at top of stack)
   Env:E
-+Thread:            # node not matched against, the + means this node will be added
++Thread:     # node not matched against, the + means this node will be added
   K::
-    Statement:S     # references the variable S (because it's inside a new node)
+    *: S     # references the variable S (because it's inside a new node)
   Env:E
+
+-Thread:     # purge finished threads
+  K::=       # the = means an exact match (not containing any unmatched nodes)
+
+Threads:=    # wait for threads to finish or rendezvous
+  Thread:*   # the * means that there can be any number of these nodes
+    K::
+      -Rendezvous:
+      *
