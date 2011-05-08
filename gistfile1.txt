@@ -15,8 +15,8 @@ Thread:              # node must be matched
 -Thread:
   K:=               # the = means an exact match (not containing any unmatched nodes)
 
-# thread rendezvous
-Threads:=            # wait for all threads to finish or rendezvous
+# wait for threads to finish or rendezvous
+Threads:=
   Thread:*           # the * means that there can be any number of these nodes
     K::
       -Rendezvous:
