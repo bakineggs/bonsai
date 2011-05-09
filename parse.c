@@ -8,7 +8,7 @@
 Rule* parse_rules(FILE* file) {
   Rule* first = parse_rule(file);
   if (!first)
-    parse_error("At least one rule must be specified");
+    parse_error("At least one rule must be specified", "");
 
   Rule* current = first;
   while (current) {
@@ -37,7 +37,7 @@ Condition* parse_conditions(FILE* file) {
   do {
     if (!fgets(current_line, 80, file)) {
       if (ferror(file))
-        parse_error("Error reading condition");
+        parse_error("Error reading condition", current_line);
       else
         return NULL;
     }
@@ -70,7 +70,7 @@ Condition* parse_conditions(FILE* file) {
     }
 
     if (*line_position == ' ')
-      parse_error("Space before node name");
+      parse_error("Space before node name", current_line);
 
     if (current_depth == 0) {
       current->parent = NULL;
@@ -78,7 +78,7 @@ Condition* parse_conditions(FILE* file) {
       current->ancestor_removes_node = false;
     }
     else if (current_depth > previous_depth + 1)
-      parse_error("Condition at depth more than one level below its parent");
+      parse_error("Condition at depth more than one level below its parent", current_line);
     else {
       while (previous_depth >= current_depth) {
         previous = previous->parent;
@@ -106,30 +106,37 @@ Condition* parse_conditions(FILE* file) {
       line_position++;
 
     if (current->creates_node && current->ancestor_creates_node)
-      parse_error("Redundant + in front of node and ancestor");
+      parse_error("Redundant + in front of node and ancestor", current_line);
     if (current->removes_node && current->ancestor_removes_node)
-      parse_error("Redundant - in front of node and ancestor");
+      parse_error("Redundant - in front of node and ancestor", current_line);
 
     size_t type_length = strspn(line_position, VALID_NODE_NAME_CHARS);
     if (type_length == 0)
-      parse_error("Missing node name");
+      parse_error("Missing node name", current_line);
 
     current->node_type = (char*) malloc(type_length);
     strncpy(current->node_type, line_position, type_length);
     line_position += type_length;
 
-    if (*line_position++ != ":")
-      parse_error("Missing : after node name");
+    if (*line_position++ != ':')
+      parse_error("Missing : after node name", current_line);
 
     // TODO: detect ordered, exact, and multiple
 
     if (!fgets(current_line, 80, file)) {
       if (ferror(file))
-        parse_error("Error reading condition");
+        parse_error("Error reading condition", current_line);
       else
-        parse_error("End of file reached inside a condition");
+        parse_error("End of file reached inside a condition", current_line);
     }
   } while (strcmp(current_line, "\n") != 0);
 
   return first;
+}
+
+void parse_error(char* message, char* line) {
+  fprintf(stderr, "%s", message);
+  if (strcmp(line, "") != 0)
+    fprintf(stderr, ":\n  %s", line);
+  exit(1);
 }
