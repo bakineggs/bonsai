@@ -35,8 +35,12 @@ Condition* parse_conditions(FILE* file) {
   char current_line[80];
 
   do {
-    if (!fgets(current_line, 80, file))
-      return NULL;
+    if (!fgets(current_line, 80, file)) {
+      if (ferror(file))
+        parse_error("Error reading condition");
+      else
+        return NULL;
+    }
   } while (strcmp(current_line, "\n") == 0);
 
   Condition* first;
@@ -57,9 +61,16 @@ Condition* parse_conditions(FILE* file) {
     if (!first)
       first = current;
 
+    char* line_position = current_line;
+
     current_depth = 0;
-    while (strncmp(current_line + (current_depth * 2), "  ", 2) == 0)
+    while (strncmp(line_position, "  ", 2) == 0) {
       current_depth++;
+      line_position += 2;
+    }
+
+    if (*line_position == ' ')
+      parse_error("Space before node name");
 
     if (current_depth == 0) {
       current->parent = NULL;
@@ -87,23 +98,28 @@ Condition* parse_conditions(FILE* file) {
       }
     }
 
-    int column = current_depth * 2;
-
-    current->creates_node = current_line[column] == '+';
-    current->removes_node = current_line[column] == '-';
-    current->matches_node = !current->creates_node && current_line[column] != '!';
+    current->creates_node = *line_position == '+';
+    current->removes_node = *line_position == '-';
+    current->matches_node = !current->creates_node && *line_position != '!';
 
     if (current->creates_node || current->removes_node || !current->matches_node)
-      column++;
+      line_position++;
 
     if (current->creates_node && current->ancestor_creates_node)
       parse_error("Redundant + in front of node and ancestor");
     if (current->removes_node && current->ancestor_removes_node)
       parse_error("Redundant - in front of node and ancestor");
 
-    size_t type_length = strcspn(current_line + column, ":");
+    size_t type_length = strspn(line_position, VALID_NODE_NAME_CHARS);
+    if (type_length == 0)
+      parse_error("Missing node name");
+
     current->node_type = (char*) malloc(type_length);
-    strncpy(current->node_type, current_line + column, type_length);
+    strncpy(current->node_type, line_position, type_length);
+    line_position += type_length;
+
+    if (*line_position++ != ":")
+      parse_error("Missing : after node name");
 
     // TODO: detect ordered, exact, and multiple
 
