@@ -15,6 +15,7 @@ typedef struct Condition {
   bool removes_node;
 
   bool matches_node;
+  bool excludes_node;
 
   bool exact;
   bool ordered;
@@ -36,8 +37,8 @@ typedef struct Node {
   char* type;
   bool ordered;
 
-  int* integer_value;
-  float* float_value;
+  long int* integer_value;
+  double* decimal_value;
   char* string_value;
 
   struct Node* parent;

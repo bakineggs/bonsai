@@ -88,9 +88,11 @@ Condition* parse_conditions(FILE* file) {
       current->ancestor_creates_node = previous->creates_node || previous->ancestor_creates_node;
       current->ancestor_removes_node = previous->removes_node || previous->ancestor_removes_node;
 
-      if (!previous->children)
+      if (!previous->children) {
+        if (previous->variable)
+          parse_error("Can't have child of node assigned to variable", current_line);
         previous->children = current;
-      else {
+      } else {
         Condition* child = previous->children;
         while (child->next)
           child = child->next;
@@ -100,9 +102,10 @@ Condition* parse_conditions(FILE* file) {
 
     current->creates_node = *line_position == '+';
     current->removes_node = *line_position == '-';
-    current->matches_node = !current->creates_node && *line_position != '!';
+    current->excludes_node = *line_position == '!';
+    current->matches_node = !current->ancestor_creates_node && !current->creates_node && !current->excludes_node;
 
-    if (current->creates_node || current->removes_node || !current->matches_node)
+    if (current->creates_node || current->removes_node || current->excludes_node)
       line_position++;
 
     if (current->creates_node && current->ancestor_creates_node)
@@ -121,7 +124,17 @@ Condition* parse_conditions(FILE* file) {
     if (*line_position++ != ':')
       parse_error("Missing : after node name", current_line);
 
-    // TODO: detect ordered, exact, and multiple
+    if (current->ordered = *line_position == ':')
+      line_position++;
+
+    if (current->exact = *line_position == '=')
+      line_position++;
+
+    if (current->multiple = *line_position == '*')
+      line_position++;
+
+    if (current->multiple && !current->matches_node)
+      parse_error("Multiplicity defined for non-matched node", current_line);
 
     if (!fgets(current_line, 80, file)) {
       if (ferror(file))
@@ -160,6 +173,9 @@ Node* parse_nodes(FILE* file) {
     current = (Node*) malloc(sizeof(Node));
     current->next = NULL;
     current->children = NULL;
+    current->integer_value = NULL;
+    current->decimal_value = NULL;
+    current->string_value = NULL;
 
     if (!first)
       first = current;
@@ -190,9 +206,11 @@ Node* parse_nodes(FILE* file) {
       }
       current->parent = previous;
 
-      if (!previous->children)
+      if (!previous->children) {
+        if (previous->integer_value || previous->decimal_value || previous->string_value)
+          parse_error("Can't have child of node with a value", current_line);
         previous->children = current;
-      else {
+      } else {
         Node* child = previous->children;
         while (child->next)
           child = child->next;
@@ -210,6 +228,32 @@ Node* parse_nodes(FILE* file) {
 
     if (*line_position++ != ':')
       parse_error("Missing : after node name", current_line);
+
+    if (current->ordered = *line_position == ':')
+      line_position++;
+
+    if (*line_position++ == ' ') {
+      if (*line_position >= '0' && *line_position <= '9') {
+        char* endptr;
+        current->integer_value = (long int*) malloc(sizeof(long int));
+        *current->integer_value = strtol(line_position, &endptr, 10);
+        if (*endptr == '.') {
+          free(current->integer_value);
+          current->integer_value = NULL;
+          current->decimal_value = (double*) malloc(sizeof(double));
+          *current->decimal_value = strtod(line_position, &endptr);
+        }
+        if (*endptr == ' ') {
+          while (*endptr == ' ')
+            endptr++;
+          if (*endptr != '#')
+            parse_error("Expected comment after spaces at end of line", current_line);
+        }
+        if (*endptr != '\n')
+          parse_error("Unexpected character after number", current_line);
+      } else {
+      }
+    }
 
     if (!fgets(current_line, 80, file)) {
       if (ferror(file))

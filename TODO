@@ -9,6 +9,11 @@ Tests For:
       make sure creates_node = true and removes_node = true can't happen
       make sure creates_node = true and exact = true can't happen
       make sure variable != NULL and children != NULL can't happen
+      make sure creates_node = true and multiple = true can't happen
+      make sure matches_node = false and multiple = true can't happen
+      make sure creates_node = true and excludes_node = true can't happen
+      make sure removes_node = true and excludes_node = true can't happen
+      make sure matches_node = true and excludes_node = true can't happen
 
     Node:
       make sure only one of children, integer_value, float_value, or string_value can be != NULL
@@ -17,8 +22,10 @@ Tests For:
     make sure ordered conditions can't run on unordered nodes
 
 Implement:
-  parse ordered, exact, and multiple statements in rules
   parse user-defined code assignment to value
+  parse single-line strings
+  parse multi-line strings
+  parse variables
   parse program start state
 
 numeric & string values in rules?
