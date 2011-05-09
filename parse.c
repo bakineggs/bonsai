@@ -11,10 +11,11 @@ Rule* parse_rules(FILE* file) {
     parse_error("At least one rule must be specified", "");
 
   Rule* current = first;
-  while (current) {
-    current->next = parse_rule(file);
+
+  while (current->next = parse_rule(file))
     current = current->next;
-  }
+
+  current->next = first;
 
   return first;
 }
@@ -43,7 +44,7 @@ Condition* parse_conditions(FILE* file) {
     }
   } while (strcmp(current_line, "\n") == 0);
 
-  Condition* first;
+  Condition* first = NULL;
 
   Condition* previous;
   int previous_depth;
@@ -76,8 +77,7 @@ Condition* parse_conditions(FILE* file) {
       current->parent = NULL;
       current->ancestor_creates_node = false;
       current->ancestor_removes_node = false;
-    }
-    else if (current_depth > previous_depth + 1)
+    } else if (current_depth > previous_depth + 1)
       parse_error("Condition at depth more than one level below its parent", current_line);
     else {
       while (previous_depth >= current_depth) {
@@ -132,6 +132,92 @@ Condition* parse_conditions(FILE* file) {
   } while (strcmp(current_line, "\n") != 0);
 
   return first;
+}
+
+Node* parse_nodes(FILE* file) {
+  char current_line[80];
+
+  do {
+    if (!fgets(current_line, 80, file)) {
+      if (ferror(file))
+        parse_error("Error reading node", current_line);
+      else
+        parse_error("No nodes specified", current_line);
+    }
+  } while (strcmp(current_line, "\n") == 0);
+
+  Node* first = NULL;
+
+  Node* previous;
+  int previous_depth;
+  Node* current = NULL;
+  int current_depth = -1;
+
+  do {
+    previous = current;
+    previous_depth = current_depth;
+
+    current = (Node*) malloc(sizeof(Node));
+    current->next = NULL;
+    current->children = NULL;
+
+    if (!first)
+      first = current;
+
+    char* line_position = current_line;
+
+    current_depth = 0;
+    while (strncmp(line_position, "  ", 2) == 0) {
+      current_depth++;
+      line_position += 2;
+    }
+
+    if (*line_position == ' ')
+      parse_error("Space before node name", current_line);
+
+    if (current_depth == 0) {
+      current->parent = NULL;
+      while (previous->parent)
+        previous = previous->parent;
+      previous_depth = 0;
+      previous->next = current;
+    } else if (current_depth > previous_depth + 1)
+      parse_error("Node at depth more than one level below its parent", current_line);
+    else {
+      while (previous_depth >= current_depth) {
+        previous = previous->parent;
+        previous_depth--;
+      }
+      current->parent = previous;
+
+      if (!previous->children)
+        previous->children = current;
+      else {
+        Node* child = previous->children;
+        while (child->next)
+          child = child->next;
+        child->next = current;
+      }
+    }
+
+    size_t type_length = strspn(line_position, VALID_NODE_NAME_CHARS);
+    if (type_length == 0)
+      parse_error("Missing node name", current_line);
+
+    current->type = (char*) malloc(type_length);
+    strncpy(current->type, line_position, type_length);
+    line_position += type_length;
+
+    if (*line_position++ != ':')
+      parse_error("Missing : after node name", current_line);
+
+    if (!fgets(current_line, 80, file)) {
+      if (ferror(file))
+        parse_error("Error reading node", current_line);
+      else
+        return first;
+    }
+  } while (true);
 }
 
 void parse_error(char* message, char* line) {

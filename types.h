@@ -31,11 +31,15 @@ typedef struct Condition {
 } Condition;
 
 typedef struct Node {
+  struct Node* next; // instead of having a NodeSet or whatnot
+
   char* type;
   bool ordered;
 
   int* integer_value;
   float* float_value;
   char* string_value;
+
+  struct Node* parent;
   struct Node* children;
 } Node;
