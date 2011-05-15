@@ -1,3 +1,6 @@
+#ifndef TYPES_H
+#define TYPES_H
+
 typedef enum BOOL { false, true } bool;
 
 typedef struct Rule {
@@ -44,3 +47,5 @@ typedef struct Node {
   struct Node* parent;
   struct Node* children;
 } Node;
+
+#endif

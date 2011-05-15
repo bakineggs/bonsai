@@ -1,0 +1,3 @@
+*.o
+tests/*/actual_end_state.okks
+interpreter

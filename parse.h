@@ -1,9 +1,10 @@
-Rule* parse_rules(FILE* file);
-Rule* parse_rule(FILE* file);
-Condition* parse_conditions(FILE* file);
+#ifndef PARSE_H
+#define PARSE_H
 
+#include <stdio.h>
+#include "types.h"
+
+Rule* parse_rules(FILE* file);
 Node* parse_nodes(FILE* file);
 
-void parse_error(char* message, char* line);
-
-char VALID_NODE_NAME_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ";
+#endif

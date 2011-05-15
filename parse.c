@@ -2,8 +2,13 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "types.h"
 #include "parse.h"
+
+char VALID_NODE_NAME_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ";
+
+Condition* parse_conditions(FILE* file);
+Rule* parse_rule(FILE* file);
+void parse_error(char* message, char* line);
 
 Rule* parse_rules(FILE* file) {
   Rule* first = parse_rule(file);
@@ -265,7 +270,7 @@ Node* parse_nodes(FILE* file) {
 }
 
 void parse_error(char* message, char* line) {
-  fprintf(stderr, "%s", message);
+  fprintf(stderr, "Parse Error: %s", message);
   if (strcmp(line, "") != 0)
     fprintf(stderr, ":\n  %s", line);
   exit(1);
