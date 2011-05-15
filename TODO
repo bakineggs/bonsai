@@ -26,6 +26,5 @@ Implement:
   parse single-line strings
   parse multi-line strings
   parse variables
-  parse program start state
 
 numeric & string values in rules?
