@@ -145,7 +145,7 @@ Condition* parse_conditions(FILE* file) {
       if (ferror(file))
         parse_error("Error reading condition", current_line);
       else
-        parse_error("End of file reached inside a condition", current_line);
+        return first;
     }
   } while (strcmp(current_line, "\n") != 0);
 
@@ -198,10 +198,12 @@ Node* parse_nodes(FILE* file) {
 
     if (current_depth == 0) {
       current->parent = NULL;
-      while (previous->parent)
-        previous = previous->parent;
-      previous_depth = 0;
-      previous->next = current;
+      if (previous) {
+        while (previous->parent)
+          previous = previous->parent;
+        previous_depth = 0;
+        previous->next = current;
+      }
     } else if (current_depth > previous_depth + 1)
       parse_error("Node at depth more than one level below its parent", current_line);
     else {
@@ -238,6 +240,9 @@ Node* parse_nodes(FILE* file) {
       line_position++;
 
     if (*line_position++ == ' ') {
+      if (current->ordered)
+        parse_error("Ordered nodes can't have values", current_line);
+
       if (*line_position >= '0' && *line_position <= '9') {
         char* endptr;
         current->integer_value = (long int*) malloc(sizeof(long int));
