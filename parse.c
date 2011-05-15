@@ -20,7 +20,7 @@ Rule* parse_rules(FILE* file) {
   while (current->next = parse_rule(file))
     current = current->next;
 
-  current->next = first;
+  current->next = NULL;
 
   return first;
 }
