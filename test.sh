@@ -2,7 +2,8 @@
 
 cd tests
 
-for name in `ls`; do
+leaf_directories=`find . -type d | sort | awk '$0 !~ last {print last} {last=$0} END {print last}'` # http://stackoverflow.com/questions/1574403/list-all-leaf-subdirectories-in-linux
+for name in $leaf_directories; do
   ./../interpreter $name/rules.okk $name/start_state.okks > $name/actual_end_state.okks
   error_status=$?
 
