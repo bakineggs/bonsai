@@ -4,10 +4,10 @@ cd tests
 
 leaf_directories=`find . -type d | sort | awk '$0 !~ last {print last} {last=$0} END {print last}'` # http://stackoverflow.com/questions/1574403/list-all-leaf-subdirectories-in-linux
 for name in $leaf_directories; do
-  ./../interpreter $name/rules.okk $name/start_state.okks > $name/actual_end_state.okks
+  ./../interpreter $name/rules.okk $name/start_state.okks > $name/actual_end_state.okks 2> $name/error.log
   error_status=$?
 
-  diff $name/end_state.okks $name/actual_end_state.okks
+  diff $name/end_state.okks $name/actual_end_state.okks > /dev/null 2> /dev/null
   different=$?
 
   if [ $error_status != 0 -o $different != 0 ]; then

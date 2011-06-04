@@ -1,3 +1,4 @@
 *.o
 actual_end_state.okks
+error.log
 interpreter
