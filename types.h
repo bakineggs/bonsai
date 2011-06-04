@@ -35,7 +35,9 @@ typedef struct Condition {
 } Condition;
 
 typedef struct Node {
-  struct Node* next; // instead of having a NodeSet or whatnot
+  // instead of having a NodeSet or whatnot
+  struct Node* previous;
+  struct Node* next;
 
   char* type;
   bool ordered;

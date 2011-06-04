@@ -176,6 +176,7 @@ Node* parse_nodes(FILE* file) {
     previous_depth = current_depth;
 
     current = (Node*) malloc(sizeof(Node));
+    current->previous = NULL;
     current->next = NULL;
     current->children = NULL;
     current->integer_value = NULL;
@@ -221,6 +222,7 @@ Node* parse_nodes(FILE* file) {
         Node* child = previous->children;
         while (child->next)
           child = child->next;
+        current->previous = child;
         child->next = current;
       }
     }

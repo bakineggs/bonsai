@@ -8,6 +8,11 @@
 bool apply(Rule* rule, Node* node);
 bool matches(Node* node, Condition* condition);
 void transform(Node* node, Condition* condition);
+void remove_node(Node* node);
+void release_memory(Node* node);
+void create_sibling(Node* node, Condition* condition);
+
+Node* state;
 
 int main(int argc, char* argv[]) {
   if (argc != 3) {
@@ -28,7 +33,7 @@ int main(int argc, char* argv[]) {
   }
 
   Rule* rules = parse_rules(rules_file);
-  Node* state = parse_nodes(state_file);
+  state = parse_nodes(state_file);
 
   while (apply(rules, state)) {}
 
@@ -37,6 +42,9 @@ int main(int argc, char* argv[]) {
 }
 
 bool apply(Rule* rule, Node* node) {
+  if (node == NULL)
+    return false;
+
   bool applied = false;
 
   if (matches(node, rule->conditions)) {
@@ -57,8 +65,51 @@ bool apply(Rule* rule, Node* node) {
 }
 
 bool matches(Node* node, Condition* condition) {
+  if (!condition->matches_node)
+    return true;
+
+  if (strcmp(node->type, condition->node_type) == 0)
+    return true;
+
   return false;
 }
 
 void transform(Node* node, Condition* condition) {
+  if (condition->removes_node)
+    remove_node(node);
+
+  if (condition->creates_node)
+    create_sibling(node, condition);
+}
+
+void remove_node(Node* node) {
+  if (node->parent && node->parent->children == node)
+    node->parent->children = node->next;
+
+  if (node->previous)
+    node->previous->next = node->next;
+
+  if (node->next)
+    node->next->previous = node->previous;
+
+  if (state == node)
+    state = node->next;
+
+  release_memory(node);
+}
+
+void release_memory(Node* node) {
+  Node* this_child = node->children;
+  Node* next_child;
+
+  while (this_child) {
+    next_child = this_child->next;
+    release_memory(this_child);
+    this_child = next_child;
+  }
+
+  free(node);
+}
+
+void create_sibling(Node* node, Condition* condition) {
 }
