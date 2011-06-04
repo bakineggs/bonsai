@@ -1,0 +1,1 @@
+Basically just tests that we're able to read in rules and a start state, write the end state, and terminate.

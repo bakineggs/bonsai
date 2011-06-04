@@ -1,3 +1,3 @@
 *.o
-tests/*/actual_end_state.okks
+actual_end_state.okks
 interpreter
