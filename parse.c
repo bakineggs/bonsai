@@ -64,9 +64,6 @@ Condition* parse_conditions(FILE* file) {
     current->next = NULL;
     current->children = NULL;
 
-    if (!first)
-      first = current;
-
     char* line_position = current_line;
 
     current_depth = 0;
@@ -79,6 +76,14 @@ Condition* parse_conditions(FILE* file) {
       parse_error("Space before node name", current_line);
 
     if (current_depth == 0) {
+      if (!first)
+        first = current;
+      else {
+        while (previous->parent)
+          previous = previous->parent;
+        previous->next = current;
+        previous_depth = 0;
+      }
       current->parent = NULL;
       current->ancestor_creates_node = false;
       current->ancestor_removes_node = false;
@@ -183,9 +188,6 @@ Node* parse_nodes(FILE* file) {
     current->decimal_value = NULL;
     current->string_value = NULL;
 
-    if (!first)
-      first = current;
-
     char* line_position = current_line;
 
     current_depth = 0;
@@ -198,13 +200,15 @@ Node* parse_nodes(FILE* file) {
       parse_error("Space before node name", current_line);
 
     if (current_depth == 0) {
-      current->parent = NULL;
-      if (previous) {
+      if (!first)
+        first = current;
+      else {
         while (previous->parent)
           previous = previous->parent;
-        previous_depth = 0;
         previous->next = current;
+        previous_depth = 0;
       }
+      current->parent = NULL;
     } else if (current_depth > previous_depth + 1)
       parse_error("Node at depth more than one level below its parent", current_line);
     else {

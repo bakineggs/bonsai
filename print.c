@@ -25,9 +25,6 @@ void print_node(Node* node) {
 
   printf("\n");
 
-  if (node->children)
-    print_node(node->children);
-
-  if (node->next)
-    print_node(node->next);
+  print_node(node->children);
+  print_node(node->next);
 }

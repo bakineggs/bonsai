@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "types.h"
@@ -65,13 +66,19 @@ bool apply(Rule* rule, Node* node) {
 }
 
 bool matches(Node* node, Condition* condition) {
+  bool this_matches = false;
+
   if (!condition->matches_node)
-    return true;
+    this_matches = true;
+  else if (node && strcmp(node->type, condition->node_type) == 0)
+    this_matches = true;
 
-  if (strcmp(node->type, condition->node_type) == 0)
-    return true;
+  // TODO: change this to support unordered conditions of rules
+  // we'll have to create a one-to-one mapping from conditions to matched nodes in order to know what to transform
+  if (condition->next)
+    return this_matches && node && matches(node->next, condition->next);
 
-  return false;
+  return this_matches;
 }
 
 void transform(Node* node, Condition* condition) {
@@ -80,6 +87,10 @@ void transform(Node* node, Condition* condition) {
 
   if (condition->creates_node)
     create_sibling(node, condition);
+
+  // TODO: change me along with matches() to support unordered conditions of rules
+  if (condition->next)
+    transform(node->next, condition->next);
 }
 
 void remove_node(Node* node) {
@@ -112,4 +123,23 @@ void release_memory(Node* node) {
 }
 
 void create_sibling(Node* node, Condition* condition) {
+  Node* sibling = (Node*) malloc(sizeof(Node));
+  sibling->children = NULL;
+  sibling->integer_value = NULL;
+  sibling->decimal_value = NULL;
+  sibling->string_value = NULL;
+
+  if (!state) {
+    state = sibling;
+    sibling->previous = NULL;
+    sibling->next = NULL;
+  } else {
+    if (sibling->next = node->next)
+      sibling->next->previous = sibling;
+
+    sibling->previous = node;
+    node->next = sibling;
+  }
+
+  sibling->type = condition->node_type;
 }
