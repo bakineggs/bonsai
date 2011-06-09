@@ -8,6 +8,9 @@ void preceding_spaces(Node* node) {
 }
 
 void print_node(Node* node) {
+  if (!node)
+    return;
+
   preceding_spaces(node);
   printf("%s:", node->type);
 
