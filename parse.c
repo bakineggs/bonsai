@@ -290,7 +290,7 @@ void error(char* message, char* line) {
   exit(1);
 }
 
-char** node_types; // this could be freed when we're done parsing
+char** node_types; // TODO: this could be freed when we're done parsing
 int node_types_length = 0;
 int node_types_capacity = 0;
 char* node_type_for(char** line_position, char* current_line) {
