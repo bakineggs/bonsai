@@ -4,11 +4,10 @@
 
 #include "parse.h"
 
-char VALID_NODE_NAME_CHARS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ";
-
 Condition* parse_conditions(FILE* file);
 Rule* parse_rule(FILE* file);
 void error(char* message, char* line);
+char* node_type_for(char** line_position, char* current_line);
 
 Rule* parse_rules(FILE* file) {
   Rule* first = parse_rule(file);
@@ -123,13 +122,7 @@ Condition* parse_conditions(FILE* file) {
     if (current->removes_node && current->ancestor_removes_node)
       error("Redundant - in front of node and ancestor", current_line);
 
-    size_t type_length = strspn(line_position, VALID_NODE_NAME_CHARS);
-    if (type_length == 0)
-      error("Missing node name", current_line);
-
-    current->node_type = (char*) malloc(type_length);
-    strncpy(current->node_type, line_position, type_length);
-    line_position += type_length;
+    current->node_type = node_type_for(&line_position, current_line);
 
     if (*line_position++ != ':')
       error("Missing : after node name", current_line);
@@ -231,13 +224,7 @@ Node* parse_nodes(FILE* file) {
       }
     }
 
-    size_t type_length = strspn(line_position, VALID_NODE_NAME_CHARS);
-    if (type_length == 0)
-      error("Missing node name", current_line);
-
-    current->type = (char*) malloc(type_length);
-    strncpy(current->type, line_position, type_length);
-    line_position += type_length;
+    current->type = node_type_for(&line_position, current_line);
 
     if (*line_position++ != ':')
       error("Missing : after node name", current_line);
@@ -285,4 +272,33 @@ void error(char* message, char* line) {
   if (strcmp(line, "") != 0)
     fprintf(stderr, ":\n  %s", line);
   exit(1);
+}
+
+char** node_types; // this could be freed when we're done parsing
+int node_types_length = 0;
+int node_types_capacity = 0;
+char* node_type_for(char** line_position, char* current_line) {
+  size_t length = strspn(*line_position, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ");
+  if (length == 0)
+    error("Missing node name", current_line);
+
+  char* start_of_name = *line_position;
+  *line_position += length;
+
+  int i; for (i = 0; i < node_types_length; i++)
+    if (strncmp(node_types[i], start_of_name, length) == 0)
+      return node_types[i];
+
+  if (node_types_length == node_types_capacity) {
+    node_types_capacity += 64;
+    char** new_node_types = (char**) malloc(node_types_capacity * sizeof(char*));
+    int i; for (i = 0; i < node_types_length; i++)
+      new_node_types[i] = node_types[i];
+    free(node_types);
+    node_types = new_node_types;
+  }
+
+  char* type = node_types[node_types_length++] = (char*) malloc(length);
+  strncpy(type, start_of_name, length);
+  return type;
 }

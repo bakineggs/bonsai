@@ -70,7 +70,7 @@ bool matches(Node* node, Condition* condition) {
 
   if (!condition->matches_node)
     this_matches = true;
-  else if (node && strcmp(node->type, condition->node_type) == 0)
+  else if (node && node->type == condition->node_type)
     this_matches = true;
 
   // TODO: change this to support unordered conditions of rules
