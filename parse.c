@@ -6,8 +6,8 @@
 
 Rule* parse_rule(FILE* file);
 Condition* parse_conditions(FILE* file);
-Condition* parse_condition(char* line, Condition* previous); // TODO
-int condition_depth(Condition* condition); // TODO
+Condition* parse_condition(char* line, Condition* previous);
+int condition_depth(Condition* condition);
 
 Node* parse_node(char* line, Node* previous);
 int node_depth(Node* node);
@@ -43,117 +43,121 @@ Rule* parse_rule(FILE* file) {
 }
 
 Condition* parse_conditions(FILE* file) {
-  char current_line[80];
+  char line[80];
 
   do {
-    if (!fgets(current_line, 80, file)) {
+    if (!fgets(line, 80, file)) {
       if (ferror(file))
-        error("Error reading condition", current_line);
+        error("Error reading condition", line);
       else
         return NULL;
     }
-  } while (strcmp(current_line, "\n") == 0);
+  } while (strcmp(line, "\n") == 0);
 
   Condition* first = NULL;
-
-  Condition* previous;
-  int previous_depth;
-  Condition* current = NULL;
-  int current_depth = -1;
+  Condition* condition = NULL;
 
   do {
-    previous = current;
-    previous_depth = current_depth;
+    condition = parse_condition(line, condition);
 
-    current = (Condition*) malloc(sizeof(Condition));
-    current->next = NULL;
-    current->children = NULL;
+    if (!first)
+      first = condition;
 
-    char* line_position = current_line;
-
-    current_depth = 0;
-    while (strncmp(line_position, "  ", 2) == 0) {
-      current_depth++;
-      line_position += 2;
-    }
-
-    if (*line_position == ' ')
-      error("Space before node name", current_line);
-
-    if (current_depth == 0) {
-      if (!first)
-        first = current;
-      else {
-        while (previous->parent)
-          previous = previous->parent;
-        previous->next = current;
-        previous_depth = 0;
-      }
-      current->parent = NULL;
-      current->ancestor_creates_node = false;
-      current->ancestor_removes_node = false;
-    } else if (current_depth > previous_depth + 1)
-      error("Condition at depth more than one level below its parent", current_line);
-    else {
-      while (previous_depth >= current_depth) {
-        previous = previous->parent;
-        previous_depth--;
-      }
-      current->parent = previous;
-      current->ancestor_creates_node = previous->creates_node || previous->ancestor_creates_node;
-      current->ancestor_removes_node = previous->removes_node || previous->ancestor_removes_node;
-
-      if (!previous->children) {
-        if (previous->variable)
-          error("Can't have child of node assigned to variable", current_line);
-        previous->children = current;
-      } else {
-        Condition* child = previous->children;
-        while (child->next)
-          child = child->next;
-        child->next = current;
-      }
-    }
-
-    current->creates_node = *line_position == '+';
-    current->removes_node = *line_position == '-';
-    current->excludes_node = *line_position == '!';
-    current->matches_node = !current->ancestor_creates_node && !current->creates_node && !current->excludes_node;
-
-    if (current->creates_node || current->removes_node || current->excludes_node)
-      line_position++;
-
-    if (current->creates_node && current->ancestor_creates_node)
-      error("Redundant + in front of node and ancestor", current_line);
-    if (current->removes_node && current->ancestor_removes_node)
-      error("Redundant - in front of node and ancestor", current_line);
-
-    current->node_type = node_type_for(&line_position, current_line);
-
-    if (*line_position++ != ':')
-      error("Missing : after node name", current_line);
-
-    if (current->ordered = *line_position == ':')
-      line_position++;
-
-    if (current->exact = *line_position == '=')
-      line_position++;
-
-    if (current->multiple = *line_position == '*')
-      line_position++;
-
-    if (current->multiple && !current->matches_node)
-      error("Multiplicity defined for non-matched node", current_line);
-
-    if (!fgets(current_line, 80, file)) {
+    if (!fgets(line, 80, file)) {
       if (ferror(file))
-        error("Error reading condition", current_line);
+        error("Error reading condition", line);
       else
         return first;
     }
-  } while (strcmp(current_line, "\n") != 0);
+  } while (strcmp(line, "\n") != 0);
 
   return first;
+}
+
+Condition* parse_condition(char* line, Condition* previous) {
+  Condition* condition = (Condition*) malloc(sizeof(Condition));
+  condition->next = NULL;
+  condition->children = NULL;
+
+  char* position = line;
+
+  int depth = 0;
+  while (strncmp(position, "  ", 2) == 0) {
+    depth++;
+    position += 2;
+  }
+
+  if (*position == ' ')
+    error("Space before node name", line);
+
+  if (depth == 0) {
+    if (previous) {
+      while (previous->parent)
+        previous = previous->parent;
+      previous->next = condition;
+    }
+    condition->parent = NULL;
+    condition->ancestor_creates_node = false;
+    condition->ancestor_removes_node = false;
+  } else if (depth > condition_depth(previous) + 1)
+    error("Condition at depth more than one level below its parent", line);
+  else {
+    while (condition_depth(previous) >= depth)
+      previous = previous->parent;
+    condition->parent = previous;
+    condition->ancestor_creates_node = previous->creates_node || previous->ancestor_creates_node;
+    condition->ancestor_removes_node = previous->removes_node || previous->ancestor_removes_node;
+
+    if (!previous->children) {
+      if (previous->variable)
+        error("Can't have child of node assigned to variable", line);
+      previous->children = condition;
+    } else {
+      Condition* child = previous->children;
+      while (child->next)
+        child = child->next;
+      child->next = condition;
+    }
+  }
+
+  condition->creates_node = *position == '+';
+  condition->removes_node = *position == '-';
+  condition->excludes_node = *position == '!';
+  condition->matches_node = !condition->ancestor_creates_node && !condition->creates_node && !condition->excludes_node;
+
+  if (condition->creates_node || condition->removes_node || condition->excludes_node)
+    position++;
+
+  if (condition->creates_node && condition->ancestor_creates_node)
+    error("Redundant + in front of condition and ancestor", line);
+  if (condition->removes_node && condition->ancestor_removes_node)
+    error("Redundant - in front of condition and ancestor", line);
+
+  condition->node_type = node_type_for(&position, line);
+
+  if (*position++ != ':')
+    error("Missing : after node name", line);
+
+  if (condition->ordered = *position == ':')
+    position++;
+
+  if (condition->exact = *position == '=')
+    position++;
+
+  if (condition->multiple = *position == '*')
+    position++;
+
+  if (condition->multiple && !condition->matches_node)
+    error("Multiplicity defined for non-matched node", line);
+
+  return condition;
+}
+
+int condition_depth(Condition* condition) {
+  int depth = 0;
+  while (condition = condition->parent)
+    depth++;
+  return depth;
 }
 
 Node* parse_nodes(FILE* file) {
