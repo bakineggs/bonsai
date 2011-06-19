@@ -98,7 +98,8 @@ void transform(Node* node, Node* parent, Condition* condition) {
       state = create_node(condition);
     else
       runtime_error("Couldn't create node");
-  }
+  } else if (condition->children)
+    transform(node->children, node, condition->children);
 
   // TODO: change me along with matches() to support unordered conditions of rules
   if (condition->next)
@@ -151,8 +152,8 @@ void create_child(Node* parent, Condition* condition) {
   if (parent->children)
     runtime_error("Why are we creating a child instead of a sibling?");
 
-  parent->children = create_node(condition);
-  parent->children->parent = parent;
+  Node* child = parent->children = create_node(condition);
+  do { child->parent = parent; } while (child = child->next);
 }
 
 Node* create_node(Condition* condition) {
@@ -166,6 +167,13 @@ Node* create_node(Condition* condition) {
   node->integer_value = NULL;
   node->decimal_value = NULL;
   node->string_value = NULL;
+
+  if (condition->children)
+    create_child(node, condition->children);
+
+  if (condition->ancestor_creates_node && condition->next)
+    create_sibling(node, condition->next);
+
   return node;
 }
 
