@@ -1,0 +1,1 @@
+Tests that rules adding a node in the top level of the rule can be applied at the bottom level of the state tree.

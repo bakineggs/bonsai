@@ -1,3 +1,0 @@
-Tests that rules adding a node in the top level of the rule can be applied at the top level of the state tree.
-
-Relies on node removal (couldn't find an independent way to test adding a node while making a program that terminates).
