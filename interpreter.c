@@ -14,7 +14,7 @@ void release_memory(Node* node);
 void create_sibling(Node* node, Condition* condition);
 void create_child(Node* parent, Condition* condition);
 Node* create_node(Condition* condition);
-void runtime_error(char* message);
+void shouldnt_happen(char* message);
 
 Node* state;
 
@@ -97,7 +97,7 @@ void transform(Node* node, Node* parent, Condition* condition) {
     else if (!state)
       state = create_node(condition);
     else
-      runtime_error("Couldn't create node");
+      shouldnt_happen("Couldn't create node");
   } else if (condition->children)
     transform(node->children, node, condition->children);
 
@@ -108,7 +108,7 @@ void transform(Node* node, Node* parent, Condition* condition) {
 
 void remove_node(Node* node) {
   if (!node)
-    runtime_error("Attempting to remove non-existent node");
+    shouldnt_happen("Attempting to remove non-existent node");
 
   if (node->parent && node->parent->children == node)
     node->parent->children = node->next;
@@ -149,7 +149,7 @@ void create_sibling(Node* node, Condition* condition) {
 
 void create_child(Node* parent, Condition* condition) {
   if (parent->children)
-    runtime_error("Why are we creating a child instead of a sibling?");
+    shouldnt_happen("Why are we creating a child instead of a sibling?");
 
   Node* child = parent->children = create_node(condition);
   do { child->parent = parent; } while (child = child->next);
@@ -176,7 +176,7 @@ Node* create_node(Condition* condition) {
   return node;
 }
 
-void runtime_error(char* message) {
+void shouldnt_happen(char* message) {
   fprintf(stderr, "%s\n", message);
-  exit(1);
+  exit(2);
 }
