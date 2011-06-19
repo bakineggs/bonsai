@@ -8,10 +8,13 @@
 
 bool apply(Rule* rule, Node* node);
 bool matches(Node* node, Condition* condition);
-void transform(Node* node, Condition* condition);
+void transform(Node* node, Node* parent, Condition* condition);
 void remove_node(Node* node);
 void release_memory(Node* node);
 void create_sibling(Node* node, Condition* condition);
+void create_child(Node* parent, Condition* condition);
+Node* create_node(Condition* condition);
+void runtime_error(char* message);
 
 Node* state;
 
@@ -49,7 +52,7 @@ bool apply(Rule* rule, Node* node) {
   bool applied = false;
 
   if (matches(node, rule->conditions)) {
-    transform(node, rule->conditions);
+    transform(node, node->parent, rule->conditions);
     applied = true;
   }
 
@@ -81,19 +84,31 @@ bool matches(Node* node, Condition* condition) {
   return this_matches;
 }
 
-void transform(Node* node, Condition* condition) {
+void transform(Node* node, Node* parent, Condition* condition) {
+  Node* next = node ? node->next : NULL;
+
   if (condition->removes_node)
     remove_node(node);
-
-  if (condition->creates_node)
-    create_sibling(node, condition);
+  else if (condition->creates_node) {
+    if (node)
+      create_sibling(node, condition);
+    else if (parent)
+      create_child(parent, condition);
+    else if (!state)
+      state = create_node(condition);
+    else
+      runtime_error("Couldn't create node");
+  }
 
   // TODO: change me along with matches() to support unordered conditions of rules
   if (condition->next)
-    transform(node->next, condition->next);
+    transform(next, parent, condition->next);
 }
 
 void remove_node(Node* node) {
+  if (!node)
+    runtime_error("Attempting to remove non-existent node");
+
   if (node->parent && node->parent->children == node)
     node->parent->children = node->next;
 
@@ -123,23 +138,38 @@ void release_memory(Node* node) {
 }
 
 void create_sibling(Node* node, Condition* condition) {
-  Node* sibling = (Node*) malloc(sizeof(Node));
-  sibling->children = NULL;
-  sibling->integer_value = NULL;
-  sibling->decimal_value = NULL;
-  sibling->string_value = NULL;
+  Node* sibling = create_node(condition);
 
-  if (!state) {
-    state = sibling;
-    sibling->previous = NULL;
-    sibling->next = NULL;
-  } else {
-    if (sibling->next = node->next)
-      sibling->next->previous = sibling;
+  if (sibling->next = node->next)
+    sibling->next->previous = sibling;
 
-    sibling->previous = node;
-    node->next = sibling;
-  }
+  sibling->previous = node;
+  node->next = sibling;
+}
 
-  sibling->type = condition->node_type;
+void create_child(Node* parent, Condition* condition) {
+  if (parent->children)
+    runtime_error("Why are we creating a child instead of a sibling?");
+
+  parent->children = create_node(condition);
+  parent->children->parent = parent;
+}
+
+Node* create_node(Condition* condition) {
+  Node* node = (Node*) malloc(sizeof(Node));
+  node->previous = NULL;
+  node->next = NULL;
+  node->children = NULL;
+  node->parent = NULL;
+  node->type = condition->node_type;
+  node->ordered = condition->ordered;
+  node->integer_value = NULL;
+  node->decimal_value = NULL;
+  node->string_value = NULL;
+  return node;
+}
+
+void runtime_error(char* message) {
+  fprintf(stderr, "%s\n", message);
+  exit(1);
 }
