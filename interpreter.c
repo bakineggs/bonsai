@@ -69,19 +69,19 @@ bool apply(Rule* rule, Node* node) {
 }
 
 bool matches(Node* node, Condition* condition) {
-  bool this_matches = false;
-
-  if (!condition->matches_node)
-    this_matches = true;
-  else if (node && node->type == condition->node_type)
-    this_matches = true;
+  if (condition->matches_node) {
+    if (!node || node->type != condition->node_type)
+      return false;
+    if (condition->children && !matches(node->children, condition->children))
+      return false;
+  }
 
   // TODO: change this to support unordered conditions of rules
   // we'll have to create a one-to-one mapping from conditions to matched nodes in order to know what to transform
   if (condition->next)
-    return this_matches && node && matches(node->next, condition->next);
+    return node && matches(node->next, condition->next);
 
-  return this_matches;
+  return true;
 }
 
 void transform(Node* node, Node* parent, Condition* condition) {
