@@ -126,13 +126,12 @@ void remove_node(Node* node) {
 }
 
 void release_memory(Node* node) {
-  Node* this_child = node->children;
-  Node* next_child;
+  Node* child;
+  Node* next = node->children;
 
-  while (this_child) {
-    next_child = this_child->next;
-    release_memory(this_child);
-    this_child = next_child;
+  while (child = next) {
+    next = child->next;
+    release_memory(child);
   }
 
   free(node);
