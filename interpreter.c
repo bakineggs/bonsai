@@ -8,7 +8,7 @@
 
 bool apply(Rule* rule, Node* node);
 bool matches(Node* node, Condition* condition);
-void transform(Node* node, Node* parent, Condition* condition);
+bool transform(Node* node, Node* parent, Condition* condition);
 void remove_node(Node* node);
 void release_memory(Node* node);
 void create_sibling(Node* node, Condition* condition);
@@ -51,10 +51,8 @@ bool apply(Rule* rule, Node* node) {
 
   bool applied = false;
 
-  if (matches(node, rule->conditions)) {
-    transform(node, node->parent, rule->conditions);
+  if (matches(node, rule->conditions) && transform(node, node->parent, rule->conditions))
     applied = true;
-  }
 
   if (node->children && apply(rule, node->children))
     applied = true;
@@ -84,12 +82,15 @@ bool matches(Node* node, Condition* condition) {
   return true;
 }
 
-void transform(Node* node, Node* parent, Condition* condition) {
+bool transform(Node* node, Node* parent, Condition* condition) {
   Node* next = node ? node->next : NULL;
 
-  if (condition->removes_node)
+  bool transformed = false;
+
+  if (condition->removes_node) {
     remove_node(node);
-  else if (condition->creates_node) {
+    transformed = true;
+  } else if (condition->creates_node) {
     if (node)
       create_sibling(node, condition);
     else if (parent)
@@ -98,12 +99,15 @@ void transform(Node* node, Node* parent, Condition* condition) {
       state = create_node(condition);
     else
       shouldnt_happen("Couldn't create node");
-  } else if (condition->children)
-    transform(node->children, node, condition->children);
+    transformed = true;
+  } else if (condition->children && transform(node->children, node, condition->children))
+    transformed = true;
 
   // TODO: change me along with matches() to support unordered conditions of rules
-  if (condition->next)
-    transform(next, parent, condition->next);
+  if (condition->next && transform(next, parent, condition->next))
+    transformed = true;
+
+  return transformed;
 }
 
 void remove_node(Node* node) {
