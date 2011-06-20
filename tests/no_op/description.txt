@@ -1,0 +1,1 @@
+Tests to make sure that the interpreter halts when given a rule that matches but doesn't change anything.
