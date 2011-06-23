@@ -1,0 +1,1 @@
+Tests that unordered children in a rule can match unordered nodes when they are declared in the same order.
