@@ -50,4 +50,14 @@ typedef struct Node {
   struct Node* children;
 } Node;
 
+typedef struct Match {
+  struct Match* other; // instead of a MatchSet or Matches or whatnot
+
+  struct Match* next;
+  struct Match* children;
+
+  struct Condition* condition;
+  struct Node* node;
+} Match;
+
 #endif

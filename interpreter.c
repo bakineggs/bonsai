@@ -7,10 +7,11 @@
 #include "print.h"
 
 bool apply(Rule* rule, Node* node);
-bool matches(Node* node, Condition* condition);
+Match* matches(Node* node, Condition* condition);
+Match* release_match_memory(Match* match);
 bool transform(Node* node, Node* parent, Condition* condition);
 void remove_node(Node* node);
-void release_memory(Node* node);
+void release_node_memory(Node* node);
 void create_sibling(Node* node, Condition* condition);
 void create_child(Node* parent, Condition* condition);
 Node* create_node(Condition* condition);
@@ -66,20 +67,39 @@ bool apply(Rule* rule, Node* node) {
   return applied;
 }
 
-bool matches(Node* node, Condition* condition) {
+Match* matches(Node* node, Condition* condition) {
+  Match* match = (Match*) malloc(sizeof(Match));
+  match->other = node ? matches(node->next, condition) : NULL;
+  match->next = NULL;
+  match->children = NULL;
+
   if (condition->matches_node) {
     if (!node || node->type != condition->node_type)
-      return false;
-    if (condition->children && !matches(node->children, condition->children))
-      return false;
+      return release_match_memory(match);
+    if (condition->children && !(match->children = matches(node->children, condition->children)))
+      return release_match_memory(match);
   }
 
   // TODO: change this to support unordered conditions of rules
   // we'll have to create a one-to-one mapping from conditions to matched nodes in order to know what to transform
   if (condition->next)
-    return node && matches(node->next, condition->next);
+    if (!(match->next = node ? matches(node->next, condition->next) : NULL))
+      return release_match_memory(match);
 
-  return true;
+  return match;
+}
+
+Match* release_match_memory(Match* match) {
+  Match* other = match->other;
+
+  if (match->next)
+    release_match_memory(match->next);
+
+  if (match->children)
+    release_match_memory(match->children);
+
+  free(match);
+  return other;
 }
 
 bool transform(Node* node, Node* parent, Condition* condition) {
@@ -126,16 +146,16 @@ void remove_node(Node* node) {
   if (state == node)
     state = node->next;
 
-  release_memory(node);
+  release_node_memory(node);
 }
 
-void release_memory(Node* node) {
+void release_node_memory(Node* node) {
   Node* child;
   Node* next = node->children;
 
   while (child = next) {
     next = child->next;
-    release_memory(child);
+    release_node_memory(child);
   }
 
   free(node);
