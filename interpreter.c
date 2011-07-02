@@ -49,10 +49,10 @@ bool apply(Rule* rule, Node* node) {
   if (node == NULL)
     return false;
 
-  bool applied = false;
-
   if (matches(node, rule->conditions) && transform(node, node->parent, rule->conditions))
-    applied = true;
+    return true;
+
+  bool applied = false;
 
   if (node->children && apply(rule, node->children))
     applied = true;
