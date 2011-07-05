@@ -53,6 +53,7 @@ typedef struct Node {
 typedef struct Match {
   struct Match* other; // instead of a MatchSet or Matches or whatnot
 
+  struct Match* parent;
   struct Match* next;
   struct Match* children;
 

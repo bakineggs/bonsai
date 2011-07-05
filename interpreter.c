@@ -8,16 +8,15 @@
 
 bool apply(Rule* rule, Node* node);
 Match* matches(Node* node, Condition* condition);
+Match* create_match(Node* node, Condition* condition);
 Match* release_match_memory(Match* match);
-bool transform(Node* node, Node* parent, Condition* condition);
+bool transform(Match* match);
 void remove_node(Node* node);
 void release_node_memory(Node* node);
 void create_sibling(Node* node, Condition* condition);
 void create_child(Node* parent, Condition* condition);
 Node* create_node(Condition* condition);
 void shouldnt_happen(char* message);
-
-Node* state;
 
 int main(int argc, char* argv[]) {
   if (argc != 3) {
@@ -38,11 +37,34 @@ int main(int argc, char* argv[]) {
   }
 
   Rule* rules = parse_rules(rules_file);
-  state = parse_nodes(state_file);
+  Node* start_state = parse_nodes(state_file);
+
+  Node* state = (Node*) malloc(sizeof(Node));
+  state->previous = NULL;
+  state->next = NULL;
+  state->type = "state tree root"; // only ever compare pointers, not values, so it's unique
+  state->ordered = false;
+  state->integer_value = NULL;
+  state->decimal_value = NULL;
+  state->string_value = NULL;
+  state->parent = NULL;
+  state->children = start_state;
+
+  Node* child = state->children;
+  while (child) {
+    child->parent = state;
+    child = child->next;
+  }
 
   while (apply(rules, state)) {}
 
-  print_node(state);
+  child = state->children;
+  while (child) {
+    child->parent = NULL;
+    child = child->next;
+  }
+
+  print_node(state->children);
   return 0;
 }
 
@@ -50,8 +72,21 @@ bool apply(Rule* rule, Node* node) {
   if (node == NULL)
     return false;
 
-  if (matches(node, rule->conditions) && transform(node, node->parent, rule->conditions))
-    return true;
+  Match* match = matches(node, rule->conditions); // gets multiple, but we only use the first right now
+
+  if (match) {
+    Match* parent = create_match(node->parent, NULL);
+    parent->children = match;
+
+    Match* child = parent->children;
+    while (child) {
+      child->parent = parent;
+      child = child->next;
+    }
+
+    if (transform(match))
+      return true;
+  }
 
   bool applied = false;
 
@@ -68,16 +103,20 @@ bool apply(Rule* rule, Node* node) {
 }
 
 Match* matches(Node* node, Condition* condition) {
-  Match* match = (Match*) malloc(sizeof(Match));
+  Match* match = create_match(node, condition);
   match->other = node ? matches(node->next, condition) : NULL;
-  match->next = NULL;
-  match->children = NULL;
 
   if (condition->matches_node) {
     if (!node || node->type != condition->node_type)
       return release_match_memory(match);
     if (condition->children && !(match->children = matches(node->children, condition->children)))
       return release_match_memory(match);
+
+    Match* child = match->children;
+    while (child) {
+      child->parent = match;
+      child = child->next;
+    }
   }
 
   // TODO: change this to support unordered conditions of rules
@@ -86,6 +125,17 @@ Match* matches(Node* node, Condition* condition) {
     if (!(match->next = node ? matches(node->next, condition->next) : NULL))
       return release_match_memory(match);
 
+  return match;
+}
+
+Match* create_match(Node* node, Condition* condition) {
+  Match* match = (Match*) malloc(sizeof(Match));
+  match->node = node;
+  match->condition = condition;
+  match->other = NULL;
+  match->next = NULL;
+  match->parent = NULL;
+  match->children = NULL;
   return match;
 }
 
@@ -102,29 +152,25 @@ Match* release_match_memory(Match* match) {
   return other;
 }
 
-bool transform(Node* node, Node* parent, Condition* condition) {
-  Node* next = node ? node->next : NULL;
-
+bool transform(Match* match) {
   bool transformed = false;
 
-  if (condition->removes_node) {
-    remove_node(node);
+  if (match->condition->removes_node) {
+    remove_node(match->node);
+    match->node = NULL;
     transformed = true;
-  } else if (condition->creates_node) {
-    if (node)
-      create_sibling(node, condition);
-    else if (parent)
-      create_child(parent, condition);
-    else if (!state)
-      state = create_node(condition);
+  } else if (match->condition->creates_node) {
+    if (match->node)
+      create_sibling(match->node, match->condition);
+    else if (match->parent && match->parent->node)
+      create_child(match->parent->node, match->condition);
     else
       shouldnt_happen("Couldn't create node");
     transformed = true;
-  } else if (condition->children && transform(node->children, node, condition->children))
+  } else if (match->children && transform(match->children))
     transformed = true;
 
-  // TODO: change me along with matches() to support unordered conditions of rules
-  if (condition->next && transform(next, parent, condition->next))
+  if (match->next && transform(match->next))
     transformed = true;
 
   return transformed;
@@ -142,9 +188,6 @@ void remove_node(Node* node) {
 
   if (node->next)
     node->next->previous = node->previous;
-
-  if (state == node)
-    state = node->next;
 
   release_node_memory(node);
 }
