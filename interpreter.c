@@ -39,15 +39,7 @@ int main(int argc, char* argv[]) {
   Rule* rules = parse_rules(rules_file);
   Node* start_state = parse_nodes(state_file);
 
-  Node* state = (Node*) malloc(sizeof(Node));
-  state->previous = NULL;
-  state->next = NULL;
-  state->type = "state tree root"; // only ever compare pointers, not values, so it's unique
-  state->ordered = false;
-  state->integer_value = NULL;
-  state->decimal_value = NULL;
-  state->string_value = NULL;
-  state->parent = NULL;
+  Node* state = create_node(NULL);
   state->children = start_state;
 
   Node* child = state->children;
@@ -228,17 +220,23 @@ Node* create_node(Condition* condition) {
   node->next = NULL;
   node->children = NULL;
   node->parent = NULL;
-  node->type = condition->node_type;
-  node->ordered = condition->ordered;
   node->integer_value = NULL;
   node->decimal_value = NULL;
   node->string_value = NULL;
 
-  if (condition->children)
-    create_child(node, condition->children);
+  if (condition) {
+    node->type = condition->node_type;
+    node->ordered = condition->ordered;
 
-  if (condition->ancestor_creates_node && condition->next)
-    create_sibling(node, condition->next);
+    if (condition->children)
+      create_child(node, condition->children);
+
+    if (condition->ancestor_creates_node && condition->next)
+      create_sibling(node, condition->next);
+  } else {
+    node->type = (char*) malloc(sizeof(char));
+    node->ordered = false;
+  }
 
   return node;
 }
