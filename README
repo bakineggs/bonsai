@@ -56,23 +56,23 @@ K:
 K::
   +*: A
   +FollowedBy:
-  Plus:
-    -Unevaluated:
-      *: A
-    +Context:
+    Plus:
+      -Unevaluated:
+        *: A
+      +Context:
 
 # reinsert evaluated integer
 K::
   -Integer: I
   -FollowedBy:
-  Plus:
-    -Context:
-    +Integer: I
+    Plus:
+      -Context:
+      +Integer: I
 
 # reinsert evaluated decimal
 K::
   -Decimal: A
   -FollowedBy:
-  Plus:
-    -Context:
-    +Decimal: A
+    Plus:
+      -Context:
+      +Decimal: A
