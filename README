@@ -55,7 +55,7 @@ K:
 # remove an argument for evaluation (all args must start inside an "unevaluated" node)
 K::
   +*: A
-  +FollowedBy:
+  +Restore:
     Plus:
       -Unevaluated:
         *: A
@@ -64,7 +64,7 @@ K::
 # reinsert evaluated integer
 K::
   -Integer: I
-  -FollowedBy:
+  -Restore:
     Plus:
       -Context:
       +Integer: I
@@ -72,7 +72,7 @@ K::
 # reinsert evaluated decimal
 K::
   -Decimal: A
-  -FollowedBy:
+  -Restore:
     Plus:
       -Context:
       +Decimal: A
