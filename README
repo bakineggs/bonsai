@@ -5,12 +5,12 @@ Examples (a lot of this could change):
 # spawn new thread (see see https://gist.github.com/369171 for similar k-framework version)
 Thread:              # node must be matched
   K::                # node must be matched, the :: means that children are ordered (default is unordered)
-    -Spawn:          # node must be matched, the - means that this node will be removed
-      *: S           # makes S a variable that is any kind of node (makes a variable because it's a matched node)
+    -Spawn:=         # node must be matched, the - means that this node will be removed, the := means all children must be matched
+      *:* S          # makes S a variable that is any number of any kind of node (makes a variable because it's a matched node)
   Env: E
 +Thread:             # node not matched against, the + means this node will be added
   K::
-    *: S             # references the variable S (because it's inside a new node)
+    *:* S            # references the variable S (because it's inside a new node)
   Env: E
 
 # purge a finished thread
@@ -27,7 +27,7 @@ Threads:=
 Thread:
   K::
     -Join:
-      *: I
+      Integer: I
 !Thread:             # this node must not match
   Id: I
 
@@ -36,7 +36,7 @@ K:                   # not ordered: may add 2 integers where ever
   -Plus:
     Integer: A
     Integer: B
-  +Integer: < A + B  # the < means do a computation (with the ability to call user-defined functions)
+  +Integer: < A + B  # the < means do a computation (with the ability to call user-defined functions) - exact syntax and use undecided
 
 # decimal addition
 K:
