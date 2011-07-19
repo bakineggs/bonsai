@@ -1,3 +1,5 @@
+- support assigning a matched node to a variable while matching children
+
 Roadmap:
   1) Implement an interpreter in the most straight-forward way possible while building up a good test suite
   2) Bootstrap! (write an okk interpreter using okk)
