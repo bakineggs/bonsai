@@ -1,7 +1,9 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#ifndef __cplusplus
 typedef enum BOOL { false, true } bool;
+#endif
 
 typedef struct Rule {
   struct Rule* next; // instead of having a RuleSet or whatnot
