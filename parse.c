@@ -272,10 +272,16 @@ void error(char* message, char* line) {
   exit(1);
 }
 
+char* wildcard;
 char** node_types; // TODO: this could be freed when we're done parsing
 int node_types_length = 0;
 int node_types_capacity = 0;
 char* node_type_for(char** line_position, char* current_line) {
+  if (**line_position == '*') {
+    (*line_position)++;
+    return wildcard;
+  }
+
   size_t length = strspn(*line_position, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ");
   if (length == 0)
     error("Missing node name", current_line);
