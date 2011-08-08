@@ -334,7 +334,7 @@ char* get_line(FILE* file) {
 }
 
 bool is_blank(char* line) {
-  if (*line == '\n')
+  if (*line == '\n' || *line == '\0')
     return true;
 
   while (*line == ' ')
