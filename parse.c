@@ -144,6 +144,12 @@ Condition* parse_condition(char* line, Condition* previous) {
   if (condition->multiple && !condition->matches_node)
     error("Multiplicity defined for non-matched node", line);
 
+  condition->variable = NULL;
+  if (*position == ' ') {
+    position++;
+    // TODO: parse variable names and code fragments
+  }
+
   return condition;
 }
 
