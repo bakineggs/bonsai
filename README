@@ -1,6 +1,32 @@
 Okk Programming Language
 
-Examples (a lot of this could change):
+Okk is a programming language primarily designed for writing programming languages. It works by applying a set of rules to transform a forest representing the state of a program. While the primary goal of okk is to be able to create a programming language interpreter by writing a set of rules representing the semantics of the language, it could also be helpful for many other types of problems.
+
+Before diving into the details of writing a language, let's start off with an easier example. If we wanted to perform a map-reduce operation to compute the sum of the squares of a list of numbers, we could do this with okk. We'll do this by making a forest containing single-node trees representing our list of numbers and specifying rules to square them and sum up those squares.
+
+Here is the forest representing our starting state:
+
+Number: 5   # this line is a tree consisting of a single "Number" node that has an associated value of 5
+Number: 12
+Number: 26  # in case you couldn't tell, anything after a # symbol is a comment
+Number: 7
+Number: 18
+...
+
+Here are the rules to transform this list into a sum of squares:
+
+# this rule squares any value in the starting list
+-Number: X           # remove a "Number" node with the value X
++Squared: < X * X    # create a "Squared" node with the value X * X
+
+# this rule adds any two values that have already been squared
+-Squared: X          # remove a "Squared" node with the value X
+-Squared: Y          # remove a "Squared" node with the value Y
++Squared: < X + Y    # create a "Squared" node with the value X + Y
+
+These rules are applied in any order until all that is left is a single "Squared" node with our result as the value.
+
+Here are some rules that could be part of an interpreter:
 
 # spawn new thread (see see https://gist.github.com/369171 for similar k-framework version)
 Thread:              # node must be matched
@@ -10,15 +36,15 @@ Thread:              # node must be matched
   Env: E
 +Thread:             # node not matched against, the + means this node will be added
   K::
-    *:* S            # references the variable S (because it's inside a new node)
+    *: S             # references the variable S (because it's inside a new node)
   Env: E
 
 # purge a finished thread
 -Thread:
-  K:=               # the = means an exact match (not containing any unmatched nodes)
+  K:=                # the = means an exact match (not containing any unmatched nodes), so this matches a "K" node with no children
 
-# wait for threads to finish or rendezvous
-Threads:=
+# wait for all threads to finish or rendezvous
+Threads:=            # all child nodes must match for this rule to apply
   Thread:*           # the * means that there can be any number of these nodes
     K::
       -Rendezvous:
