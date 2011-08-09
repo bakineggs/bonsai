@@ -11,7 +11,6 @@ Number: 12
 Number: 26  # in case you couldn't tell, anything after a # symbol is a comment
 Number: 7
 Number: 18
-...
 
 Here are the rules to transform this list into a sum of squares:
 
