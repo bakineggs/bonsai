@@ -6,7 +6,7 @@ Before diving into the details of writing a language, let's start off with an ea
 
 Here is the forest representing our starting state:
 
-Number: 5   # this line is a tree consisting of a single "Number" node that has an associated value of 5
+Number: 5   # each line is a tree consisting of a single "Number" node that has an associated value
 Number: 12
 Number: 26  # in case you couldn't tell, anything after a # symbol is a comment
 Number: 7
