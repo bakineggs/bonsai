@@ -294,7 +294,7 @@ char* node_type_for(char** line_position, char* current_line) {
   *line_position += length;
 
   int i; for (i = 0; i < node_types_length; i++)
-    if (strncmp(node_types[i], start_of_name, length) == 0)
+    if (strlen(node_types[i]) == length && strncmp(node_types[i], start_of_name, length) == 0)
       return node_types[i];
 
   if (node_types_length == node_types_capacity) {
