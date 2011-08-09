@@ -57,25 +57,22 @@ Thread:
   Id: I
 
 # integer addition
-K:                   # not ordered: may add 2 integers where ever
-  -Plus:
-    Integer: A
-    Integer: B
-  +Integer: < A + B  # the < means do a computation (with the ability to call user-defined functions) - exact syntax and use undecided
+-Plus:
+  Integer: A
+  Integer: B
++Integer: < A + B    # the < means do a computation (with the ability to call user-defined functions) - exact syntax and use undecided
 
 # decimal addition
-K:
-  -Plus:
-    Decimal: A
-    Decimal: B
-  +Decimal: < A + B
+-Plus:
+  Decimal: A
+  Decimal: B
++Decimal: < A + B
 
 # mixed addition
-K:
-  -Plus:
-    Integer: A
-    Decimal: B
-  +Decimal: < A + B
+-Plus:
+  Integer: A
+  Decimal: B
++Decimal: < A + B
 
 # remove an argument for evaluation (all args must start inside an "unevaluated" node)
 K::
