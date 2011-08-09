@@ -88,7 +88,7 @@ bool apply(Rule* rule, Node* node) {
   if (node->next && apply(rule, node->next))
     applied = true;
 
-  if (rule->next && apply(rule->next, node))
+  if (node->parent == NULL && rule->next && apply(rule->next, node))
     applied = true;
 
   return applied;
