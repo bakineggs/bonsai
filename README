@@ -15,12 +15,12 @@ Number: 18
 Here are the rules to transform this list into a sum of squares:
 
 # this rule squares any value in the starting list
--Number: X           # remove a "Number" node with the value X
+-Number: X           # remove a "Number" node and assign its value to the variable X
 +Squared: < X * X    # create a "Squared" node with the value X * X
 
 # this rule adds any two values that have already been squared
--Squared: X          # remove a "Squared" node with the value X
--Squared: Y          # remove a "Squared" node with the value Y
+-Squared: X          # remove a "Squared" node and assign its value to the variable X
+-Squared: Y          # remove a "Squared" node and assign its value to the variable Y
 +Squared: < X + Y    # create a "Squared" node with the value X + Y
 
 These rules are applied in any order until all that is left is a single "Squared" node with our result as the value.
