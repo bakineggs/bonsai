@@ -96,9 +96,10 @@ bool apply(Rule* rule, Node* node) {
 
 Match* matches(Node* node, Condition* condition) {
   Match* match = create_match(node, condition);
-  match->other = node ? matches(node->next, condition) : NULL;
 
   if (condition->matches_node) {
+    match->other = node && node->next ? matches(node->next, condition) : NULL;
+
     if (!node || node->type != condition->node_type)
       return release_match_memory(match);
     if (condition->children && !(match->children = matches(node->children, condition->children)))
@@ -109,9 +110,24 @@ Match* matches(Node* node, Condition* condition) {
       child->parent = match;
       child = child->next;
     }
+  } else if (condition->excludes_node) {
+    Node* this = node;
+    bool heading_back = true;
+    while (this) {
+      if (this->type == condition->node_type)
+        if (!condition->children || (match->children = matches(this->children, condition->children)))
+          return release_match_memory(match);
+
+      if (heading_back && !(this = this->previous)) { // walk to the beginning of the list
+        heading_back = false;
+        this = node->next;
+      } else if (!heading_back) // and then to the end
+        this = this->next;
+    }
+
   }
 
-  // TODO: change this to support unordered conditions of rules
+  // TODO: change this (along with match->other) to support unordered conditions of rules
   // we'll have to create a one-to-one mapping from conditions to matched nodes in order to know what to transform
   if (condition->next)
     if (!(match->next = node ? matches(node->next, condition->next) : NULL))
