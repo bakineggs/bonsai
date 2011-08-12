@@ -1,5 +1,8 @@
 *.o
 actual_end_state.okks
 error.log
+parser_error.log
+interpreter_error.log
 interpreter
 bootstrapped/parser
+bootstrapped_start_state.okks
