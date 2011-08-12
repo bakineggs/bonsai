@@ -3,6 +3,7 @@
 Roadmap:
   1) Implement an interpreter in the most straight-forward way possible while building up a good test suite
   2) Bootstrap! (write an okk interpreter using okk)
+      to make the start state, output the result of parse.c to an start_state.okks with Rule, Condition, and Node structs represented as Rule:, Condition:, and Node: nodes
   3) Write a compiler that creates an interpreter from a set of rules
   4) Build a distributed interpreter? (or a compiler that builds a distributed interpreter?)
 
