@@ -110,7 +110,10 @@ Match* matches(Node* node, Condition* condition) {
       child->parent = match;
       child = child->next;
     }
-  } else if (condition->excludes_node) {
+  } else if (condition->prevents_rule) {
+    if (!node)
+      shouldnt_happen("Testing a condition that prevents a rule against a NULL node");
+
     Node* this = node;
     bool heading_back = true;
     while (this) {
@@ -124,7 +127,6 @@ Match* matches(Node* node, Condition* condition) {
       } else if (!heading_back) // and then to the end
         this = this->next;
     }
-
   }
 
   // TODO: change this (along with match->other) to support unordered conditions of rules

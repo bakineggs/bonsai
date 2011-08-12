@@ -19,9 +19,9 @@ Tests For:
       make sure variable != NULL and children != NULL can't happen
       make sure creates_node = true and multiple = true can't happen
       make sure matches_node = false and multiple = true can't happen
-      make sure creates_node = true and excludes_node = true can't happen
-      make sure removes_node = true and excludes_node = true can't happen
-      make sure matches_node = true and excludes_node = true can't happen
+      make sure creates_node = true and prevents_rule = true (or ancestor has prevents_rule = true) can't happen
+      make sure removes_node = true and prevents_rule = true (or ancestor has prevents_rule = true) can't happen
+      make sure matches_node = true and prevents_rule = true (or ancestor has prevents_rule = true) can't happen
 
     Node:
       make sure only one of children, integer_value, float_value, or string_value can be != NULL

@@ -20,7 +20,8 @@ typedef struct Condition {
   bool removes_node;
 
   bool matches_node;
-  bool excludes_node;
+
+  bool prevents_rule;
 
   bool exact;
   bool ordered;

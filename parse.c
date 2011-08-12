@@ -114,10 +114,10 @@ Condition* parse_condition(char* line, Condition* previous) {
 
   condition->creates_node = *position == '+';
   condition->removes_node = *position == '-';
-  condition->excludes_node = *position == '!';
-  condition->matches_node = !condition->ancestor_creates_node && !condition->creates_node && !condition->excludes_node;
+  condition->prevents_rule = *position == '!';
+  condition->matches_node = !condition->ancestor_creates_node && !condition->creates_node && !condition->prevents_rule;
 
-  if (condition->creates_node || condition->removes_node || condition->excludes_node)
+  if (condition->creates_node || condition->removes_node || condition->prevents_rule)
     position++;
 
   if (condition->creates_node && condition->ancestor_creates_node)
