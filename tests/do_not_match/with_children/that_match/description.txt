@@ -1,0 +1,1 @@
+Tests that the ! operator prevents the rule from being run if its corresponding node and its children match.
