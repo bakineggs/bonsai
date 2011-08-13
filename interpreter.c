@@ -7,7 +7,8 @@
 #include "print.h"
 
 bool apply(Rule* rule, Node* node);
-Match* matches(Node* node, Condition* condition);
+Match* matches(Node* node, Rule* rule);
+Match* matches_condition(Node* node, Condition* condition);
 Match* create_match(Node* node, Condition* condition);
 Match* release_match_memory(Match* match);
 bool transform(Match* match);
@@ -64,21 +65,9 @@ bool apply(Rule* rule, Node* node) {
   if (node == NULL)
     return false;
 
-  Match* match = matches(node, rule->conditions); // gets multiple, but we only use the first right now
-
-  if (match) {
-    Match* parent = create_match(node->parent, NULL);
-    parent->children = match;
-
-    Match* child = parent->children;
-    while (child) {
-      child->parent = parent;
-      child = child->next;
-    }
-
-    if (transform(match))
-      return true;
-  }
+  Match* match = matches(node, rule);
+  if (match && transform(match))
+    return true;
 
   bool applied = false;
 
@@ -94,15 +83,30 @@ bool apply(Rule* rule, Node* node) {
   return applied;
 }
 
-Match* matches(Node* node, Condition* condition) {
+Match* matches(Node* node, Rule* rule) {
+  Match* match = matches_condition(node, rule->conditions);
+  if (match) {
+    Match* parent = create_match(node->parent, NULL);
+    parent->children = match;
+
+    Match* child = parent->children;
+    while (child) {
+      child->parent = parent;
+      child = child->next;
+    }
+  }
+  return match;
+}
+
+Match* matches_condition(Node* node, Condition* condition) {
   Match* match = create_match(node, condition);
 
   if (condition->matches_node) {
-    match->other = node && node->next ? matches(node->next, condition) : NULL;
+    match->other = node && node->next ? matches_condition(node->next, condition) : NULL;
 
     if (!node || node->type != condition->node_type)
       return release_match_memory(match);
-    if (condition->children && !(match->children = matches(node->children, condition->children)))
+    if (condition->children && !(match->children = matches_condition(node->children, condition->children)))
       return release_match_memory(match);
 
     Match* child = match->children;
@@ -118,7 +122,7 @@ Match* matches(Node* node, Condition* condition) {
     bool heading_back = true;
     while (this) {
       if (this->type == condition->node_type)
-        if (!condition->children || (match->children = matches(this->children, condition->children)))
+        if (!condition->children || (match->children = matches_condition(this->children, condition->children)))
           return release_match_memory(match);
 
       if (heading_back && !(this = this->previous)) { // walk to the beginning of the list
@@ -132,7 +136,7 @@ Match* matches(Node* node, Condition* condition) {
   // TODO: change this (along with match->other) to support unordered conditions of rules
   // we'll have to create a one-to-one mapping from conditions to matched nodes in order to know what to transform
   if (condition->next)
-    if (!(match->next = node ? matches(node->next, condition->next) : NULL))
+    if (!(match->next = node ? matches_condition(node->next, condition->next) : NULL))
       return release_match_memory(match);
 
   return match;
