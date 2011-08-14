@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
 
   Rule* rules = parse_rules(rules_file);
   Node* start_state = parse_nodes(state_file);
+  done_parsing();
 
   Node* state = create_node(NULL);
   state->children = start_state;

@@ -331,8 +331,8 @@ void error(char* message, char* line) {
   exit(1);
 }
 
-char* wildcard;
-char** node_types; // TODO: this could be freed when we're done parsing
+char* wildcard = "*";
+char** node_types;
 int node_types_length = 0;
 int node_types_capacity = 0;
 char* node_type_for(char** line_position, char* current_line) {
@@ -396,4 +396,10 @@ bool is_blank(char* line) {
     line++;
 
   return *line == '#';
+}
+
+void done_parsing() {
+  int i; for (i = 0; i < node_types_length; i++)
+    free(node_types[i]);
+  free(node_types);
 }
