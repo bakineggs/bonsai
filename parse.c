@@ -22,6 +22,7 @@ char* node_type_for(char** line_position, char* current_line);
 char* parse_words(char** line_position, char* current_line);
 
 char* get_line(FILE* file);
+int line_number(char* line);
 bool is_blank(char* line);
 
 Rule* parse_rules(FILE* file) {
@@ -332,10 +333,13 @@ int node_depth(Node* node) {
 }
 
 void error(char* message, char* line, char* line_position) {
-  fprintf(stderr, "Parse Error: %s", message);
+  if (line)
+    fprintf(stderr, "Parse Error (line %d): %s\n", line_number(line), message);
+  else
+    fprintf(stderr, "Parse Error: %s\n", message);
 
   if (line && strcmp(line, "\n") != 0) {
-    fprintf(stderr, ":\n%s", line);
+    fprintf(stderr, "%s", line);
 
     if (line_position) {
       while (line != line_position) {
@@ -387,6 +391,27 @@ char* parse_words(char** line_position, char* current_line) {
   return type;
 }
 
+int current_size = 0;
+int current_line_number[8];
+FILE* current_file[8];
+char* current_line[8];
+void set_current_line(FILE* file, char* line) {
+  int i; for (i = 0; i < current_size; i++)
+    if (current_file[i] == file) {
+      current_line_number[i]++;
+      current_line[i] = line;
+      return;
+    }
+
+  if (current_size == 8)
+    error("Too many files open", NULL, NULL);
+
+  current_file[current_size] = file;
+  current_line[current_size] = line;
+  current_line_number[current_size] = 1;
+  current_size++;
+}
+
 const int chars_per_read = 80;
 char* get_line(FILE* file) {
   char* line = "";
@@ -406,7 +431,16 @@ char* get_line(FILE* file) {
     }
   } while (line[strlen(line) - 1] != '\n');
 
+  set_current_line(file, line);
+
   return line;
+}
+
+int line_number(char* line) {
+  int i; for (i = 0; i < current_size; i++)
+    if (current_line[i] == line)
+      return current_line_number[i];
+  return 0;
 }
 
 bool is_blank(char* line) {
