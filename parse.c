@@ -16,8 +16,10 @@ bool condition_included(Condition* condition, Condition** list);
 Node* parse_node(char* line, Node* previous);
 int node_depth(Node* node);
 
-void error(char* message, char* line);
+void error(char* message, char* line, char* line_position);
+
 char* node_type_for(char** line_position, char* current_line);
+char* parse_words(char** line_position, char* current_line);
 
 char* get_line(FILE* file);
 bool is_blank(char* line);
@@ -25,7 +27,7 @@ bool is_blank(char* line);
 Rule* parse_rules(FILE* file) {
   Rule* first = parse_rule(file);
   if (!first)
-    error("At least one rule must be specified", "");
+    error("At least one rule must be specified", NULL, NULL);
 
   Rule* current = first;
   while (current->next = parse_rule(file))
@@ -54,7 +56,7 @@ Rule* parse_rule(FILE* file) {
   Condition* condition = NULL;
   do {
     condition = parse_condition(line, rule, condition);
-
+    rule = condition->children;
     line = get_line(file);
   } while (!is_blank(line));
 
@@ -78,10 +80,10 @@ Condition* parse_condition(char* line, Rule* rule, Condition* previous) {
   }
 
   if (*position == ' ')
-    error("Space before node name", line);
+    error("Space before node name", line, position);
 
   if (depth > rule_depth(rule))
-    error("Condition at depth more than one level below its parent", line);
+    error("Condition at depth more than one level below its parent", line, NULL);
 
   while (rule_depth(rule) > depth) {
     rule = previous->rule;
@@ -94,13 +96,13 @@ Condition* parse_condition(char* line, Rule* rule, Condition* previous) {
   bool matches_node = operation != '+' && operation != '!' && !ancestor_creates_node(condition);
 
   if (ancestor_removes_node(condition) && (operation == '+' || operation == '-'))
-    error("Invalid condition type inside removed node", line);
+    error("Invalid condition type inside removed node", line, position);
 
   if (ancestor_creates_node(condition) && (operation == '+' || operation == '-' || operation == '!'))
-    error("Invalid condition type inside created node", line);
+    error("Invalid condition type inside created node", line, position);
 
   if (ancestor_prevents_rule(condition) && (operation == '+' || operation == '-'))
-    error("Invalid condition type inside condition preventing a rule", line);
+    error("Invalid condition type inside condition preventing a rule", line, position);
 
   if (operation == '+' || ancestor_creates_node(condition))
     append_condition(condition, &rule->creating);
@@ -114,7 +116,7 @@ Condition* parse_condition(char* line, Rule* rule, Condition* previous) {
   condition->node_type = node_type_for(&position, line);
 
   if (*position++ != ':')
-    error("Missing : after node name", line);
+    error("Missing : after node name", line, --position);
 
   if (condition->children->ordered = *position == ':') {
     position++;
@@ -130,14 +132,14 @@ Condition* parse_condition(char* line, Rule* rule, Condition* previous) {
     position++;
 
     if (ancestor_creates_node(condition))
-      error("Invalid condition type inside created node", line);
+      error("Invalid condition type inside created node", line, --position);
   }
 
   if (*position == '*') {
     position++;
 
     if (!matches_node)
-      error("Multiplicity defined for non-matched node", line);
+      error("Multiplicity defined for non-matched node", line, --position);
 
     append_condition(condition, &rule->matching_multiple);
   } else if (matches_node)
@@ -172,11 +174,9 @@ bool ancestor_creates_node(Condition* condition) {
 }
 
 bool ancestor_removes_node(Condition* condition) {
-  while (condition) {
+  while (condition = condition->rule->parent)
     if (condition->removes_node)
       return true;
-    condition = condition->rule->parent;
-  }
 
   return false;
 }
@@ -226,7 +226,7 @@ Node* parse_nodes(FILE* file) {
   }
 
   if (!first)
-    error("No nodes specified", "");
+    error("No nodes specified", NULL, NULL);
 
   return first;
 }
@@ -249,7 +249,7 @@ Node* parse_node(char* line, Node* previous) {
   }
 
   if (*position == ' ')
-    error("Space before node name", line);
+    error("Space before node name", line, position);
 
   if (depth == 0) {
     if (previous) {
@@ -260,7 +260,7 @@ Node* parse_node(char* line, Node* previous) {
     }
     node->parent = NULL;
   } else if (depth > node_depth(previous) + 1)
-    error("Node at depth more than one level below its parent", line);
+    error("Node at depth more than one level below its parent", line, NULL);
   else {
     while (node_depth(previous) >= depth)
       previous = previous->parent;
@@ -268,7 +268,7 @@ Node* parse_node(char* line, Node* previous) {
 
     if (!previous->children) {
       if (previous->integer_value || previous->decimal_value || previous->string_value)
-        error("Can't have child of node with a value", line);
+        error("Can't have child of node with a value", line, NULL);
       previous->children = node;
     } else {
       Node* child = previous->children;
@@ -282,16 +282,16 @@ Node* parse_node(char* line, Node* previous) {
   node->type = node_type_for(&position, line);
 
   if (*position++ != ':')
-    error("Missing : after node name", line);
+    error("Missing : after node name", line, --position);
 
   if (node->ordered = *position == ':')
     position++;
 
   if (*position++ == ' ') {
-    if (node->ordered)
-      error("Ordered nodes can't have values", line);
-
     if (*position >= '0' && *position <= '9') {
+      if (node->ordered)
+        error("Ordered nodes can't have values", line, position);
+
       char* endptr;
       node->integer_value = (long int*) malloc(sizeof(long int));
       *node->integer_value = strtol(position, &endptr, 10);
@@ -305,12 +305,19 @@ Node* parse_node(char* line, Node* previous) {
         while (*endptr == ' ')
           endptr++;
         if (*endptr != '#')
-          error("Expected comment after spaces at end of line", line);
+          error("Expected comment after spaces at end of line", line, endptr);
       }
       if (*endptr != '\n')
-        error("Unexpected character after number", line);
-    } else {
+        error("Unexpected character after number", line, endptr);
+    } else if (*position == '"') {
+      if (node->ordered)
+        error("Ordered nodes can't have values", line, position);
       // TODO: parse string values
+    } else {
+      while (*position == ' ')
+        position++;
+      if (*position != '#')
+        error("Expected comment after spaces at end of line", line, position);
     }
   }
 
@@ -324,44 +331,58 @@ int node_depth(Node* node) {
   return depth;
 }
 
-void error(char* message, char* line) {
+void error(char* message, char* line, char* line_position) {
   fprintf(stderr, "Parse Error: %s", message);
-  if (strcmp(line, "") != 0)
-    fprintf(stderr, ":\n  %s", line);
+
+  if (line && strcmp(line, "\n") != 0) {
+    fprintf(stderr, ":\n%s", line);
+
+    if (line_position) {
+      while (line != line_position) {
+        fprintf(stderr, " ");
+        line++;
+      }
+      fprintf(stderr, "^\n");
+    }
+  }
+
   exit(1);
 }
 
 char* wildcard = "*";
-char** node_types;
-int node_types_length = 0;
-int node_types_capacity = 0;
 char* node_type_for(char** line_position, char* current_line) {
   if (**line_position == '*') {
     (*line_position)++;
     return wildcard;
   }
+  return parse_words(line_position, current_line);
+}
 
+char** words;
+int words_length = 0;
+int words_capacity = 0;
+char* parse_words(char** line_position, char* current_line) {
   size_t length = strspn(*line_position, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ");
   if (length == 0)
-    error("Missing node name", current_line);
+    error("Expected words", current_line, *line_position);
 
   char* start_of_name = *line_position;
   *line_position += length;
 
-  int i; for (i = 0; i < node_types_length; i++)
-    if (strlen(node_types[i]) == length && strncmp(node_types[i], start_of_name, length) == 0)
-      return node_types[i];
+  int i; for (i = 0; i < words_length; i++)
+    if (strlen(words[i]) == length && strncmp(words[i], start_of_name, length) == 0)
+      return words[i];
 
-  if (node_types_length == node_types_capacity) {
-    node_types_capacity += 64;
-    char** new_node_types = (char**) malloc(node_types_capacity * sizeof(char*));
-    int i; for (i = 0; i < node_types_length; i++)
-      new_node_types[i] = node_types[i];
-    free(node_types);
-    node_types = new_node_types;
+  if (words_length == words_capacity) {
+    words_capacity += 64;
+    char** new_words = (char**) malloc(words_capacity * sizeof(char*));
+    int i; for (i = 0; i < words_length; i++)
+      new_words[i] = words[i];
+    free(words);
+    words = new_words;
   }
 
-  char* type = node_types[node_types_length++] = (char*) malloc(length);
+  char* type = words[words_length++] = (char*) malloc(length);
   strncpy(type, start_of_name, length);
   return type;
 }
@@ -379,7 +400,7 @@ char* get_line(FILE* file) {
 
     if (!fgets(line + (size - chars_per_read), chars_per_read, file)) {
       if (ferror(file))
-        error("Error reading file", line);
+        error("Error reading file", NULL, NULL);
       else
         break;
     }
@@ -398,8 +419,6 @@ bool is_blank(char* line) {
   return *line == '#';
 }
 
-void done_parsing() {
-  int i; for (i = 0; i < node_types_length; i++)
-    free(node_types[i]);
-  free(node_types);
+void parsing_done() {
+  free(words);
 }
