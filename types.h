@@ -7,34 +7,28 @@ typedef enum BOOL { false, true } bool;
 
 typedef struct Rule {
   struct Rule* next; // instead of having a RuleSet or whatnot
+  struct Condition* parent;
 
-  struct Condition* conditions;
+  bool exact;
+
+  bool ordered;
+  struct Condition* ordered_conditions;
+
+  struct Condition* preventing;
+  struct Condition* matching_single;
+  struct Condition* matching_multiple;
+  struct Condition* creating;
 } Rule;
 
 typedef struct Condition {
   struct Condition* next; // instead of having of ConditionList or whatnot
 
   char* node_type;
-
-  bool creates_node;
+  char* variable;
   bool removes_node;
 
-  bool matches_node;
-
-  bool prevents_rule;
-
-  bool exact;
-  bool ordered;
-  bool multiple;
-
-  char* variable;
-
-  struct Condition* parent;
-  struct Condition* children;
-
-  // instead of checking for these all the time
-  bool ancestor_creates_node;
-  bool ancestor_removes_node;
+  struct Rule* rule;
+  struct Rule* children;
 } Condition;
 
 typedef struct Node {

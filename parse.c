@@ -5,9 +5,8 @@
 #include "parse.h"
 
 Rule* parse_rule(FILE* file);
-Condition* parse_conditions(FILE* file);
-Condition* parse_condition(char* line, Condition* previous);
-int condition_depth(Condition* condition);
+Condition* parse_condition(char* line, Rule* rule, Condition* previous);
+int rule_depth(Rule* rule);
 
 Node* parse_node(char* line, Node* previous);
 int node_depth(Node* node);
@@ -24,7 +23,6 @@ Rule* parse_rules(FILE* file) {
     error("At least one rule must be specified", "");
 
   Rule* current = first;
-
   while (current->next = parse_rule(file))
     current = current->next;
 
@@ -32,18 +30,6 @@ Rule* parse_rules(FILE* file) {
 }
 
 Rule* parse_rule(FILE* file) {
-  Rule* rule = (Rule*) malloc(sizeof(Rule));
-  rule->conditions = parse_conditions(file);
-
-  if (!rule->conditions) {
-    free(rule);
-    return NULL;
-  }
-
-  return rule;
-}
-
-Condition* parse_conditions(FILE* file) {
   char* line;
   do {
     if (feof(file))
@@ -51,25 +37,32 @@ Condition* parse_conditions(FILE* file) {
     line = get_line(file);
   } while (is_blank(line));
 
-  Condition* first = NULL;
+  Rule* rule = (Rule*) malloc(sizeof(Rule));
+  rule->exact = false;
+  rule->ordered = false;
+  rule->parent = NULL;
+  rule->preventing = NULL;
+  rule->matching_single = NULL;
+  rule->matching_multiple = NULL;
+  rule->creating = NULL;
+
   Condition* condition = NULL;
-
   do {
-    condition = parse_condition(line, condition);
-
-    if (!first)
-      first = condition;
+    condition = parse_condition(line, rule, condition);
 
     line = get_line(file);
   } while (!is_blank(line));
 
-  return first;
+  return rule;
 }
 
-Condition* parse_condition(char* line, Condition* previous) {
+Condition* parse_condition(char* line, Rule* rule, Condition* previous) {
   Condition* condition = (Condition*) malloc(sizeof(Condition));
   condition->next = NULL;
-  condition->children = NULL;
+
+  condition->children = (Rule*) malloc(sizeof(Rule));;
+  condition->children->next = NULL;
+  condition->children->parent = condition;
 
   char* position = line;
 
@@ -82,65 +75,68 @@ Condition* parse_condition(char* line, Condition* previous) {
   if (*position == ' ')
     error("Space before node name", line);
 
-  if (depth == 0) {
-    if (previous) {
-      while (previous->parent)
-        previous = previous->parent;
-      previous->next = condition;
-    }
-    condition->parent = NULL;
-    condition->ancestor_creates_node = false;
-    condition->ancestor_removes_node = false;
-  } else if (depth > condition_depth(previous) + 1)
+  if (depth > rule_depth(rule))
     error("Condition at depth more than one level below its parent", line);
-  else {
-    while (condition_depth(previous) >= depth)
-      previous = previous->parent;
-    condition->parent = previous;
-    condition->ancestor_creates_node = previous->creates_node || previous->ancestor_creates_node;
-    condition->ancestor_removes_node = previous->removes_node || previous->ancestor_removes_node;
 
-    if (!previous->children) {
-      if (previous->variable)
-        error("Can't have child of node assigned to variable", line);
-      previous->children = condition;
-    } else {
-      Condition* child = previous->children;
-      while (child->next)
-        child = child->next;
-      child->next = condition;
-    }
+  while (rule_depth(rule) > depth) {
+    rule = previous->rule;
+    previous = rule->parent;
   }
+  condition->rule = rule;
 
-  condition->creates_node = *position == '+';
-  condition->removes_node = *position == '-';
-  condition->prevents_rule = *position == '!';
-  condition->matches_node = !condition->ancestor_creates_node && !condition->creates_node && !condition->prevents_rule;
+  char operation = *position;
+  condition->removes_node = operation == '-';
+  bool matches_node = operation != '+' && operation != '!' && !ancestor_creates_node(condition);
 
-  if (condition->creates_node || condition->removes_node || condition->prevents_rule)
+  if (ancestor_removes_node(condition) && (operation == '+' || operation == '-'))
+    error("Invalid condition type inside removed node", line);
+
+  if (ancestor_creates_node(condition) && (operation == '+' || operation == '-' || operation == '!'))
+    error("Invalid condition type inside created node", line);
+
+  if (ancestor_prevents_rule(condition) && (operation == '+' || operation == '-'))
+    error("Invalid condition type inside condition preventing a rule", line);
+
+  if (operation == '+' || ancestor_creates_node(condition))
+    append_condition(condition, &rule->creating);
+
+  if (operation == '!')
+    append_condition(condition, &rule->preventing);
+
+  if (operation == '+' || operation == '-' || operation == '!')
     position++;
-
-  if (condition->creates_node && condition->ancestor_creates_node)
-    error("Redundant + in front of condition and ancestor", line);
-  if (condition->removes_node && condition->ancestor_removes_node)
-    error("Redundant - in front of condition and ancestor", line);
 
   condition->node_type = node_type_for(&position, line);
 
   if (*position++ != ':')
     error("Missing : after node name", line);
 
-  if (condition->ordered = *position == ':')
+  if (condition->children->ordered = *position == ':') {
+    position++;
+    condition->children->ordered_conditions = NULL;
+  } else {
+    condition->children->preventing = NULL;
+    condition->children->matching_single = NULL;
+    condition->children->matching_multiple = NULL;
+    condition->children->creating = NULL;
+  }
+
+  if (condition->children->exact = *position == '=') {
     position++;
 
-  if (condition->exact = *position == '=')
+    if (ancestor_creates_node(condition))
+      error("Invalid condition type inside created node", line);
+  }
+
+  if (*position == '*') {
     position++;
 
-  if (condition->multiple = *position == '*')
-    position++;
+    if (!matches_node)
+      error("Multiplicity defined for non-matched node", line);
 
-  if (condition->multiple && !condition->matches_node)
-    error("Multiplicity defined for non-matched node", line);
+    append_condition(condition, &rule->matching_multiple);
+  } else if (matches_node)
+    append_condition(condition, &rule->matching_single);
 
   condition->variable = NULL;
   if (*position == ' ') {
@@ -151,10 +147,12 @@ Condition* parse_condition(char* line, Condition* previous) {
   return condition;
 }
 
-int condition_depth(Condition* condition) {
+int rule_depth(Rule* rule) {
   int depth = 0;
-  while (condition = condition->parent)
+  while (rule->parent) {
+    rule = rule->parent->rule;
     depth++;
+  }
   return depth;
 }
 
