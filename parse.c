@@ -7,6 +7,11 @@
 Rule* parse_rule(FILE* file);
 Condition* parse_condition(char* line, Rule* rule, Condition* previous);
 int rule_depth(Rule* rule);
+bool ancestor_creates_node(Condition* condition);
+bool ancestor_removes_node(Condition* condition);
+bool ancestor_prevents_rule(Condition* condition);
+void append_condition(Condition* condition, Condition** list);
+bool condition_included(Condition* condition, Condition** list);
 
 Node* parse_node(char* line, Node* previous);
 int node_depth(Node* node);
@@ -154,6 +159,58 @@ int rule_depth(Rule* rule) {
     depth++;
   }
   return depth;
+}
+
+bool ancestor_creates_node(Condition* condition) {
+  while (condition) {
+    if (condition_included(condition, &condition->rule->creating))
+      return true;
+    condition = condition->rule->parent;
+  }
+
+  return false;
+}
+
+bool ancestor_removes_node(Condition* condition) {
+  while (condition) {
+    if (condition->removes_node)
+      return true;
+    condition = condition->rule->parent;
+  }
+
+  return false;
+}
+
+bool ancestor_prevents_rule(Condition* condition) {
+  while (condition) {
+    if (condition_included(condition, &condition->rule->preventing))
+      return true;
+    condition = condition->rule->parent;
+  }
+
+  return false;
+}
+
+void append_condition(Condition* condition, Condition** list) {
+  if (!*list)
+    *list = condition;
+  else {
+    Condition* current = *list;
+    while (current->next)
+      current = current->next;
+    current->next = condition;
+  }
+}
+
+bool condition_included(Condition* condition, Condition** list) {
+  Condition* current = *list;
+  while (current) {
+    if (condition == current)
+      return true;
+    current = current->next;
+  }
+
+  return false;
 }
 
 Node* parse_nodes(FILE* file) {
