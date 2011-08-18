@@ -54,10 +54,11 @@ Rule* parse_rule(FILE* file) {
   rule->matching_multiple = NULL;
   rule->creating = NULL;
 
+  Rule* current = rule;
   Condition* condition = NULL;
   do {
-    condition = parse_condition(line, rule, condition);
-    rule = condition->children;
+    condition = parse_condition(line, current, condition);
+    current = condition->children;
     line = get_line(file);
   } while (!is_blank(line));
 
@@ -105,7 +106,7 @@ Condition* parse_condition(char* line, Rule* rule, Condition* previous) {
   if (ancestor_prevents_rule(condition) && (operation == '+' || operation == '-'))
     error("Invalid condition type inside condition preventing a rule", line, position);
 
-  if (operation == '+' || ancestor_creates_node(condition))
+  if (condition->creates_node = (operation == '+' || ancestor_creates_node(condition)))
     append_condition(condition, &rule->creating);
 
   if (operation == '!')

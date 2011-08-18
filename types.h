@@ -25,6 +25,8 @@ typedef struct Condition {
 
   char* node_type;
   char* variable;
+
+  bool creates_node;
   bool removes_node;
 
   struct Rule* rule;
@@ -48,14 +50,13 @@ typedef struct Node {
 } Node;
 
 typedef struct Match {
-  struct Match* other; // instead of a MatchSet or Matches or whatnot
+  struct Match* other; // alternative set of matches
 
-  struct Match* parent;
-  struct Match* next;
-  struct Match* children;
+  struct Match* next; // next match in the set
 
   struct Condition* condition;
   struct Node* node;
+  struct Node* parent;
 } Match;
 
 #endif
