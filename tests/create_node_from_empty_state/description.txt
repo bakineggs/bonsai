@@ -1,1 +1,0 @@
-Tests that we can create a node when the state is empty.
