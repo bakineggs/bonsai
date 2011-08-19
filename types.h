@@ -56,7 +56,6 @@ typedef struct Match {
 
   struct Condition* condition;
   struct Node* node;
-  struct Node* parent;
 } Match;
 
 #endif

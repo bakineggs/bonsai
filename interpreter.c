@@ -8,15 +8,22 @@
 
 bool apply(Rule* rule, Node* node);
 
-Match* matches(Node* node, Rule* rule);
-bool condition_matches_any_child(Condition* condition, Node* node);
-bool condition_must_match_one_unmatched_child(Match** match, Condition* condition, Node* node);
-void condition_may_match_multiple_unmatched_children(Match** match, Condition* condition, Node* node);
-bool condition_matches_node(Condition* condition, Node* node);
-bool node_matched(Match* match, Node* node);
-void add_match(Match** match, Condition* condition, Node* node, Node* parent);
-void add_other_match(Match* match, Condition* condition, Node* node);
-Match* release_match_memory(Match* match);
+Match* matches(Rule* rule, Node* node);
+
+bool matches_any_child(Condition* condition, Node* node);
+Match* matches_any_unmatched_child(Match* matches, Condition* condition, Node* node);
+Match* must_match_one_unmatched_child(Match* matches, Condition* condition, Node* node);
+Match* must_match_one_child(Condition* condition, Node* node);
+Match* may_match_many_unmatched_children(Match* matches, Condition* condition, Node* node);
+Match* may_match_many_children(Condition* condition, Node* node);
+Match* matches_this_node(Condition* condition, Node* node);
+
+bool matched(Match* matches, Node* node);
+Match* add_match(Match* matches, Condition* condition, Node* node);
+Match* append_match(Match* matches, Match* match);
+Match* clone_match(Match* match);
+Match* release_this_match(Match* match);
+void release_all_matches(Match* match);
 
 bool transform(Match* match);
 void remove_node(Node* node);
@@ -71,10 +78,7 @@ int main(int argc, char* argv[]) {
 }
 
 bool apply(Rule* rule, Node* node) {
-  if (node == NULL)
-    return false;
-
-  Match* match = matches(node, rule);
+  Match* match = matches(rule, node);
   if (match && transform(match))
     return true;
 
@@ -92,187 +96,203 @@ bool apply(Rule* rule, Node* node) {
   return applied;
 }
 
-Match* matches(Node* node, Rule* rule) {
-  Match* match = NULL;
-
+Match* matches(Rule* rule, Node* node) {
   Condition* preventing = rule->preventing;
   while (preventing) {
-    if (condition_matches_any_child(preventing, node))
+    if (matches_any_child(preventing, node))
       return NULL;
     preventing = preventing->next;
   }
 
+  Match* match = NULL;
+
   Condition* matching = rule->matching_single;
   while (matching) {
-    if (!condition_must_match_one_unmatched_child(&match, matching, node))
+    if (!(match = must_match_one_unmatched_child(match, matching, node)))
       return NULL;
     matching = matching->next;
   }
 
-  if (match)
-    while (match->other)
-      match = release_match_memory(match);
-
   matching = rule->matching_multiple;
   while (matching) {
-    condition_may_match_multiple_unmatched_children(&match, matching, node);
+    match = may_match_many_unmatched_children(match, matching, node);
     matching = matching->next;
   }
 
-  matching = rule->creating;
-  while (matching) {
-    add_match(&match, matching, node->children, node);
-    matching = matching->next;
+  Condition* creating = rule->creating;
+  while (creating) {
+    match = add_match(match, creating, node);
+    creating = creating->next;
   }
 
-  if (!match) {
-    match = (Match*) malloc(sizeof(Match));
-    match->other = NULL;
-    match->next = NULL;
-    match->condition = NULL;
-    match->node = NULL;
-    match->parent = NULL;
+  return add_match(match, NULL, node);
+}
+
+bool matches_any_child(Condition* condition, Node* node) {
+  Match* match;
+  Node* child = node->children;
+  while (child) {
+    if (match = matches_this_node(condition, child)) {
+      release_all_matches(match);
+      return true;
+    }
+    child = child->next;
+  }
+  return false;
+}
+
+Match* matches_any_unmatched_child(Match* matches, Condition* condition, Node* node) {
+  return NULL;
+}
+
+Match* must_match_one_unmatched_child(Match* matches, Condition* condition, Node* node) {
+  if (!matches)
+    return must_match_one_child(condition, node);
+
+  if (matches && matches->other)
+    matches->other = must_match_one_unmatched_child(matches->other, condition, node);
+
+  Match* match;
+  Node* child = node->children;
+  while (child) {
+    if (!matched(matches, child) && (match = matches_this_node(condition, child))) {
+      Match* new = clone_match(matches);
+      new->other = matches;
+      append_match(matches, match);
+      matches = new;
+    }
+    child = child->next;
   }
 
+  match = matches->other;
+  matches->other = NULL;
+  release_all_matches(matches);
   return match;
 }
 
-bool condition_matches_any_child(Condition* condition, Node* node) {
+Match* must_match_one_child(Condition* condition, Node* node) {
+  Match* matches = NULL;
+  Match* match;
   Node* child = node->children;
   while (child) {
-    if (condition_matches_node(condition, child))
-      return true;
+    if (match = matches_this_node(condition, child)) {
+      match->other = matches;
+      matches = match;
+    }
     child = child->next;
   }
-  return false;
+
+  return matches;
 }
 
-bool condition_must_match_one_unmatched_child(Match** match, Condition* condition, Node* node) {
-  if (*match) {
-    Match* previous_match = NULL;
-    Match* current_match = *match;
-    while (current_match) {
-      bool matched = false;
-      Node* child = node->children;
-      while (child) {
-        if (!node_matched(*match, child) && condition_matches_node(condition, child)) {
-          if (!matched) {
-            add_match(&current_match, condition, child, node);
-            if (!previous_match)
-              *match = current_match;
-            else
-              previous_match->other = current_match;
-            matched = true;
-          } else {
-            add_other_match(current_match, condition, child);
-            current_match = current_match->other;
-          }
-        }
-        child = child->next;
-      }
-      if (matched)
-        current_match = (previous_match = current_match)->other;
-      else if (current_match == *match)
-        *match = current_match = release_match_memory(current_match);
-      else
-        previous_match->other = current_match = release_match_memory(current_match);
-    }
-  } else {
-    Node* child = node->children;
-    while (child) {
-      if (condition_matches_node(condition, child)) {
-        if (!*match)
-          add_match(match, condition, child, node);
-        else
-          add_other_match(*match, condition, child);
-      }
-      child = child->next;
-    }
-  }
-  return *match != NULL;
-}
+Match* may_match_many_unmatched_children(Match* matches, Condition* condition, Node* node) {
+  if (!matches)
+    return may_match_many_children(condition, node);
 
-void condition_may_match_multiple_unmatched_children(Match** match, Condition* condition, Node* node) {
+  if (matches->other)
+    matches->other = may_match_many_unmatched_children(matches->other, condition, node);
+
+  Match* match;
   Node* child = node->children;
   while (child) {
-    if (!node_matched(*match, child) && condition_matches_node(condition, child))
-      add_match(match, condition, child, node);
+    if (!matched(matches, child) && (match = matches_this_node(condition, child)))
+      append_match(matches, match);
     child = child->next;
   }
+
+  return matches;
 }
 
-bool condition_matches_node(Condition* condition, Node* node) {
+Match* may_match_many_children(Condition* condition, Node* node) {
+  Match* matches = NULL;
+  Match* match;
+  Node* child = node->children;
+  while (child) {
+    if (match = matches_this_node(condition, child))
+      matches = append_match(match, matches);
+    child = child->next;
+  }
+
+  return matches;
+}
+
+Match* matches_this_node(Condition* condition, Node* node) {
   if (!node || node->type != condition->node_type)
-    return false;
+    return NULL;
 
-  if (condition->children) {
-    Match* match = matches(node, condition->children);
-    if (match)
-      while (match)
-        match = release_match_memory(match);
-    else
-      return false;
-  }
+  Match* match = NULL;
+  if (condition->children && !(match = matches(condition->children, node)))
+    return NULL;
 
-  return true;
+  return add_match(match, condition, node);
 }
 
-bool node_matched(Match* match, Node* node) {
-  while (match) {
-    if (match->node == node)
+bool matched(Match* matches, Node* node) {
+  while (matches) {
+    if (matches->node == node)
       return true;
-    match = match->next;
+    matches = matches->next;
   }
   return false;
 }
 
-void add_match(Match** match, Condition* condition, Node* node, Node* parent) {
+Match* add_match(Match* matches, Condition* condition, Node* node) {
   Match* new = (Match*) malloc(sizeof(Match));
-  if (*match) {
-    new->other = (*match)->other;
-    (*match)->other = NULL;
+  if (matches) {
+    new->other = matches->other;
+    matches->other = NULL;
   } else
     new->other = NULL;
-  new->next = *match;
+  new->next = matches;
   new->condition = condition;
   new->node = node;
-  new->parent = parent;
-  *match = new;
+  return new;
 }
 
-void add_other_match(Match* match, Condition* condition, Node* node) {
-  while (match->other)
-    match = match->other;
-  match->other = (Match*) malloc(sizeof(Match));
-  match->other->other = NULL;
-  match->other->next = NULL; // TODO: clone match->next
-  match->other->condition = condition;
-  match->other->node = node;
-  match->other->parent = node->parent;
+Match* append_match(Match* matches, Match* match) {
+  Match* current = matches;
+  while (current->next)
+    current = current->next;
+  current->next = match;
+  return matches;
 }
 
-Match* release_match_memory(Match* match) {
+Match* clone_match(Match* match) {
+  if (!match)
+    return NULL;
+
+  Match* clone = (Match*) malloc(sizeof(Match));
+  clone->other = match->other;
+  clone->next = clone_match(match->next);
+  clone->condition = match->condition;
+  clone->node = match->node;
+  return clone;
+}
+
+Match* release_this_match(Match* match) {
   Match* other = match->other;
 
   if (match->next)
-    release_match_memory(match->next);
+    release_all_matches(match->next);
 
   free(match);
   return other;
 }
 
+void release_all_matches(Match* match) {
+  while (match)
+    match = release_this_match(match);
+}
+
 bool transform(Match* match) {
   bool transformed = false;
 
-  if (match->condition->removes_node) {
+  if (match->condition && match->condition->removes_node) {
     remove_node(match->node);
     match->node = NULL;
     transformed = true;
-  } else if (match->condition->creates_node) {
-    if (match->node)
-      create_sibling(match->node, match->condition);
-    else
-      create_child(match->parent, match->condition);
+  } else if (match->condition && match->condition->creates_node) {
+    create_child(match->node, match->condition);
     transformed = true;
   }
 
@@ -313,16 +333,23 @@ void release_node_memory(Node* node) {
 void create_sibling(Node* node, Condition* condition) {
   Node* sibling = create_node(condition);
 
+  sibling->previous = node;
+  sibling->parent = node->parent;
+
+  while (sibling->next) {
+    sibling = sibling->next;
+    sibling->parent = node->parent;
+  }
+
   if (sibling->next = node->next)
     sibling->next->previous = sibling;
 
-  sibling->previous = node;
   node->next = sibling;
 }
 
 void create_child(Node* parent, Condition* condition) {
   if (parent->children)
-    shouldnt_happen("Why are we creating a child instead of a sibling?");
+    return create_sibling(parent->children, condition);
 
   Node* child = parent->children = create_node(condition);
   do { child->parent = parent; } while (child = child->next);
@@ -342,7 +369,7 @@ Node* create_node(Condition* condition) {
     node->type = condition->node_type;
     node->ordered = condition->children->ordered;
 
-    if (condition->children)
+    if (condition->children->creating)
       create_child(node, condition->children->creating);
 
     if (condition->next)
