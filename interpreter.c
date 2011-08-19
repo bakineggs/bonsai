@@ -299,6 +299,7 @@ bool transform(Match* match) {
   if (match->next && transform(match->next))
     transformed = true;
 
+  free(match);
   return transformed;
 }
 
