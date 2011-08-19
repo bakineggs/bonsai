@@ -219,6 +219,11 @@ Match* matches_this_node(Condition* condition, Node* node) {
   if (condition->children && !(match = matches(condition->children, node)))
     return NULL;
 
+  if (condition->removes_node) {
+    release_all_matches(match);
+    match = NULL;
+  }
+
   return add_match(match, condition, node);
 }
 
