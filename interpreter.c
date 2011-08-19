@@ -11,7 +11,6 @@ bool apply(Rule* rule, Node* node);
 Match* matches(Rule* rule, Node* node);
 
 bool matches_any_child(Condition* condition, Node* node);
-Match* matches_any_unmatched_child(Match* matches, Condition* condition, Node* node);
 Match* must_match_one_unmatched_child(Match* matches, Condition* condition, Node* node);
 Match* must_match_one_child(Condition* condition, Node* node);
 Match* may_match_many_unmatched_children(Match* matches, Condition* condition, Node* node);
@@ -139,10 +138,6 @@ bool matches_any_child(Condition* condition, Node* node) {
     child = child->next;
   }
   return false;
-}
-
-Match* matches_any_unmatched_child(Match* matches, Condition* condition, Node* node) {
-  return NULL;
 }
 
 Match* must_match_one_unmatched_child(Match* matches, Condition* condition, Node* node) {
