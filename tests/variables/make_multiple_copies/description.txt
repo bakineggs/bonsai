@@ -1,0 +1,1 @@
+Tests that we can assign a matched node to a variable and make multiple independent copies of it.
