@@ -1,0 +1,1 @@
+Tests that we can use values assigned to a variable in user defined code.
