@@ -22,6 +22,7 @@ Match* add_match(Match* matches, Condition* condition, Node* node);
 Match* append_match(Match* matches, Match* match);
 Match* clone_match(Match* match);
 Match* release_this_match(Match* match);
+Match* release_other_matches(Match* match);
 void release_all_matches(Match* match);
 
 bool transform(Match* match);
@@ -124,7 +125,7 @@ Match* matches(Rule* rule, Node* node) {
     creating = creating->next;
   }
 
-  return add_match(match, NULL, node);
+  return release_other_matches(add_match(match, NULL, node));
 }
 
 bool matches_any_child(Condition* condition, Node* node) {
@@ -277,6 +278,12 @@ Match* release_this_match(Match* match) {
 
   free(match);
   return other;
+}
+
+Match* release_other_matches(Match* match) {
+  release_all_matches(match->other);
+  match->other = NULL;
+  return match;
 }
 
 void release_all_matches(Match* match) {
