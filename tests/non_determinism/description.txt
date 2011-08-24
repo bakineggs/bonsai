@@ -1,0 +1,1 @@
+Tests that if multiple rules match a state, any one of them can be applied.
