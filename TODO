@@ -1,5 +1,3 @@
-- allow tests to have multiple correct end states (for testing non-determinism)
-
 - support assigning a matched node to a variable while matching children
 
 Roadmap:
