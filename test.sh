@@ -1,5 +1,7 @@
 #!/bin/bash
 
+ulimit -t 1
+
 cd tests
 
 leaf_directories=`find . -type d | sort | awk '$0 !~ last {print last} {last=$0} END {print last}'` # http://stackoverflow.com/questions/1574403/list-all-leaf-subdirectories-in-linux
