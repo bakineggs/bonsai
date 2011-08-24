@@ -7,7 +7,7 @@ for name in $leaf_directories; do
   ./../interpreter $name/rules.okk $name/start_state.okks > $name/actual_end_state.okks 2> $name/error.log
   error_status=$?
 
-  diff $name/end_state.okks $name/actual_end_state.okks > /dev/null 2> /dev/null
+  ./../state_diff $name/end_state.okks $name/actual_end_state.okks
   different=$?
 
   if [ $error_status != 0 -o $different != 0 ]; then

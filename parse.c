@@ -227,9 +227,6 @@ Node* parse_nodes(FILE* file) {
       first = node;
   }
 
-  if (!first)
-    error("No nodes specified", NULL, NULL);
-
   return first;
 }
 

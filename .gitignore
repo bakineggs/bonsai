@@ -6,3 +6,4 @@ interpreter_error.log
 interpreter
 bootstrapped/parser
 bootstrapped_start_state.okks
+state_diff

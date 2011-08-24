@@ -7,8 +7,11 @@ parse.o: parse.c
 print.o: print.c
 	gcc -c $^ -o $@
 
-test: interpreter
+test: interpreter state_diff
 	sh test.sh
+
+state_diff: state_diff.c parse.o
+	gcc $^ -o $@
 
 clean:
 	rm -f interpreter *.o
