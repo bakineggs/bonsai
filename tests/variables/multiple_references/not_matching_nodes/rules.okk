@@ -1,0 +1,6 @@
+Foo:
+  Bar: X
+Baz:
+  Bar: X
+!Qux:
++Qux:

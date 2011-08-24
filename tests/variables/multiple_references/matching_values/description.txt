@@ -1,0 +1,1 @@
+Tests that a rule referencing a variable multiple times is applied when the values match.
