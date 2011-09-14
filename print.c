@@ -16,11 +16,11 @@ void print_node(Node* node) {
 
   if (node->ordered)
     printf(":");
-  else if (node->integer_value)
-    printf(" %li", *node->integer_value);
-  else if (node->decimal_value)
-    printf(" %f", *node->decimal_value);
-  else if (node->string_value)
+  else if (node->value_type == integer)
+    printf(" %li", node->integer_value);
+  else if (node->value_type == decimal)
+    printf(" %f", node->decimal_value);
+  else if (node->value_type == string)
     printf(" %s", node->string_value);
 
   printf("\n");

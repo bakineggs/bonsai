@@ -235,9 +235,7 @@ Node* parse_node(char* line, Node* previous) {
   node->previous = NULL;
   node->next = NULL;
   node->children = NULL;
-  node->integer_value = NULL;
-  node->decimal_value = NULL;
-  node->string_value = NULL;
+  node->value_type = none;
 
   char* position = line;
 
@@ -292,13 +290,11 @@ Node* parse_node(char* line, Node* previous) {
         error("Ordered nodes can't have values", line, position);
 
       char* endptr;
-      node->integer_value = (long int*) malloc(sizeof(long int));
-      *node->integer_value = strtol(position, &endptr, 10);
+      node->value_type = integer;
+      node->integer_value = strtol(position, &endptr, 10);
       if (*endptr == '.') {
-        free(node->integer_value);
-        node->integer_value = NULL;
-        node->decimal_value = (double*) malloc(sizeof(double));
-        *node->decimal_value = strtod(position, &endptr);
+        node->value_type = decimal;
+        node->decimal_value = strtod(position, &endptr);
       }
       if (*endptr == ' ') {
         while (*endptr == ' ')
@@ -310,6 +306,8 @@ Node* parse_node(char* line, Node* previous) {
     } else if (*position == '"') {
       if (node->ordered)
         error("Ordered nodes can't have values", line, position);
+
+      node->value_type = string;
       // TODO: parse string values
     } else {
       while (*position == ' ')

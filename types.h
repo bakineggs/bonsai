@@ -33,6 +33,8 @@ typedef struct Condition {
   struct Rule* children;
 } Condition;
 
+typedef enum VALUE { none, integer, decimal, string } value;
+
 typedef struct Node {
   // instead of having a NodeSet or whatnot
   struct Node* previous;
@@ -41,8 +43,9 @@ typedef struct Node {
   char* type;
   bool ordered;
 
-  long int* integer_value;
-  double* decimal_value;
+  value value_type;
+  long int integer_value;
+  double decimal_value;
   char* string_value;
 
   struct Node* parent;

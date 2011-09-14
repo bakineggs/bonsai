@@ -369,9 +369,7 @@ Node* create_node(Condition* condition) {
   node->next = NULL;
   node->children = NULL;
   node->parent = NULL;
-  node->integer_value = NULL;
-  node->decimal_value = NULL;
-  node->string_value = NULL;
+  node->value_type = none;
 
   if (condition) {
     node->type = condition->node_type;

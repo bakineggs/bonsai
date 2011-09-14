@@ -100,26 +100,17 @@ bool properties_equal(Node* first, Node* second) {
   if (first->ordered != second->ordered)
     return false;
 
-  if (first->integer_value || second->integer_value) {
-    if (!first->integer_value || !second->integer_value)
-      return false;
-    if (*first->integer_value != *second->integer_value)
-      return false;
-  }
+  if (first->value_type != second->value_type)
+    return false;
 
-  if (first->decimal_value || second->decimal_value) {
-    if (!first->decimal_value || !second->decimal_value)
-      return false;
-    if (*first->decimal_value != *second->decimal_value)
-      return false;
-  }
+  if (first->value_type == integer && first->integer_value == second->integer_value)
+    return false;
 
-  if (first->string_value || second->string_value) {
-    if (!first->string_value || !second->string_value)
-      return false;
-    if (*first->string_value != *second->string_value)
-      return false;
-  }
+  if (first->value_type == decimal && first->decimal_value == second->decimal_value)
+    return false;
+
+  if (first->value_type == string && first->string_value == second->string_value)
+    return false;
 
   return true;
 }
