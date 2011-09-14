@@ -305,8 +305,7 @@ Node* parse_node(char* line, Node* previous) {
           endptr++;
         if (*endptr != '#')
           error("Expected comment after spaces at end of line", line, endptr);
-      }
-      if (*endptr != '\n')
+      } else if (*endptr != '\n')
         error("Unexpected character after number", line, endptr);
     } else if (*position == '"') {
       if (node->ordered)
