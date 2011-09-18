@@ -1,0 +1,9 @@
+%{
+  void set_integer(Node* node, int value) {
+    node->value_type = integer;
+    node->integer_value = value;
+  }
+%}
+
+-Foo:
++Bar: < set_integer($$, 1 + 2);

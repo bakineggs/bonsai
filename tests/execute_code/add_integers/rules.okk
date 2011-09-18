@@ -1,2 +1,2 @@
 -Foo:
-+Bar: < 1 + 2
++Bar: < $$->value_type = integer; $$->integer_value = 1 + 2;

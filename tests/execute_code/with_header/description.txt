@@ -1,0 +1,1 @@
+Tests that we can include a header that sets up runtime functions.
