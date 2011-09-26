@@ -46,6 +46,20 @@ describe Parser do
         Bar:
       EOS
     end
+
+    it 'includes the line of any syntax error' do
+      lambda {
+        parse :rules, <<-EOS, 5
+          Foo:
+            Bar:
+              :Baz
+            Qux:
+        EOS
+      }.should raise_error(ParseError) do |error|
+        error.line.line_number.should == 3
+        error.line.should == "    :Baz"
+      end
+    end
   end
 
   describe '#parse_rule' do
