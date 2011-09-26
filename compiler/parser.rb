@@ -31,3 +31,6 @@ class Parser
     Rule.new
   end
 end
+
+class ParseError
+end

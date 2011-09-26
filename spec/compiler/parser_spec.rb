@@ -150,5 +150,38 @@ describe Parser do
   end
 
   describe '#parse_condition' do
+    it 'reads the node type' do
+      parse(:condition, 'Foo:').node_type.should == 'Foo'
+    end
+
+    it 'considers the node type ^ to mean top level' do
+      parse(:condition, '^:').node_type.should == :top
+    end
+
+    it 'considers a prepended + to mean creating a node' do
+      parse(:condition, 'Foo:').creates_node?.should be_false
+      parse(:condition, '+Foo:').creates_node?.should be_true
+    end
+
+    it 'considers a prepended - to mean removing a node' do
+      parse(:condition, 'Foo:').removes_node?.should be_false
+      parse(:condition, '-Foo:').removes_node?.should be_true
+    end
+
+    it 'considers a prepended ! to mean preventing a match' do
+      parse(:condition, 'Foo:').prevents_match?.should be_false
+      parse(:condition, '!Foo:').prevents_match?.should be_true
+    end
+
+    it 'only allows one operation' do
+      ops = ['+', '-', '!']
+      (2..ops.length).each do |num_ops|
+        ops.permutation(num_ops).each do |o|
+          lambda {
+            parse(:condition, "#{o.join}Foo:")
+          }.should raise_error(ParseError, /only one operation allowed/)
+        end
+      end
+    end
   end
 end
