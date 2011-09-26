@@ -2,21 +2,23 @@ require 'spec'
 require File.dirname(__FILE__) + '/../../compiler/parser'
 
 describe Parser do
-  let(:parser) { Parser.new }
+  def parse type, body, depth = 0
+    Parser.new.send :"parse_#{type}", body.gsub(/^ {#{depth * 2}}/, '')
+  end
 
   describe '#parse_rules' do
     it 'returns an empty list of rules with an empty program' do
-      parser.parse_rules("").should be_empty
+      parse(:rules, "").should be_empty
     end
 
     it 'ignores empty lines' do
-      parser.parse_rules(<<-EOS).should be_empty
+      parse(:rules, <<-EOS, 4).should be_empty
 
       EOS
     end
 
     it 'ignores empty lines between rules' do
-      parser.parse_rules(<<-EOS.gsub /^ {8}/, '').length.should == 2
+      parse(:rules, <<-EOS, 4).length.should == 2
 
         Foo:
 
@@ -27,7 +29,7 @@ describe Parser do
     end
 
     it 'ignores comments' do
-      parser.parse_rules(<<-EOS.gsub /^ {8}/, '').length.should == 2
+      parse(:rules, <<-EOS, 4).length.should == 2
         Foo: # comment
 
         # another comment
@@ -38,7 +40,7 @@ describe Parser do
     end
 
     it 'treats a whole-line comment as a rule separator' do
-      parser.parse_rules(<<-EOS.gsub /^ {8}/, '').length.should == 2
+      parse(:rules, <<-EOS, 4).length.should == 2
         Foo:
         # comment
         Bar:
@@ -48,7 +50,7 @@ describe Parser do
 
   describe '#parse_rule' do
     it 'includes the top-level conditions' do
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parse :rule, <<-EOS, 4
         Foo:
         Bar:
       EOS
@@ -56,7 +58,7 @@ describe Parser do
     end
 
     it 'nests descendant conditions' do
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parse :rule, <<-EOS, 4
         Foo:
           Bar:
             Baz:
@@ -87,7 +89,7 @@ describe Parser do
     end
 
     it 'considers the top level rule to have unordered conditions' do
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parse :rule, <<-EOS, 4
         Foo:
       EOS
       rule.conditions_are_ordered?.should be_false
@@ -99,21 +101,21 @@ describe Parser do
     end
 
     it 'considers one colon to mean conditions are unordered' do
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parse :rule, <<-EOS, 4
         Foo:
       EOS
       rule.conditions[0].child.conditions_are_ordered?.should be_false
     end
 
     it 'considers two colons to mean conditions are ordered' do
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parse :rule, <<-EOS, 4
         Foo::
       EOS
       rule.conditions[0].child.conditions_are_ordered?.should be_true
     end
 
     it 'considers the top rule to not require conditions to match all nodes' do
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parse :rule, <<-EOS, 4
         Foo:
       EOS
       rule.requires_exact_match?.should be_false
@@ -125,16 +127,24 @@ describe Parser do
     end
 
     it 'considers lack of an equals sign to mean conditions do not have to match all nodes' do
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parse :rule, <<-EOS, 4
         Foo:
       EOS
       rule.conditions[0].child.requires_exact_match?.should be_false
     end
 
     it 'considers an equals sign to mean conditions have to match all nodes' do
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parse :rule, <<-EOS, 4
         Foo:=
       EOS
+      rule.conditions[0].child.requires_exact_match?.should be_true
+    end
+
+    it 'allows ordered and exact together' do
+      rule = parse :rule, <<-EOS, 4
+        Foo::=
+      EOS
+      rule.conditions[0].child.conditions_are_ordered?.should be_true
       rule.conditions[0].child.requires_exact_match?.should be_true
     end
   end
