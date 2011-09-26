@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/rule' unless Object.const_defined? :Rule
+require File.dirname(__FILE__) + '/rule'
 
 class Parser
   class Line < String
