@@ -19,4 +19,11 @@ shared_examples_for 'an okk implementation' do
     result[:stdout].should == ""
     result[:stderr].should == ""
   end
+
+  describe 'creating nodes'
+  describe 'removing nodes'
+  describe 'preventing a match'
+  describe 'ordered children'
+  describe 'matching multiple nodes'
+  describe 'node values'
 end
