@@ -108,7 +108,7 @@ describe Parser do
       EOS
       rule.conditions_are_ordered?.should be_false
 
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parser.parse :rule, <<-EOS, 4
         Foo::
       EOS
       rule.conditions_are_ordered?.should be_false
@@ -134,7 +134,7 @@ describe Parser do
       EOS
       rule.requires_exact_match?.should be_false
 
-      rule = parser.parse_rule(<<-EOS.gsub /^ {8}/, '')
+      rule = parser.parse :rule, <<-EOS, 4
         Foo:=
       EOS
       rule.requires_exact_match?.should be_false
@@ -196,6 +196,24 @@ describe Parser do
           }.should raise_error(ParseError, /only one operation allowed/)
         end
       end
+    end
+
+    it 'considers an appended * to mean that the condition may match any number of nodes' do
+      parse(:condition, 'Foo:').matches_many_nodes?.should be_false
+      parse(:condition, 'Foo:*').matches_many_nodes?.should be_true
+    end
+
+    it 'does not assign a value without one' do
+      parse(:condition, 'Foo:').value.should be_nil
+    end
+
+    it 'reads the integer value' do
+      parse(:condition, 'Foo: 17').value.should == 17
+      parse(:condition, 'Foo: 17').value.should be_an(Integer)
+    end
+
+    it 'reads the real value' do
+      parse(:condition, 'Foo: 17.34').value.should == 17.34
     end
   end
 end
