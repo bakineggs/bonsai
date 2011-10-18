@@ -10,6 +10,9 @@ class Parser
     end
   end
 
+  class Error < StandardError
+  end
+
   def parse_rules program
     definitions = [[]]
     program.split("\n").each_with_index do |line, i|
@@ -30,7 +33,4 @@ class Parser
   def parse_rule definition
     Rule.new
   end
-end
-
-class ParseError
 end

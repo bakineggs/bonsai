@@ -3,7 +3,9 @@ require File.dirname(__FILE__) + '/../../compiler/parser'
 
 describe Parser do
   def parse type, body, depth = 0
-    Parser.new.send :"parse_#{type}", body.gsub(/^ {#{depth * 2}}/, '')
+    body.gsub! /^ {#{depth * 2}}/, ''
+    body = body.split "\n" if type == :rule
+    Parser.new.send :"parse_#{type}", body
   end
 
   describe '#parse_rules' do
@@ -55,9 +57,47 @@ describe Parser do
               :Baz
             Qux:
         EOS
-      }.should raise_error(ParseError) do |error|
+      }.should raise_error(Parser::Error) do |error|
         error.line.line_number.should == 3
         error.line.should == "    :Baz"
+      end
+    end
+
+    it 'requires the first condition to be on the top level' do
+      lambda {
+        rule = parse :rule, <<-EOS, 5
+            Foo:
+        EOS
+      }.should raise_error(Parser::Error) do |error|
+        error.line.line_number.should == 1
+        error.line.should == "  Foo:"
+        error.message.should == "The first condition of a rule must be at the top level"
+      end
+    end
+
+    it 'rejects conditions in between levels' do
+      lambda {
+        rule = parse :rule, <<-EOS, 5
+          Foo:
+           Bar:
+        EOS
+      }.should raise_error(Parser::Error) do |error|
+        error.line.line_number.should == 2
+        error.line.should == " Bar:"
+        error.message.should == "Conditions can not be in between levels"
+      end
+    end
+
+    it 'rejects conditions more than one level below their parents' do
+      lambda {
+        rule = parse :rule, <<-EOS, 5
+          Foo:
+              Bar:
+        EOS
+      }.should raise_error(Parser::Error) do |error|
+        error.line.line_number.should == 2
+        error.line.should == "    Bar:"
+        error.message.should == "Conditions must be at most 1 level below their parents"
       end
     end
   end
@@ -193,7 +233,7 @@ describe Parser do
         ops.permutation(num_ops).each do |o|
           lambda {
             parse(:condition, "#{o.join}Foo:")
-          }.should raise_error(ParseError, /only one operation allowed/)
+          }.should raise_error(Parser::Error, /only one operation allowed/)
         end
       end
     end
