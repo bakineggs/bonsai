@@ -80,8 +80,13 @@ shared_examples_for 'an okk implementation' do
     end
   end
 
-  describe 'creating nodes'
-  describe 'removing nodes'
+  describe 'creating nodes' do
+    # TODO
+  end
+
+  describe 'removing nodes' do
+    # TODO
+  end
 
   describe 'preventing a match' do
     it 'applies the rule if a match-preventing condition does not match' do
@@ -111,7 +116,77 @@ shared_examples_for 'an okk implementation' do
     end
   end
 
-  describe 'ordered children'
-  describe 'matching multiple nodes'
-  describe 'node values'
+  describe 'unordered children' do
+    # TODO
+  end
+
+  describe 'ordered children' do
+    # TODO
+  end
+
+  describe 'matching multiple nodes' do
+    # TODO
+  end
+
+  describe 'node values' do
+    # TODO
+  end
+
+  describe 'conditions at the top level of a rule' do
+    it 'matches them in unordered contexts' do
+      rules = <<-EOS
+        -Foo:
+        -Bar:
+      EOS
+      start_state = <<-EOS
+        Baz:
+          Bar:
+          Foo:
+          Qux:
+      EOS
+      end_state = <<-EOS
+        Baz:
+          Qux:
+      EOS
+      result = run_program :rules => rules, :start_state => start_state
+      result[:end_state].should == parse_state(end_state)
+    end
+
+    it 'matches them in ordered contexts' do
+      rules = <<-EOS
+        -Foo:
+        -Bar:
+      EOS
+      start_state = <<-EOS
+        Baz::
+          Qux:
+          Foo:
+          Bar:
+          FooQux:
+      EOS
+      end_state = <<-EOS
+        Baz:
+          Qux:
+          FooQux:
+      EOS
+      result = run_program :rules => rules, :start_state => start_state
+      result[:end_state].should == parse_state(end_state)
+    end
+
+    it 'does not match them out of order in ordered contexts' do
+      rules = <<-EOS
+        -Foo:
+        -Bar:
+      EOS
+      start_state = <<-EOS
+        Baz::
+          Qux:
+          Bar:
+          Foo:
+          FooQux:
+      EOS
+      result = run_program :rules => rules, :start_state => start_state
+      result[:end_state].should == parse_state(start_state)
+    end
+  end
 end
