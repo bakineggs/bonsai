@@ -61,7 +61,6 @@ shared_examples_for 'an okk implementation' do
       EOS
       result = run_program :rules => rules, :start_state => start_state
       result[:exit_status].should == 0
-      result[:end_state].should == parse_state("")
     end
 
     it 'does not apply the rule when conditions match below the root level' do
@@ -81,7 +80,59 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'creating nodes' do
-    # TODO
+    describe 'at the root level' do
+      it 'creates the node' do
+        rules = <<-EOS
+          Foo: < exit(0);
+
+          +Foo:
+        EOS
+        result = run_program :rules => rules, :start_state => ''
+        result[:exit_status].should == 0
+      end
+    end
+
+    describe 'in a child condition' do
+      describe 'with a matching parent' do
+        it 'creates the node' do
+          rules = <<-EOS
+            Foo: < exit(0);
+
+            Bar:
+              +Foo:
+          EOS
+          result = run_program :rules => rules, :start_state => 'Bar:'
+          result[:exit_status].should == 0
+        end
+      end
+
+      describe 'without a matching parent' do
+        it 'does not create the node' do
+          rules = <<-EOS
+            Foo: < exit(0);
+
+            Bar:
+              +Foo:
+          EOS
+          result = run_program :rules => rules, :start_state => 'Baz:'
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state('Baz:')
+        end
+      end
+    end
+
+    describe 'with children' do
+      it 'creates the children' do
+        rules = <<-EOS
+          Foo: < exit(0);
+
+          +Bar:
+            Foo:
+        EOS
+        result = run_program :rules => rules, :start_state => ''
+        result[:exit_status].should == 0
+      end
+    end
   end
 
   describe 'removing nodes' do
