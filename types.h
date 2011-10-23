@@ -33,7 +33,11 @@ typedef struct Condition {
   struct Rule* children;
 } Condition;
 
+#ifdef __cplusplus
+enum value { none, integer, decimal, string };
+#else
 typedef enum VALUE { none, integer, decimal, string } value;
+#endif
 
 typedef struct Node {
   // instead of having a NodeSet or whatnot
