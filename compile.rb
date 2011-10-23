@@ -10,7 +10,7 @@ rescue Errno::ENOENT
 rescue IOError
   $stderr.puts "Error reading file #{ARGV[0]}"
 
-rescue ParseError => e
+rescue Parser::Error => e
   $stderr.puts "Parse error on line ##{e.line.line_number}: #{e.message}"
   $stderr.puts "Line #{e.line.line_number}: #{e.line}"
 
