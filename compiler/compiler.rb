@@ -2,15 +2,9 @@ require File.dirname(__FILE__) + '/parser'
 
 class Compiler
   def compile program
-    apply_rules = "bool apply_rules(Node* node) {\n"
-
     rules = Parser.new.parse_rules program
-    rules.each do |rule|
-    end
 
-    apply_rules += "return false;\n}"
-
-    "#{BASE}\n#{apply_rules}"
+    "#{BASE}\n#{apply_rules rules}"
   end
 
   private
@@ -97,4 +91,13 @@ class Compiler
       void print_node(Node* node) {
       }
     EOS
+
+    def apply_rules rules
+      apply_rules = "bool apply_rules(Node* node) {\n"
+
+      rules.each do |rule|
+      end
+
+      apply_rules + "return false;\n}"
+    end
 end
