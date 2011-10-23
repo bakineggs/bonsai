@@ -5,6 +5,8 @@ require File.dirname(__FILE__) + '/../../compiler/compiler'
 describe Compiler do
   def run_program options
     options.each do |_, value|
+      raise "Started: is reserved" if value.match /^ *[!+-]?Started:/
+
       depth = value.match(/^ */)[0].length
       value.strip!
       value.gsub! /^ {#{depth}}/, ''
