@@ -201,47 +201,36 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
   if (node->children_are_ordered = *definition == ':')
     definition++;
 
-  if (*definition == ' ' || *definition == '#') {
-    if (*definition++ == ' ') {
-      if (*definition >= '0' && *definition <= '9') {
-        if (node->children_are_ordered)
-          error("Nodes with ordered children can't have values", definition);
+  if (*definition == ' ') {
+    definition++;
 
-        char* endptr;
-        node->value_type = integer;
-        node->integer_value = strtol(definition, &endptr, 10);
+    if (*definition >= '0' && *definition <= '9') {
+      if (node->children_are_ordered)
+        error("Nodes with ordered children can't have values", definition);
 
-        if (*endptr == '.') {
-          node->value_type = decimal;
-          node->decimal_value = strtod(definition, &endptr);
-        }
+      char* endptr;
+      node->value_type = integer;
+      node->integer_value = strtol(definition, &endptr, 10);
 
-        if (*endptr != '\n') {
-          while (*endptr == ' ')
-            endptr++;
-          if (*endptr != '#')
-            error("Expected comment after spaces at end of line", endptr);
-        }
-      } else if (*definition == '"') {
-        if (node->children_are_ordered)
-          error("Nodes with ordered children can't have values", definition);
-
-        // TODO: parse string values
-      } else if (*definition == '$') {
-        if (node->children_are_ordered)
-          error("Nodes with ordered children can't have values", definition);
-
-        // TODO: get value from set variable
-      } else {
-        while (*definition == ' ')
-          definition++;
-        if (*definition != '#')
-          error("Expected value or comment after spaces at end of line", definition);
+      if (*endptr == '.') {
+        node->value_type = decimal;
+        node->decimal_value = strtod(definition, &endptr);
       }
-    }
 
-    while (*definition != '\n')
-      definition++;
+      if (*endptr != '\n')
+        error("Unexpected characters after value", endptr);
+    } else if (*definition == '"') {
+      if (node->children_are_ordered)
+        error("Nodes with ordered children can't have values", definition);
+
+      // TODO: parse string values
+    } else if (*definition == '$') {
+      if (node->children_are_ordered)
+        error("Nodes with ordered children can't have values", definition);
+
+      // TODO: get value from set variable
+    } else
+      error("Expected value after space proceeding node type", definition);
   }
 
   if (*definition != '\n')
