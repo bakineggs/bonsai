@@ -20,10 +20,17 @@ class Compiler
     #   else
     #     add Node's children to Nodes
     BASE = <<-EOS
-      #define NULL 0
-      typedef enum BOOL { false = 0, true = 1 } bool;
-      typedef enum VALUE { none, integer, decimal, string } value;
+      #ifndef __cplusplus
+        typedef enum BOOL { false = 0, true = 1 } bool;
+      #endif
 
+      #include <stdio.h>
+
+      #ifndef NULL
+        #define NULL 0
+      #endif
+
+      typedef enum VALUE { none, integer, decimal, string } value;
       typedef struct Node {
         struct Node* parent;
         struct Node* next_sibling;
@@ -121,6 +128,30 @@ class Compiler
       }
 
       void print_node(Node* node) {
+        if (!node)
+          return;
+
+        Node* ancestor = node->parent;
+        while (ancestor) {
+          printf("  ");
+          ancestor = ancestor->parent;
+        }
+
+        printf("%s:", node->type);
+
+        if (node->children_are_ordered)
+          printf(":");
+        else if (node->value_type == integer)
+          printf(" %li", node->integer_value);
+        else if (node->value_type == decimal)
+          printf(" %f", node->decimal_value);
+        else if (node->value_type == string)
+          printf(" %s", node->string_value);
+
+        printf("\\n");
+
+        print_node(node->children);
+        print_node(node->next_sibling);
       }
     EOS
 
