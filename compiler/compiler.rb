@@ -43,7 +43,7 @@ class Compiler
       } Node;
 
       bool apply_rules(Node* node);
-      void add_to_poset(Node* first_in_poset, Node* node_to_add);
+      Node* add_to_poset(Node* first_in_poset, Node* node_to_add);
       void print_node(Node* node);
 
       int main() {
@@ -69,13 +69,13 @@ class Compiler
 
           if (apply_rules(node))
             while (node) {
-              add_to_poset(first_in_poset, node);
+              first_in_poset = add_to_poset(first_in_poset, node);
               node = node->parent;
             }
           else {
             Node* child = node->children;
             while (child) {
-              add_to_poset(first_in_poset, child);
+              first_in_poset = add_to_poset(first_in_poset, child);
               child = child->next_sibling;
             }
           }
@@ -85,7 +85,39 @@ class Compiler
         return 1;
       }
 
-      void add_to_poset(Node* first_in_poset, Node* node_to_add) {
+      bool is_ancestor(Node* descendant, Node* ancestor) {
+        while (descendant) {
+          if (descendant == ancestor)
+            return true;
+          descendant = descendant->parent;
+        }
+
+        return false;
+      }
+
+      Node* add_to_poset(Node* first_in_poset, Node* node_to_add) {
+        Node* previous_in_poset = NULL;
+        Node* next_in_poset = first_in_poset;
+
+        while (next_in_poset) {
+          if (next_in_poset == node_to_add)
+            return first_in_poset;
+
+          if (is_ancestor(node_to_add, next_in_poset))
+            break;
+
+          previous_in_poset = next_in_poset;
+          next_in_poset = next_in_poset->next_in_poset;
+        }
+
+        if (previous_in_poset)
+          previous_in_poset->next_in_poset = node_to_add;
+        else
+          first_in_poset = node_to_add;
+
+        node_to_add->next_in_poset = next_in_poset;
+
+        return first_in_poset;
       }
 
       void print_node(Node* node) {
