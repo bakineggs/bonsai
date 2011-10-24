@@ -239,8 +239,33 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
   return build_offset_node(definition, depth_offset, node, depth);
 }
 
+char** node_types;
+int node_types_length = 0;
+int node_types_capacity = 0;
+
 char* node_type_for(char* definition) {
-  return NULL;
+  size_t length = strspn(definition, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ");
+  if (length == 0)
+    error("Expected a node type", definition);
+
+  int i; for (i = 0; i < node_types_length; i++)
+    if (strlen(node_types[i]) == length && strncmp(node_types[i], definition, length) == 0)
+      return node_types[i];
+
+  if (node_types_length == node_types_capacity) {
+    node_types_capacity += 64;
+    char** new_node_types = (char**) malloc(node_types_capacity * sizeof(char*));
+
+    int i; for (i = 0; i < node_types_length; i++)
+      new_node_types[i] = node_types[i];
+
+    free(node_types);
+    node_types = new_node_types;
+  }
+
+  char* node_type = node_types[node_types_length++] = (char*) malloc(length);
+  strncpy(node_type, definition, length);
+  return node_type;
 }
 
 Node* new_node(char* type) {
