@@ -218,12 +218,17 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
   if (depth > previous_depth + 1)
     build_node_error("Node at depth more than one level below its parent", definition);
 
+  if (depth > previous_depth && previous->value_type != none)
+    build_node_error("Nodes with values can't have children", definition);
+
   while (previous_depth > depth) {
     previous = previous->parent;
     previous_depth--;
   }
 
   if (*definition == '$') {
+    definition++;
+
     size_t length = strspn(definition, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
     if (length == 0)
       build_node_error("Expected a variable name", definition);
@@ -306,7 +311,32 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
       if (node->children_are_ordered)
         build_node_error("Nodes with ordered children can't have values", definition);
 
-      // TODO: get value from set variable
+      size_t length = strspn(definition, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+        if (length == 0)
+          build_node_error("Expected a variable name", definition);
+
+      int i; for (i = 0; i < build_node_variables_length; i++)
+        if (strlen(build_node_variable_names[i]) == length && strncmp(build_node_variable_names[i], definition, length) == 0)
+          break;
+
+      if (i == build_node_variables_length)
+        build_node_error("Variable name not found", definition);
+
+      if (build_node_variable_types[i] == none)
+        build_node_error("Variable is a node", definition);
+
+      definition += length;
+
+      if (*definition != '\n')
+        build_node_error("Unexpected characters after variable", definition);
+
+      node->value_type = build_node_variable_types[i];
+      if (node->value_type == integer)
+        node->integer_value = build_node_integer_values[i];
+      else if (node->value_type == decimal)
+        node->decimal_value = build_node_decimal_values[i];
+      else if (node->value_type == string)
+        node->string_value = build_node_string_values[i];
     } else
       build_node_error("Expected value after space proceeding node type", definition);
   }
