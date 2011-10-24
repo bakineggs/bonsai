@@ -1,5 +1,5 @@
-#ifndef PRINT_H
-#define PRINT_H
+#ifndef OKK_PRINT_H
+#define OKK_PRINT_H
 
 #include "types.h"
 

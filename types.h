@@ -1,68 +1,33 @@
-#ifndef TYPES_H
-#define TYPES_H
-
-#ifndef __cplusplus
-typedef enum BOOL { false, true } bool;
-#endif
-
-typedef struct Rule {
-  struct Rule* next; // instead of having a RuleSet or whatnot
-  struct Condition* parent;
-
-  bool exact;
-
-  bool ordered;
-  struct Condition* ordered_conditions;
-
-  struct Condition* preventing;
-  struct Condition* matching_single;
-  struct Condition* matching_multiple;
-  struct Condition* creating;
-} Rule;
-
-typedef struct Condition {
-  struct Condition* next; // instead of having of ConditionList or whatnot
-
-  char* node_type;
-  char* variable;
-
-  bool creates_node;
-  bool removes_node;
-
-  struct Rule* rule;
-  struct Rule* children;
-} Condition;
+#ifndef OKK_TYPES_H
+#define OKK_TYPES_H
 
 #ifdef __cplusplus
-enum value { none, integer, decimal, string };
+  enum value { none, integer, decimal, string };
 #else
-typedef enum VALUE { none, integer, decimal, string } value;
+  typedef enum BOOL { false = 0, true = 1 } bool;
+  typedef enum VALUE { none, integer, decimal, string } value;
+#endif
+
+#ifndef NULL
+  #define NULL 0
 #endif
 
 typedef struct Node {
-  // instead of having a NodeSet or whatnot
-  struct Node* previous;
-  struct Node* next;
+  struct Node* parent;
+  struct Node* next_sibling;
+  struct Node* previous_sibling;
+
+  bool children_are_ordered;
+  struct Node* children;
+
+  struct Node* next_in_poset;
 
   char* type;
-  bool ordered;
 
   value value_type;
   long int integer_value;
   double decimal_value;
   char* string_value;
-
-  struct Node* parent;
-  struct Node* children;
 } Node;
-
-typedef struct Match {
-  struct Match* other; // alternative set of matches
-
-  struct Match* next; // next match in the set
-
-  struct Condition* condition;
-  struct Node* node;
-} Match;
 
 #endif

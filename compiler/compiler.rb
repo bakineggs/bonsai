@@ -20,56 +20,44 @@ class Compiler
     #   else
     #     add Node's children to Nodes
     BASE = <<-EOS
-      #ifndef __cplusplus
-        typedef enum BOOL { false = 0, true = 1 } bool;
-      #endif
-
+      #include <stdlib.h>
       #include <stdio.h>
 
-      #ifndef NULL
-        #define NULL 0
+      #{File.read File.dirname(__FILE__) + '/../types.h'}
+
+      #define OKK_NODE_BUILDER_H
+      #ifdef __cplusplus
+        extern "C" {
       #endif
 
-      typedef enum VALUE { none, integer, decimal, string } value;
-      typedef struct Node {
-        struct Node* parent;
-        struct Node* next_sibling;
-        struct Node* previous_sibling;
+      void set_node(char* variable, Node* value);
+      void set_integer(char* variable, int value);
+      void set_real(char* variable, double value);
+      void set_string(char* variable, char* value);
+      Node* build_node(char* definition);
 
-        bool children_are_ordered;
-        struct Node* children;
+      #ifdef __cplusplus
+        }
+      #endif
 
-        struct Node* next_in_poset;
+      #define OKK_PRINT_H
+      #ifdef __cplusplus
+        extern "C" {
+      #endif
 
-        char* type;
+      void print_node(Node* node);
 
-        value value_type;
-        long int integer_value;
-        double decimal_value;
-        char* string_value;
-      } Node;
+      #ifdef __cplusplus
+        }
+      #endif
 
       bool apply_rules(Node* node);
       Node* add_to_poset(Node* first_in_poset, Node* node_to_add);
-      void print_node(Node* node);
 
       int main() {
-        struct Node root = {
-          .parent = NULL,
-          .next_sibling = NULL,
-          .previous_sibling = NULL,
+        Node* root = build_node("^:");
 
-          .children_are_ordered = false,
-          .children = NULL,
-
-          .next_in_poset = NULL,
-
-          .type = "^",
-
-          .value_type = none
-        };
-
-        Node* first_in_poset = &root;
+        Node* first_in_poset = root;
         while (first_in_poset) {
           Node* node = first_in_poset;
           first_in_poset = node->next_in_poset;
@@ -88,7 +76,7 @@ class Compiler
           }
         }
 
-        print_node(&root);
+        print_node(root);
         return 1;
       }
 
@@ -152,6 +140,30 @@ class Compiler
 
         print_node(node->children);
         print_node(node->next_sibling);
+      }
+
+      void set_node(char* variable, Node* value) {}
+      void set_integer(char* variable, int value) {}
+      void set_real(char* variable, double value) {}
+      void set_string(char* variable, char* value) {}
+
+      Node* build_node(char* definition) {
+        Node* node = (Node*) malloc(sizeof(Node));
+
+        node->parent = NULL;
+        node->next_sibling = NULL;
+        node->previous_sibling = NULL;
+
+        node->children_are_ordered = false;
+        node->children = NULL;
+
+        node->next_in_poset = NULL;
+
+        node->type = "^";
+
+        node->value_type = none;
+
+        return node;
       }
     EOS
 
