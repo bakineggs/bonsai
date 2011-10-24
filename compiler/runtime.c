@@ -307,6 +307,7 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
         build_node_error("Nodes with ordered children can't have values", definition);
 
       // TODO: parse string values
+      build_node_error("I haven't implemented parsing strings yet", definition);
     } else if (*definition == '$') {
       if (node->children_are_ordered)
         build_node_error("Nodes with ordered children can't have values", definition);
