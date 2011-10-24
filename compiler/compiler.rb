@@ -7,6 +7,7 @@ class Compiler
     <<-EOS
       #include <stdlib.h>
       #include <stdio.h>
+      #include <string.h>
 
       #{File.read File.dirname(__FILE__) + '/../types.h'}
 
