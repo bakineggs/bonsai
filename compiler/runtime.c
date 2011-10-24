@@ -224,8 +224,37 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
   }
 
   if (*definition == '$') {
-    Node* node; // TODO: get node from set variable
-    return build_offset_node(definition, depth_offset, node, depth);
+    size_t length = strspn(definition, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+    if (length == 0)
+      build_node_error("Expected a variable name", definition);
+
+    int i; for (i = 0; i < build_node_variables_length; i++)
+      if (strlen(build_node_variable_names[i]) == length && strncmp(build_node_variable_names[i], definition, length) == 0)
+        break;
+
+    if (i == build_node_variables_length)
+      build_node_error("Variable name not found", definition);
+
+    if (build_node_variable_types[i] != none)
+      build_node_error("Variable is not a node", definition);
+
+    definition += length;
+
+    if (*definition != '\n')
+      build_node_error("Unexpected characters after variable", definition);
+
+    if (depth > previous_depth) {
+      build_node_node_values[i]->parent = previous;
+
+      previous->children = build_node_node_values[i];
+    } else { // depth == previous_depth
+      build_node_node_values[i]->parent = previous->parent;
+
+      build_node_node_values[i]->previous_sibling = previous;
+      previous->next_sibling = build_node_node_values[i];
+    }
+
+    return build_offset_node(definition, depth_offset, build_node_node_values[i], depth);
   }
 
   Node* node = new_node(node_type_for(definition));
