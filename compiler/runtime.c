@@ -5,7 +5,7 @@
 
 void set_node(char* variable, Node* value);
 void set_integer(char* variable, int value);
-void set_real(char* variable, double value);
+void set_decimal(char* variable, double value);
 void set_string(char* variable, char* value);
 Node* build_node(char* definition);
 
@@ -116,10 +116,58 @@ void print_node(Node* node) {
   print_node(node->next_sibling);
 }
 
-void set_node(char* variable, Node* value) {}
-void set_integer(char* variable, int value) {}
-void set_real(char* variable, double value) {}
-void set_string(char* variable, char* value) {}
+void build_node_error(char* message, char* definition) {
+  fprintf(stderr, "build_node error: %s\n%s\n", message, definition);
+  exit(1);
+}
+
+#define BUILD_NODE_VARIABLES_CAPACITY 64
+char* build_node_variable_names[BUILD_NODE_VARIABLES_CAPACITY];
+value build_node_variable_types[BUILD_NODE_VARIABLES_CAPACITY];
+Node* build_node_node_values[BUILD_NODE_VARIABLES_CAPACITY];
+int build_node_integer_values[BUILD_NODE_VARIABLES_CAPACITY];
+double build_node_decimal_values[BUILD_NODE_VARIABLES_CAPACITY];
+char* build_node_string_values[BUILD_NODE_VARIABLES_CAPACITY];
+int build_node_variables_length = 0;
+
+int unused_variable_index(char* variable) {
+  int i; for (i = 0; i < build_node_variables_length; i++)
+    if (strcmp(build_node_variable_names[i], variable) == 0)
+      build_node_error("Variable already in use", variable);
+
+  if (build_node_variables_length == BUILD_NODE_VARIABLES_CAPACITY)
+    build_node_error("You're seriously using enough variables to fill the table?", variable);
+
+  build_node_variables_length++;
+  build_node_variable_names[i] = (char*) malloc(sizeof(char) * (strlen(variable) + 1));
+  strcpy(build_node_variable_names[i], variable);
+  return i;
+}
+
+void set_node(char* variable, Node* value) {
+  int i = unused_variable_index(variable);
+  build_node_variable_types[i] = none;
+  build_node_node_values[i] = value;
+}
+
+void set_integer(char* variable, int value) {
+  int i = unused_variable_index(variable);
+  build_node_variable_types[i] = integer;
+  build_node_integer_values[i] = value;
+}
+
+void set_decimal(char* variable, double value) {
+  int i = unused_variable_index(variable);
+  build_node_variable_types[i] = decimal;
+  build_node_decimal_values[i] = value;
+}
+
+void set_string(char* variable, char* value) {
+  int i = unused_variable_index(variable);
+  build_node_variable_types[i] = string;
+  build_node_string_values[i] = (char*) malloc(sizeof(char) * (strlen(value) + 1));
+  strcpy(build_node_string_values[i], value);
+}
 
 Node* build_offset_node(char* definition, int depth_offset, Node* previous, int previous_depth);
 Node* build_node(char* definition) {
@@ -133,12 +181,13 @@ Node* build_node(char* definition) {
     current++;
   }
 
-  return build_offset_node(definition, depth, NULL, 0);
-}
+  Node* node = build_offset_node(definition, depth, NULL, 0);
 
-void error(char* message, char* definition) {
-  fprintf(stderr, "build_node error: %s\n%s\n", message, definition);
-  exit(1);
+  int i; for (i = 0; i < build_node_variables_length; i++)
+    free(build_node_variable_names[i]);
+  build_node_variables_length = 0;
+
+  return node;
 }
 
 char* node_type_for(char* definition);
@@ -164,10 +213,10 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
   }
 
   if (*definition == ' ')
-    error("Space before node name", definition);
+    build_node_error("Space before node name", definition);
 
   if (depth > previous_depth + 1)
-    error("Node at depth more than one level below its parent", definition);
+    build_node_error("Node at depth more than one level below its parent", definition);
 
   while (previous_depth > depth) {
     previous = previous->parent;
@@ -196,7 +245,7 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
   definition += strlen(node->type);
 
   if (*definition != ':')
-    error("Missing : after node name", definition);
+    build_node_error("Missing : after node name", definition);
 
   if (node->children_are_ordered = *definition == ':')
     definition++;
@@ -206,7 +255,7 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
 
     if (*definition >= '0' && *definition <= '9') {
       if (node->children_are_ordered)
-        error("Nodes with ordered children can't have values", definition);
+        build_node_error("Nodes with ordered children can't have values", definition);
 
       char* endptr;
       node->value_type = integer;
@@ -218,23 +267,23 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
       }
 
       if (*endptr != '\n')
-        error("Unexpected characters after value", endptr);
+        build_node_error("Unexpected characters after value", endptr);
     } else if (*definition == '"') {
       if (node->children_are_ordered)
-        error("Nodes with ordered children can't have values", definition);
+        build_node_error("Nodes with ordered children can't have values", definition);
 
       // TODO: parse string values
     } else if (*definition == '$') {
       if (node->children_are_ordered)
-        error("Nodes with ordered children can't have values", definition);
+        build_node_error("Nodes with ordered children can't have values", definition);
 
       // TODO: get value from set variable
     } else
-      error("Expected value after space proceeding node type", definition);
+      build_node_error("Expected value after space proceeding node type", definition);
   }
 
   if (*definition != '\n')
-    error("Unexpected characters at end of line", definition);
+    build_node_error("Unexpected characters at end of line", definition);
 
   return build_offset_node(definition, depth_offset, node, depth);
 }
@@ -246,7 +295,7 @@ int node_types_capacity = 0;
 char* node_type_for(char* definition) {
   size_t length = strspn(definition, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ");
   if (length == 0)
-    error("Expected a node type", definition);
+    build_node_error("Expected a node type", definition);
 
   int i; for (i = 0; i < node_types_length; i++)
     if (strlen(node_types[i]) == length && strncmp(node_types[i], definition, length) == 0)
