@@ -137,20 +137,60 @@ shared_examples_for 'an okk implementation' do
 
   describe 'removing nodes' do
     describe 'at the root level' do
-      it 'removes the node'
+      it 'removes the node' do
+        result = run_program :rules => '-Foo:', :start_state => 'Foo:'
+        result[:exit_status].should == 1
+        result[:end_state].should == parse_state('')
+      end
     end
 
     describe 'in a child condition' do
-      it 'removes the node'
+      it 'removes the node' do
+        rules = <<-EOS
+          Foo:
+            -Bar:
+        EOS
+        start_state = <<-EOS
+          Foo:
+            Bar:
+        EOS
+        result = run_program :rules => rules, :start_state => start_state
+        result[:exit_status].should == 1
+        result[:end_state].should == parse_state('Foo:')
+      end
     end
 
     describe 'with children' do
       describe 'that match' do
-        it 'removes the node'
+        it 'removes the node' do
+          rules = <<-EOS
+            -Foo:
+              Bar:
+          EOS
+          start_state = <<-EOS
+            Foo:
+              Bar:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state('')
+        end
       end
 
       describe 'that do not match' do
-        it 'does not remove the node'
+        it 'does not remove the node' do
+          rules = <<-EOS
+            -Foo:
+              Bar:
+          EOS
+          start_state = <<-EOS
+            Foo:
+              Baz:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state(start_state)
+        end
       end
     end
   end
