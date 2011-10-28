@@ -224,15 +224,37 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'unordered children' do
-    # TODO
+    describe 'that match in order' do
+      it 'applies the rule'
+    end
+
+    describe 'that match out of order' do
+      it 'does not apply the rule'
+    end
   end
 
   describe 'ordered children' do
-    # TODO
+    describe 'that match in order' do
+      it 'applies the rule'
+    end
+
+    describe 'that match out of order' do
+      it 'does not apply the rule'
+    end
   end
 
   describe 'matching multiple nodes' do
-    # TODO
+    describe 'with no nodes that match' do
+      it 'applies the rule'
+    end
+
+    describe 'with one node that matches' do
+      it 'applies the rule'
+    end
+
+    describe 'with multiple nodes that match' do
+      it 'applies the rule'
+    end
   end
 
   describe 'node values' do
