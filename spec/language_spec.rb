@@ -136,7 +136,23 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'removing nodes' do
-    # TODO
+    describe 'at the root level' do
+      it 'removes the node'
+    end
+
+    describe 'in a child condition' do
+      it 'removes the node'
+    end
+
+    describe 'with children' do
+      describe 'that match' do
+        it 'removes the node'
+      end
+
+      describe 'that do not match' do
+        it 'does not remove the node'
+      end
+    end
   end
 
   describe 'preventing a match' do
