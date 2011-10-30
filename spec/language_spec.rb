@@ -223,23 +223,130 @@ shared_examples_for 'an okk implementation' do
     end
   end
 
-  describe 'unordered children' do
-    describe 'that match in order' do
-      it 'applies the rule'
+  describe 'unordered child conditions' do
+    let(:rules) do
+      <<-EOS
+        Foo:
+          Bar:
+          Baz: < exit(0);
+      EOS
     end
 
-    describe 'that match out of order' do
-      it 'does not apply the rule'
+    describe 'matching unordered child nodes' do
+      describe 'that match in order' do
+        it 'applies the rule' do
+          start_state = <<-EOS
+            Foo:
+              Bar:
+              Baz:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 0
+        end
+      end
+
+      describe 'that match out of order' do
+        it 'applies the rule' do
+          start_state = <<-EOS
+            Foo:
+              Baz:
+              Bar:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 0
+        end
+      end
+    end
+
+    describe 'matching ordered child nodes' do
+      describe 'that match in order' do
+        it 'applies the rule' do
+          start_state = <<-EOS
+            Foo::
+              Bar:
+              Baz:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 0
+        end
+      end
+
+      describe 'that match out of order' do
+        it 'applies the rule' do
+          start_state = <<-EOS
+            Foo::
+              Baz:
+              Bar:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 0
+        end
+      end
     end
   end
 
-  describe 'ordered children' do
-    describe 'that match in order' do
-      it 'applies the rule'
+  describe 'ordered child conditions' do
+    let(:rules) do
+      <<-EOS
+        Foo::
+          Bar:
+          Baz: < exit(0);
+      EOS
     end
 
-    describe 'that match out of order' do
-      it 'does not apply the rule'
+    describe 'matching unordered child nodes' do
+      describe 'that match in order' do
+        it 'does not apply the rule' do
+          start_state = <<-EOS
+            Foo:
+              Bar:
+              Baz:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state(start_state)
+        end
+      end
+
+      describe 'that match out of order' do
+        it 'does not apply the rule' do
+          start_state = <<-EOS
+            Foo:
+              Baz:
+              Bar:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state(start_state)
+        end
+      end
+    end
+
+    describe 'matching ordered child nodes' do
+      describe 'that match in order' do
+        it 'applies the rule' do
+          start_state = <<-EOS
+            Foo::
+              Bar:
+              Baz:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 0
+        end
+      end
+
+      describe 'that match out of order' do
+        it 'does not apply the rule' do
+          start_state = <<-EOS
+            Foo::
+              Baz:
+              Bar:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state(start_state)
+        end
+      end
     end
   end
 
