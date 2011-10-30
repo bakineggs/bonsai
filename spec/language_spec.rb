@@ -364,6 +364,26 @@ shared_examples_for 'an okk implementation' do
     end
   end
 
+  describe 'nat matching all child conditions' do
+    describe 'with all child nodes matching' do
+      it 'applies the rule'
+    end
+
+    describe 'with some child nodes not matching' do
+      it 'applies the rule'
+    end
+  end
+
+  describe 'matching all child conditions' do
+    describe 'with all child nodes matching' do
+      it 'applies the rule'
+    end
+
+    describe 'with some child nodes not matching' do
+      it 'does not apply the rule'
+    end
+  end
+
   describe 'node values' do
     # TODO
   end
