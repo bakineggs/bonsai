@@ -351,16 +351,47 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'matching multiple nodes' do
+    let(:rules) do
+      <<-EOS
+        -Foo:
+        -Bar:*
+      EOS
+    end
+
     describe 'with no nodes that match' do
-      it 'applies the rule'
+      it 'applies the rule' do
+        start_state = <<-EOS
+          Foo:
+        EOS
+        result = run_program :rules => rules, :start_state => start_state
+        result[:exit_status].should == 1
+        result[:end_state].should == parse_state('')
+      end
     end
 
     describe 'with one node that matches' do
-      it 'applies the rule'
+      it 'applies the rule' do
+        start_state = <<-EOS
+          Foo:
+          Bar:
+        EOS
+        result = run_program :rules => rules, :start_state => start_state
+        result[:exit_status].should == 1
+        result[:end_state].should == parse_state('')
+      end
     end
 
     describe 'with multiple nodes that match' do
-      it 'applies the rule'
+      it 'applies the rule' do
+        start_state = <<-EOS
+          Foo:
+          Bar:
+          Bar:
+        EOS
+        result = run_program :rules => rules, :start_state => start_state
+        result[:exit_status].should == 1
+        result[:end_state].should == parse_state('')
+      end
     end
   end
 
