@@ -82,10 +82,10 @@ shared_examples_for 'an okk implementation' do
     it 'causes a gcc error with invalid code' do
       header = <<-EOS
         %{
-          void e() not_valid_code; }
+          void e() { not_valid_code; }
         %}
       EOS
-      result = run_program :rules => "Foo: < e();", :start_state => "Foo:", :header => header
+      result = run_program :rules => "Foo: < exit(0);", :start_state => "Foo:", :header => header
       result[:gcc_error].should be_true
       result[:exit_status].should be_nil
       result[:stdout].should be_nil
