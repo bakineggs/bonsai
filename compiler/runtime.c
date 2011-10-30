@@ -18,7 +18,7 @@ Node* build_node(char* definition);
   extern "C" {
 #endif
 
-void print_node(Node* node);
+void print_node(Node* node, FILE* stream);
 
 #ifdef __cplusplus
   }
@@ -50,7 +50,14 @@ int main() {
     }
   }
 
-  print_node(root);
+  Node* child = root->children;
+  while (child) {
+    child->parent = NULL;
+    child = child->next_sibling;
+  }
+
+  fprintf(stderr, "No rules to apply!\n");
+  print_node(root->children, stderr);
   return 1;
 }
 
@@ -86,31 +93,31 @@ Node* add_to_poset(Node* first_in_poset, Node* node_to_add) {
   return first_in_poset;
 }
 
-void print_node(Node* node) {
+void print_node(Node* node, FILE* stream) {
   if (!node)
     return;
 
   Node* ancestor = node->parent;
   while (ancestor) {
-    printf("  ");
+    fprintf(stream, "  ");
     ancestor = ancestor->parent;
   }
 
-  printf("%s:", node->type);
+  fprintf(stream, "%s:", node->type);
 
   if (node->children_are_ordered)
-    printf(":");
+    fprintf(stream, ":");
   else if (node->value_type == integer)
-    printf(" %li", node->integer_value);
+    fprintf(stream, " %li", node->integer_value);
   else if (node->value_type == decimal)
-    printf(" %f", node->decimal_value);
+    fprintf(stream, " %f", node->decimal_value);
   else if (node->value_type == string)
-    printf(" %s", node->string_value);
+    fprintf(stream, " %s", node->string_value);
 
-  printf("\n");
+  fprintf(stream, "\n");
 
-  print_node(node->children);
-  print_node(node->next_sibling);
+  print_node(node->children, stream);
+  print_node(node->next_sibling, stream);
 }
 
 void build_node_error(char* message, char* definition) {

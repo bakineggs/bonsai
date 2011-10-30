@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-void print_node(Node* node);
+void print_node(Node* node, FILE* stream);
 
 #endif
