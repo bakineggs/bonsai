@@ -20,32 +20,78 @@ shared_examples_for 'an okk implementation' do
     state + [{:label => parent.gsub(' ', ''), :children => parse_state(children.join "\n")}]
   end
 
-  it 'errors out when no rules match' do
-    result = run_program :rules => "Foo:", :start_state => "Bar:"
-    result[:exit_status].should == 1
-    result[:stdout].should == ""
-    result[:stderr].should == "No rules to apply!\nBar:"
-    result[:end_state].should == parse_state(<<-EOS)
-      Bar:
-    EOS
+  describe 'halting' do
+    it 'errors out when no rules match' do
+      result = run_program :rules => "Foo:", :start_state => "Bar:"
+      result[:exit_status].should == 1
+      result[:stdout].should == ""
+      result[:stderr].should == "No rules to apply!\nBar:"
+      result[:end_state].should == parse_state('Bar:')
+    end
+
+    it 'errors out when no rules make a change' do
+      result = run_program :rules => "Foo:", :start_state => "Foo:"
+      result[:exit_status].should == 1
+      result[:stdout].should == ""
+      result[:stderr].should == "No rules to apply!\nFoo:"
+      result[:end_state].should == parse_state('Foo:')
+    end
   end
 
-  it 'errors out when no rules make a change' do
-    result = run_program :rules => "Foo:", :start_state => "Foo:"
-    result[:exit_status].should == 1
-    result[:stdout].should == ""
-    result[:stderr].should == "No rules to apply!\nFoo:"
-    result[:end_state].should == parse_state(<<-EOS)
-      Foo:
-    EOS
+  describe 'executing code' do
+    it 'executes code of a matched rule' do
+      result = run_program :rules => "Foo: < exit(0);", :start_state => "Foo:"
+      result[:exit_status].should == 0
+      result[:stdout].should == ""
+      result[:stderr].should == ""
+      result[:end_state].should be_nil
+    end
+
+    it 'does not execute code of an unmatched rule' do
+      result = run_program :rules => "Foo: < exit(0);", :start_state => "Bar:"
+      result[:exit_status].should == 1
+      result[:stdout].should == ""
+      result[:stderr].should == ""
+      result[:end_state].should == parse_state('Bar:')
+    end
+
+    it 'causes a gcc error with invalid code' do
+      result = run_program :rules => "Foo: < not_valid_code;", :start_state => "Bar:"
+      result[:gcc_error].should be_true
+      result[:exit_status].should be_nil
+      result[:stdout].should be_nil
+      result[:stderr].should be_nil
+      result[:end_state].should be_nil
+    end
   end
 
-  it 'executes code of a matched rule' do
-    result = run_program :rules => "Foo: < exit(0);", :start_state => "Foo:"
-    result[:exit_status].should == 0
-    result[:stdout].should == ""
-    result[:stderr].should == ""
-    result[:end_state].should == parse_state("")
+  describe 'header' do
+    it 'makes included code callable' do
+      header = <<-EOS
+        %{
+          void e() { exit(0); }
+        %}
+      EOS
+      result = run_program :rules => "Foo: < e();", :start_state => "Foo:", :header => header
+      result[:exit_status].should == 0
+      result[:stdout].should == ""
+      result[:stderr].should == ""
+      result[:end_state].should be_nil
+    end
+
+    it 'causes a gcc error with invalid code' do
+      header = <<-EOS
+        %{
+          void e() not_valid_code; }
+        %}
+      EOS
+      result = run_program :rules => "Foo: < e();", :start_state => "Foo:", :header => header
+      result[:gcc_error].should be_true
+      result[:exit_status].should be_nil
+      result[:stdout].should be_nil
+      result[:stderr].should be_nil
+      result[:end_state].should be_nil
+    end
   end
 
   describe 'root label' do

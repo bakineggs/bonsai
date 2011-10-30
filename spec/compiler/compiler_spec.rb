@@ -5,18 +5,21 @@ require File.dirname(__FILE__) + '/../../compiler/compiler'
 describe Compiler do
   def run_program options
     options.each do |_, value|
-      raise "Started: is reserved" if value.match /^ *[!+-]?Started:/
-
       depth = value.match(/^ */)[0].length
       value.strip!
       value.gsub! /^ {#{depth}}/, ''
     end
 
-    start_state = options[:start_state].gsub(/^([^ ])/, '+\1').gsub /^/, '  '
+    raise "Started: is reserved" if options[:rules].match /^ *[!+-]?Started:/
+    raise "Started: is reserved" if options[:start_state].match /^ *[!+-]?Started:/
+
+    header = options.delete :header
+
+    start_state = options[:start_state].gsub(/^([^ ])/, '+\1').gsub /^(.)/, '  \1'
     rules = "^:\n  !Started:\n  +Started:\n#{start_state}\n\n#{options[:rules]}"
 
     source = Tempfile.new ['interpreter', '.c']
-    source.puts Compiler.new.compile rules
+    source.puts Compiler.new.compile "#{header}\n\n#{rules}"
     source.flush
 
     result = {}
@@ -28,7 +31,6 @@ describe Compiler do
       result[:exit_status] = $?.exitstatus
       result[:stdout] = File.read "#{interpreter}.stdout"
       result[:stderr] = File.read("#{interpreter}.stderr").gsub(/^Started:\n/, '')
-      result[:end_state] = []
 
       if end_state = result[:stderr].split("No rules to apply!\n")[1]
         result[:end_state] = parse_state end_state
@@ -37,6 +39,8 @@ describe Compiler do
       File.delete interpreter
       File.delete "#{interpreter}.stdout"
       File.delete "#{interpreter}.stderr"
+    else
+      result[:gcc_error] = true
     end
 
     source.close
