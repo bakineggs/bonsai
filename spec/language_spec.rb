@@ -395,23 +395,74 @@ shared_examples_for 'an okk implementation' do
     end
   end
 
-  describe 'nat matching all child conditions' do
+  describe 'not matching all nodes with a condition' do
+    let(:rules) do
+      <<-EOS
+        Foo:
+          Bar:
+          Baz: < exit(0);
+      EOS
+    end
+
     describe 'with all child nodes matching' do
-      it 'applies the rule'
+      it 'applies the rule' do
+        start_state = <<-EOS
+          Foo:
+            Bar:
+            Baz:
+        EOS
+        result = run_program :rules => rules, :start_state => start_state
+        result[:exit_status].should == 0
+      end
     end
 
     describe 'with some child nodes not matching' do
-      it 'applies the rule'
+      it 'applies the rule' do
+        start_state = <<-EOS
+          Foo:
+            Bar:
+            Baz:
+            Qux:
+        EOS
+        result = run_program :rules => rules, :start_state => start_state
+        result[:exit_status].should == 0
+      end
     end
   end
 
-  describe 'matching all child conditions' do
+  describe 'matching all nodes with a condition' do
+    let(:rules) do
+      <<-EOS
+        Foo:=
+          Bar:
+          Baz: < exit(0);
+      EOS
+    end
+
     describe 'with all child nodes matching' do
-      it 'applies the rule'
+      it 'applies the rule' do
+        start_state = <<-EOS
+          Foo:
+            Bar:
+            Baz:
+        EOS
+        result = run_program :rules => rules, :start_state => start_state
+        result[:exit_status].should == 0
+      end
     end
 
     describe 'with some child nodes not matching' do
-      it 'does not apply the rule'
+      it 'does not apply the rule' do
+        start_state = <<-EOS
+          Foo:
+            Bar:
+            Baz:
+            Qux:
+        EOS
+        result = run_program :rules => rules, :start_state => start_state
+        result[:exit_status].should == 1
+        result[:end_state].should == parse_state(start_state)
+      end
     end
   end
 
