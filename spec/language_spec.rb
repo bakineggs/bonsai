@@ -271,14 +271,9 @@ shared_examples_for 'an okk implementation' do
         Baz:
           Bar:
           Foo:
-          Qux:
-      EOS
-      end_state = <<-EOS
-        Baz:
-          Qux:
       EOS
       result = run_program :rules => rules, :start_state => start_state
-      result[:end_state].should == parse_state(end_state)
+      result[:end_state].should == parse_state('Baz:')
     end
 
     it 'matches them in ordered contexts' do
@@ -288,18 +283,11 @@ shared_examples_for 'an okk implementation' do
       EOS
       start_state = <<-EOS
         Baz::
-          Qux:
           Foo:
           Bar:
-          FooQux:
-      EOS
-      end_state = <<-EOS
-        Baz:
-          Qux:
-          FooQux:
       EOS
       result = run_program :rules => rules, :start_state => start_state
-      result[:end_state].should == parse_state(end_state)
+      result[:end_state].should == parse_state('Baz:')
     end
 
     it 'does not match them out of order in ordered contexts' do
@@ -309,10 +297,8 @@ shared_examples_for 'an okk implementation' do
       EOS
       start_state = <<-EOS
         Baz::
-          Qux:
           Bar:
           Foo:
-          FooQux:
       EOS
       result = run_program :rules => rules, :start_state => start_state
       result[:end_state].should == parse_state(start_state)
