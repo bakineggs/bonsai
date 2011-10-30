@@ -54,14 +54,11 @@ int main() {
   return 1;
 }
 
-bool is_ancestor(Node* descendant, Node* ancestor) {
-  while (descendant) {
-    if (descendant == ancestor)
-      return true;
-    descendant = descendant->parent;
-  }
+bool is_ancestor(Node* node, Node* possible_ancestor) {
+  while (node != possible_ancestor)
+    node = node->parent;
 
-  return false;
+  return node != NULL;
 }
 
 Node* add_to_poset(Node* first_in_poset, Node* node_to_add) {
