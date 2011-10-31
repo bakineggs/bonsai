@@ -1,6 +1,9 @@
 require File.dirname(__FILE__) + '/condition'
 
 class Rule
+  def initialize options = {}
+  end
+
   def conditions_can_match_in_order?
     false
   end

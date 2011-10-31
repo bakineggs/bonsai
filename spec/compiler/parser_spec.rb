@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../compiler/parser'
 describe Parser do
   def parse type, body, depth = 0
     body.gsub! /^ {#{depth * 2}}/, ''
-    body = body.split "\n" if type == :rule
+    body = body.split "\n" if type == :conditions
     Parser.new.send :"parse_#{type}", body
   end
 
@@ -49,6 +49,27 @@ describe Parser do
       EOS
     end
 
+    it 'considers top level conditions to have unordered children' do
+      parse(:rules, <<-EOS, 4).first.conditions_are_ordered?.should be_false
+        Foo:
+      EOS
+
+      parse(:rules, <<-EOS, 4).first.conditions_are_ordered?.should be_false
+        Foo::
+      EOS
+    end
+
+    it 'considers the top rule to not require conditions to match all nodes' do
+      parse(:rules, <<-EOS, 4).first.requires_exact_match?.should be_false
+        Foo:
+      EOS
+      rule
+
+      parse(:rules, <<-EOS, 4).first.requires_exact_match?.should be_false
+        Foo:=
+      EOS
+    end
+
     it 'includes the line of any syntax error' do
       lambda {
         parse :rules, <<-EOS, 5
@@ -65,7 +86,7 @@ describe Parser do
 
     it 'requires the first condition to be on the top level' do
       lambda {
-        rule = parse :rule, <<-EOS, 5
+        parse :rules, <<-EOS, 5
             Foo:
         EOS
       }.should raise_error(Parser::Error) do |error|
@@ -77,7 +98,7 @@ describe Parser do
 
     it 'rejects conditions in between levels' do
       lambda {
-        rule = parse :rule, <<-EOS, 5
+        parse :rules, <<-EOS, 5
           Foo:
            Bar:
         EOS
@@ -90,7 +111,7 @@ describe Parser do
 
     it 'rejects conditions more than one level below their parents' do
       lambda {
-        rule = parse :rule, <<-EOS, 5
+        parse :rules, <<-EOS, 5
           Foo:
               Bar:
         EOS
@@ -102,104 +123,75 @@ describe Parser do
     end
   end
 
-  describe '#parse_rule' do
+  describe '#parse_conditions' do
     it 'includes the top-level conditions' do
-      rule = parse :rule, <<-EOS, 4
+      parse(:conditions, <<-EOS, 4).length.should == 2
         Foo:
         Bar:
       EOS
-      rule.conditions.length.should == 2
     end
 
     it 'nests descendant conditions' do
-      rule = parse :rule, <<-EOS, 4
+      conditions = parse :conditions, <<-EOS, 4
         Foo:
           Bar:
             Baz:
           Qux:
         FooBar:
       EOS
-      rule.conditions.length.should == 2
+      conditions.length.should == 2
 
-      foo = rule.conditions[0].child
+      foo = conditions[0]
       foo.node_type.should == 'Foo'
-      foo.conditions.length.should == 2
+      foo.child_rule.conditions.length.should == 2
 
-      bar = foo.conditions[0].child
+      bar = foo.child_rule.conditions[0]
       bar.node_type.should == 'Bar'
-      bar.conditions.length.should == 1
+      bar.child_rule.conditions.length.should == 1
 
-      baz = bar.conditions[0].child
+      baz = bar.child_rule.conditions[0]
       baz.node_type.should == 'Baz'
-      baz.conditions.should be_empty
+      baz.child_rule.conditions.should be_empty
 
-      qux = foo.conditions[1].child
+      qux = foo.child_rule.conditions[1]
       qux.node_type.should == 'Qux'
-      qux.conditions.should be_empty
+      qux.child_rule.conditions.should be_empty
 
-      foo_bar = rule.conditions[1]
+      foo_bar = rule.child_rule.conditions[1]
       foo_bar.node_type.should == 'FooBar'
-      foo_bar.conditions.should be_empty
-    end
-
-    it 'considers the top level rule to have unordered conditions' do
-      rule = parse :rule, <<-EOS, 4
-        Foo:
-      EOS
-      rule.conditions_are_ordered?.should be_false
-
-      rule = parser.parse :rule, <<-EOS, 4
-        Foo::
-      EOS
-      rule.conditions_are_ordered?.should be_false
+      foo_bar.child_rule.conditions.should be_empty
     end
 
     it 'considers one colon to mean conditions are unordered' do
-      rule = parse :rule, <<-EOS, 4
+      parse(:condition, <<-EOS, 4).child_rule.conditions_are_ordered?.should be_false
         Foo:
       EOS
-      rule.conditions[0].child.conditions_are_ordered?.should be_false
     end
 
     it 'considers two colons to mean conditions are ordered' do
-      rule = parse :rule, <<-EOS, 4
+      parse(:condition, <<-EOS, 4).child_rule.conditions_are_ordered?.should be_true
         Foo::
       EOS
-      rule.conditions[0].child.conditions_are_ordered?.should be_true
-    end
-
-    it 'considers the top rule to not require conditions to match all nodes' do
-      rule = parse :rule, <<-EOS, 4
-        Foo:
-      EOS
-      rule.requires_exact_match?.should be_false
-
-      rule = parser.parse :rule, <<-EOS, 4
-        Foo:=
-      EOS
-      rule.requires_exact_match?.should be_false
     end
 
     it 'considers lack of an equals sign to mean conditions do not have to match all nodes' do
-      rule = parse :rule, <<-EOS, 4
+      parse(:condition, <<-EOS, 4).child_rule.requires_exact_match?.should be_false
         Foo:
       EOS
-      rule.conditions[0].child.requires_exact_match?.should be_false
     end
 
     it 'considers an equals sign to mean conditions have to match all nodes' do
-      rule = parse :rule, <<-EOS, 4
+      parse(:condition, <<-EOS, 4).child_rule.requires_exact_match?.should be_true
         Foo:=
       EOS
-      rule.conditions[0].child.requires_exact_match?.should be_true
     end
 
     it 'allows ordered and exact together' do
-      rule = parse :rule, <<-EOS, 4
+      rule = parse(:condition, <<-EOS, 4).child_rule
         Foo::=
       EOS
-      rule.conditions[0].child.conditions_are_ordered?.should be_true
-      rule.conditions[0].child.requires_exact_match?.should be_true
+      rule.conditions_are_ordered?.should be_true
+      rule.requires_exact_match?.should be_true
     end
   end
 
