@@ -19,28 +19,42 @@ class Compiler
 
   private
     def apply_rules rules
-      apply_rules = ""
+      apply_rules = <<-EOS
+        typedef struct Match {
+        } Match;
+      EOS
 
-      rules.each_with_index do |rule, index|
-        apply_rules += <<-EOS
-          bool apply_rule_#{index}(Node* node) {
-            return false;
-          }
-        EOS
-      end
+      apply_rules += rules.map {|rule| "#{rule_matches rule}\n#{transform_rule rule}"}.join "\n"
 
       apply_rules += <<-EOS
         bool apply_rules(Node* node) {
+          Match* match;
       EOS
 
-      apply_rules += (0...rules.length).map do |i|
+      apply_rules += rules.map do |rule|
         <<-EOS
-          if (apply_rule_#{i}(node))
+          if ((match = rule_#{rule.object_id}_matches(node)) && transform_rule_#{rule.object_id}(match))
             return true;
         EOS
       end.join ' else '
 
       apply_rules + <<-EOS
+          return false;
+        }
+      EOS
+    end
+
+    def rule_matches rule
+      <<-EOS
+        Match* rule_#{rule.object_id}_matches(Node* node) {
+          return NULL;
+        }
+      EOS
+    end
+
+    def transform_rule rule
+      <<-EOS
+        bool transform_rule_#{rule.object_id}(Match* match) {
           return false;
         }
       EOS
