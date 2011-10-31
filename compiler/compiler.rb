@@ -19,11 +19,30 @@ class Compiler
 
   private
     def apply_rules rules
-      apply_rules = "bool apply_rules(Node* node) {\n"
+      apply_rules = ""
 
-      rules.each do |rule|
+      rules.each_with_index do |rule, index|
+        apply_rules += <<-EOS
+          bool apply_rule_#{index}(Node* node) {
+            return false;
+          }
+        EOS
       end
 
-      apply_rules + "return false;\n}"
+      apply_rules += <<-EOS
+        bool apply_rules(Node* node) {
+      EOS
+
+      apply_rules += (0...rules.length).map do |i|
+        <<-EOS
+          if (apply_rule_#{i}(node))
+            return true;
+        EOS
+      end.join ' else '
+
+      apply_rules + <<-EOS
+          return false;
+        }
+      EOS
     end
 end
