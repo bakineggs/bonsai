@@ -45,8 +45,30 @@ class Compiler
     end
 
     def rule_matches rule
-      <<-EOS
+      rule_matches = <<-EOS
         Match* rule_#{rule.object_id}_matches(Node* node) {
+      EOS
+
+      if rule.conditions_can_match_in_order?
+        rule_matches += <<-EOS
+          if (node->children_are_ordered) {
+        EOS
+
+        unless rule.can_match_ordered_nodes_out_of_order?
+          rule_matches += <<-EOS
+            return NULL;
+          EOS
+        end
+
+        rule_matches += <<-EOS
+          }
+        EOS
+      end
+
+      if rule.conditions_can_match_out_of_order?
+      end
+
+      rule_matches + <<-EOS
           return NULL;
         }
       EOS
