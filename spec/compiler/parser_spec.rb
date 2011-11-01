@@ -150,30 +150,6 @@ describe Parser do
       foo_bar.node_type.should == 'FooBar'
       foo_bar.child_rule.conditions.should be_empty
     end
-
-    it 'considers one colon to mean conditions are unordered' do
-      parse(:condition, 'Foo:').child_rule.conditions_are_ordered?.should be_false
-    end
-
-    it 'considers two colons to mean conditions are ordered' do
-      parse(:condition, 'Foo::').child_rule.conditions_are_ordered?.should be_true
-    end
-
-    it 'considers lack of an equals sign to mean conditions do not have to match all nodes' do
-      parse(:condition, 'Foo:').child_rule.requires_exact_match?.should be_false
-    end
-
-    it 'considers an equals sign to mean conditions have to match all nodes' do
-      parse(:condition, 'Foo:=').child_rule.requires_exact_match?.should be_true
-    end
-
-    it 'allows ordered and exact together' do
-      rule = parse(:condition, <<-EOS, 4).child_rule
-        Foo::=
-      EOS
-      rule.conditions_are_ordered?.should be_true
-      rule.requires_exact_match?.should be_true
-    end
   end
 
   describe '#parse_condition' do
@@ -211,10 +187,28 @@ describe Parser do
       end
     end
 
+    it 'considers an appended : to mean conditions are ordered' do
+      parse(:condition, 'Foo:').child_rule.conditions_are_ordered?.should be_false
+      parse(:condition, 'Foo::').child_rule.conditions_are_ordered?.should be_true
+    end
+
+    it 'considers an appended = to mean conditions have to match all nodes' do
+      parse(:condition, 'Foo:').child_rule.requires_exact_match?.should be_false
+      parse(:condition, 'Foo:=').child_rule.requires_exact_match?.should be_true
+    end
+
     it 'considers an appended * to mean that the condition may match any number of nodes' do
       parse(:condition, 'Foo:').matches_many_nodes?.should be_false
       parse(:condition, 'Foo:*').matches_many_nodes?.should be_true
     end
+
+    it 'allows ordered, exact, and multiple together' do
+      condition = parse :condition, 'Foo::=*'
+      condition.child_rule.conditions_are_ordered?.should be_true
+      condition.child_rule.requires_exact_match?.should be_true
+      condition.matches_many_nodes?.should be_true
+    end
+    # TODO: test that the :, =, and * operators must be applied in a specific order
 
     it 'does not assign a value without one' do
       parse(:condition, 'Foo:').value.should be_nil
