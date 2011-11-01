@@ -49,25 +49,14 @@ describe Parser do
       EOS
     end
 
-    it 'considers top level conditions to have unordered children' do
-      parse(:rules, <<-EOS, 4).first.conditions_are_ordered?.should be_false
-        Foo:
-      EOS
-
-      parse(:rules, <<-EOS, 4).first.conditions_are_ordered?.should be_false
-        Foo::
-      EOS
+    it 'considers the top level rule to have unordered children' do
+      parse(:rules, 'Foo:').first.conditions_are_ordered?.should be_false
+      parse(:rules, 'Foo::').first.conditions_are_ordered?.should be_false
     end
 
-    it 'considers the top rule to not require conditions to match all nodes' do
-      parse(:rules, <<-EOS, 4).first.requires_exact_match?.should be_false
-        Foo:
-      EOS
-      rule
-
-      parse(:rules, <<-EOS, 4).first.requires_exact_match?.should be_false
-        Foo:=
-      EOS
+    it 'considers the top level rule to not require all nodes to be matched' do
+      parse(:rules, 'Foo:').first.requires_exact_match?.should be_false
+      parse(:rules, 'Foo:=').first.requires_exact_match?.should be_false
     end
 
     it 'includes the line of any syntax error' do
@@ -163,27 +152,19 @@ describe Parser do
     end
 
     it 'considers one colon to mean conditions are unordered' do
-      parse(:condition, <<-EOS, 4).child_rule.conditions_are_ordered?.should be_false
-        Foo:
-      EOS
+      parse(:condition, 'Foo:').child_rule.conditions_are_ordered?.should be_false
     end
 
     it 'considers two colons to mean conditions are ordered' do
-      parse(:condition, <<-EOS, 4).child_rule.conditions_are_ordered?.should be_true
-        Foo::
-      EOS
+      parse(:condition, 'Foo::').child_rule.conditions_are_ordered?.should be_true
     end
 
     it 'considers lack of an equals sign to mean conditions do not have to match all nodes' do
-      parse(:condition, <<-EOS, 4).child_rule.requires_exact_match?.should be_false
-        Foo:
-      EOS
+      parse(:condition, 'Foo:').child_rule.requires_exact_match?.should be_false
     end
 
     it 'considers an equals sign to mean conditions have to match all nodes' do
-      parse(:condition, <<-EOS, 4).child_rule.requires_exact_match?.should be_true
-        Foo:=
-      EOS
+      parse(:condition, 'Foo:=').child_rule.requires_exact_match?.should be_true
     end
 
     it 'allows ordered and exact together' do
