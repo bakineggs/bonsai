@@ -1,12 +1,9 @@
 require 'spec'
 require File.dirname(__FILE__) + '/../../compiler/rule'
+require File.dirname(__FILE__) + '/../../compiler/parser'
 
 describe Rule do
-  let(:top_level_rule) do
-    # TODO: build the following rule:
-    # Foo:
-    # Bar::
-  end
+  let(:top_level_rule) { Parser.new.parse_rules("Foo:\nBar::").first }
   let(:unordered_rule) { top_level_rule.conditions[0].child_rule }
   let(:ordered_rule) { top_level_rule.conditions[1].child_rule }
 

@@ -4,6 +4,7 @@ class Rule
   attr_reader :conditions
 
   def initialize options = {}
+    @top_level = options[:top_level]
     @conditions_are_ordered = options[:conditions_are_ordered]
     @must_match_all_nodes = options[:must_match_all_nodes]
     @conditions = options[:conditions]
@@ -18,14 +19,14 @@ class Rule
   end
 
   def conditions_can_match_in_order?
-    false
+    conditions_are_ordered? || @top_level
   end
 
   def conditions_can_match_out_of_order?
-    false
+    !conditions_are_ordered? || @top_level
   end
 
   def conditions_can_match_ordered_nodes_out_of_order?
-    false
+    !conditions_are_ordered? && !@top_level
   end
 end

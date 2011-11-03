@@ -30,7 +30,7 @@ class Parser
         raise Error, 'The first condition of a rule must be at the top level'
       end
 
-      Rule.new :conditions => parse_conditions(definition)
+      Rule.new :top_level => true, :conditions => parse_conditions(definition)
     end
   end
 
