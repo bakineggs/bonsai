@@ -54,7 +54,22 @@ class Compiler
           if (node->children_are_ordered) {
         EOS
 
-        unless rule.can_match_ordered_nodes_out_of_order?
+        rule_matches += <<-EOS
+            if (false) { // TODO: if the conditions match the nodes in order
+        EOS
+
+        if rule.must_match_all_nodes?
+          rule_matches += <<-EOS
+              if (false) // TODO: if there are no unmatched nodes
+          EOS
+        end
+
+        rule_matches += <<-EOS
+              return NULL; // TODO: return the matched nodes
+            }
+        EOS
+
+        unless rule.conditions_can_match_ordered_nodes_out_of_order?
           rule_matches += <<-EOS
             return NULL;
           EOS
@@ -66,6 +81,26 @@ class Compiler
       end
 
       if rule.conditions_can_match_out_of_order?
+        rule_matches += <<-EOS
+          if (false) // TODO: if any preventing rule matches one of the node's children
+            return NULL;
+
+          if (false) { // TODO: if there is a one-to-one mapping of singly-matched conditions to node's children
+            // TODO: greedily map multiply-matched conditions to node's unmatched children
+        EOS
+
+        if rule.must_match_all_nodes?
+          rule_matches += <<-EOS
+            if (false) // TODO: if there are any unmatched nodes
+              return NULL;
+          EOS
+        end
+
+        rule_matches += <<-EOS
+            // TODO: add creating conditions to the match
+            return NULL; // TODO: return the match
+          }
+        EOS
       end
 
       rule_matches + <<-EOS
