@@ -210,17 +210,29 @@ describe Parser do
     end
     # TODO: test that the :, =, and * operators must be applied in a specific order
 
-    it 'does not assign a value without one' do
-      parse(:condition, 'Foo:').value.should be_nil
+    describe 'values' do
+      it 'does not assign a value without one' do
+        parse(:condition, 'Foo:').value.should be_nil
+      end
+
+      it 'reads the integer value' do
+        parse(:condition, 'Foo: 17').value.should == 17
+        parse(:condition, 'Foo: 17').value.should be_an(Integer)
+      end
+
+      it 'reads the real value' do
+        parse(:condition, 'Foo: 17.34').value.should == 17.34
+      end
     end
 
-    it 'reads the integer value' do
-      parse(:condition, 'Foo: 17').value.should == 17
-      parse(:condition, 'Foo: 17').value.should be_an(Integer)
-    end
+    describe 'code segments' do
+      it 'does not assign a code segment without one' do
+        parse(:condition, 'Foo:').code_segment.should be_nil
+      end
 
-    it 'reads the real value' do
-      parse(:condition, 'Foo: 17.34').value.should == 17.34
+      it 'reads the code segment' do
+        parse(:condition, 'Foo: < exit(0);').code_segment.should == 'exit(0);'
+      end
     end
   end
 end
