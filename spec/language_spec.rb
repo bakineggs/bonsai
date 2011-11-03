@@ -370,14 +370,30 @@ shared_examples_for 'an okk implementation' do
 
     describe 'matching ordered child nodes' do
       describe 'that match in order' do
-        it 'applies the rule' do
-          start_state = <<-EOS
-            Foo::
-              Bar:
-              Baz:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 0
+        describe 'from the beginning' do
+          it 'applies the rule' do
+            start_state = <<-EOS
+              Foo::
+                Bar:
+                Baz:
+            EOS
+            result = run_program :rules => rules, :start_state => start_state
+            result[:exit_status].should == 0
+          end
+        end
+
+        describe 'from the middle' do
+          it 'does not apply the rule' do
+            start_state = <<-EOS
+              Foo::
+                Qux:
+                Bar:
+                Baz:
+            EOS
+            result = run_program :rules => rules, :start_state => start_state
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state(start_state)
+          end
         end
       end
 
@@ -517,46 +533,62 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'conditions at the top level of a rule' do
-    it 'matches them in unordered contexts' do
-      rules = <<-EOS
+    let(:rules) do
+      <<-EOS
         -Foo:
         -Bar:
       EOS
-      start_state = <<-EOS
-        Baz:
-          Bar:
-          Foo:
-      EOS
-      result = run_program :rules => rules, :start_state => start_state
-      result[:end_state].should == parse_state('Baz:')
     end
 
-    it 'matches them in ordered contexts' do
-      rules = <<-EOS
-        -Foo:
-        -Bar:
-      EOS
-      start_state = <<-EOS
-        Baz::
-          Foo:
-          Bar:
-      EOS
-      result = run_program :rules => rules, :start_state => start_state
-      result[:end_state].should == parse_state('Baz:')
+    describe 'in unordered contexts' do
+      it 'matches them' do
+        start_state = <<-EOS
+          Baz:
+            Bar:
+            Foo:
+        EOS
+        result = run_program :rules => rules, :start_state => start_state
+        result[:end_state].should == parse_state('Baz:')
+      end
     end
 
-    it 'does not match them out of order in ordered contexts' do
-      rules = <<-EOS
-        -Foo:
-        -Bar:
-      EOS
-      start_state = <<-EOS
-        Baz::
-          Bar:
-          Foo:
-      EOS
-      result = run_program :rules => rules, :start_state => start_state
-      result[:end_state].should == parse_state(start_state)
+    describe 'in ordered contexts' do
+      describe 'matching from the beginning' do
+        it 'matches them' do
+          start_state = <<-EOS
+            Baz::
+              Foo:
+              Bar:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:end_state].should == parse_state('Baz:')
+        end
+      end
+
+      describe 'matching from the middle' do
+        it 'matches them' do
+          start_state = <<-EOS
+            Baz::
+              Qux:
+              Foo:
+              Bar:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:end_state].should == parse_state('Baz:')
+        end
+      end
+
+      describe 'matching out of order' do
+        it 'does not match them' do
+          start_state = <<-EOS
+            Baz::
+              Bar:
+              Foo:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:end_state].should == parse_state(start_state)
+        end
+      end
     end
   end
 end
