@@ -26,6 +26,10 @@ class Condition
     @prevents_match
   end
 
+  def must_match_a_node?
+    !creates_node? && !prevents_match? && !matches_multiple_nodes?
+  end
+
   def matches_multiple_nodes?
     @matches_multiple_nodes
   end

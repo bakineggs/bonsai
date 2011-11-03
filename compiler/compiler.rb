@@ -156,8 +156,24 @@ class Compiler
       rule_matches += <<-EOS
           if (false) // TODO: if any preventing rule matches one of the node's children
             return NULL;
+      EOS
 
-          if (false) { // TODO: if there is a one-to-one mapping of singly-matched conditions to node's children
+      singly_matched_conditions = rule.conditions.select &:must_match_a_node?
+      child_rules_match += one_to_one_mapping singly_matched_conditions
+
+      if singly_matched_conditions.empty?
+        rule_matches += <<-EOS
+          Match* match = NULL;
+          if (true) {
+        EOS
+      else
+        rule_matches += <<-EOS
+          Match* match = map_condition_#{singly_matched_conditions.first.object_id}(node);
+          if (match) {
+        EOS
+      end
+
+      rule_matches += <<-EOS
             // TODO: greedily map multiply-matched conditions to node's unmatched children
       EOS
 
@@ -180,6 +196,19 @@ class Compiler
       EOS
 
       "#{child_rules_match}\n#{rule_matches}"
+    end
+
+    def one_to_one_mapping conditions
+      mapping = <<-EOS
+        Match* map_condition_#{conditions.first.object_id}(Node* node) {
+          return NULL;
+        }
+      EOS
+
+      "#{one_to_one_mapping_of_unmatched conditions[1..-1]}\n#{mapping}"
+    end
+
+    def one_to_one_mapping_of_unmatched conditions
     end
 
     def transform_rule rule
