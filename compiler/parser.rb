@@ -70,7 +70,7 @@ class Parser
       :creates_node => match[1] == '+',
       :removes_node => match[1] == '-',
       :prevents_match => match[1] == '!',
-      :node_type => match[2] == '^' ? :top : match[2],
+      :node_type => match[2] == '^' ? :root : match[2],
       :matches_multiple_nodes => match[5] == '*',
       :child_rule => Rule.new({
         :conditions_are_ordered => match[3] == ':',

@@ -158,7 +158,7 @@ describe Parser do
     end
 
     it 'considers the node type ^ to mean top level' do
-      parse(:condition, '^:').node_type.should == :top
+      parse(:condition, '^:').node_type.should == :root
     end
 
     it 'considers a prepended + to mean creating a node' do

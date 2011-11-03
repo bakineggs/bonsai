@@ -19,12 +19,7 @@ class Compiler
 
   private
     def apply_rules rules
-      apply_rules = <<-EOS
-        typedef struct Match {
-        } Match;
-      EOS
-
-      apply_rules += rules.map {|rule| "#{rule_matches rule}\n#{transform_rule rule}"}.join "\n"
+      apply_rules = rules.map {|rule| "#{rule_matches rule}\n#{transform_rule rule}"}.join "\n"
 
       apply_rules += <<-EOS
         bool apply_rules(Node* node) {
@@ -45,14 +40,52 @@ class Compiler
     end
 
     def rule_matches rule
+      child_rules_match = ""
+
       rule_matches = <<-EOS
         Match* rule_#{rule.object_id}_matches(Node* node) {
+          Match* first_match = NULL;
+          Match* current_match = NULL;
       EOS
 
       if rule.conditions_can_match_in_order?
         rule_matches += <<-EOS
           if (node->children_are_ordered) {
+            Node* child = node->children;
         EOS
+
+        rule.conditions.each do |condition|
+          if condition.creates_node?
+            rule_matches += <<-EOS
+              Match* creating_match = (Match*) malloc(sizeof(Match));
+              creating_match->next = NULL;
+              creating_match->child = NULL;
+              creating_match->node = child;
+              if (current_match) {
+                current_match->next = creating_match;
+                current_match = creating_match;
+              } else
+                first_match = current_match = creating_match;
+            EOS
+          elsif condition.prevents_match?
+            rule_matches += <<-EOS
+              if (child->type != #{condition.node_type == :root ? "root_node_type" : "node_type_for(\"#{condition.node_type}\")"})
+                return release_match_memory(first_match);
+            EOS
+
+            if condition.child_rule
+              child_rules_match += rule_matches condition.child_rule
+              rule_matches += <<-EOS
+                if (!(current_match->child = rule_#{condition.child_rule.object_id}_matches(child)))
+                  return release_match_memory(first_match);
+              EOS
+            end
+          elsif condition.matches_multiple_nodes?
+            # TODO
+          else
+            # TODO
+          end
+        end
 
         rule_matches += <<-EOS
             if (false) { // TODO: if the conditions match the nodes in order
@@ -103,10 +136,12 @@ class Compiler
         EOS
       end
 
-      rule_matches + <<-EOS
+      rule_matches += <<-EOS
           return NULL;
         }
       EOS
+
+      "#{child_rules_match}\n#{rule_matches}"
     end
 
     def transform_rule rule

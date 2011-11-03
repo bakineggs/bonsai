@@ -28,8 +28,10 @@ Node* new_node(char* type);
 bool apply_rules(Node* node);
 Node* add_to_poset(Node* first_in_poset, Node* node_to_add);
 
+char* root_node_type = "^";
+
 int main() {
-  Node* root = new_node("^");
+  Node* root = new_node(root_node_type);
 
   Node* first_in_poset = root;
   while (first_in_poset) {
@@ -398,4 +400,19 @@ Node* new_node(char* type) {
   node->value_type = none;
 
   return node;
+}
+
+typedef struct Match {
+  struct Match* next;
+  struct Match* child;
+  Node* node;
+} Match;
+
+Match* release_match_memory(Match* match) {
+  if (match) {
+    release_match_memory(match->next);
+    release_match_memory(match->child);
+    free(match);
+  }
+  return NULL;
 }
