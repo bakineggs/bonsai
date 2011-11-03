@@ -55,8 +55,8 @@ describe Parser do
     end
 
     it 'considers the top level rule to not require all nodes to be matched' do
-      parse(:rules, 'Foo:').first.requires_exact_match?.should be_false
-      parse(:rules, 'Foo:=').first.requires_exact_match?.should be_false
+      parse(:rules, 'Foo:').first.must_match_all_nodes?.should be_false
+      parse(:rules, 'Foo:=').first.must_match_all_nodes?.should be_false
     end
 
     it 'includes the line of any syntax error' do
@@ -146,7 +146,7 @@ describe Parser do
       qux.node_type.should == 'Qux'
       qux.child_rule.conditions.should be_empty
 
-      foo_bar = rule.child_rule.conditions[1]
+      foo_bar = conditions[1]
       foo_bar.node_type.should == 'FooBar'
       foo_bar.child_rule.conditions.should be_empty
     end
@@ -193,20 +193,20 @@ describe Parser do
     end
 
     it 'considers an appended = to mean conditions have to match all nodes' do
-      parse(:condition, 'Foo:').child_rule.requires_exact_match?.should be_false
-      parse(:condition, 'Foo:=').child_rule.requires_exact_match?.should be_true
+      parse(:condition, 'Foo:').child_rule.must_match_all_nodes?.should be_false
+      parse(:condition, 'Foo:=').child_rule.must_match_all_nodes?.should be_true
     end
 
     it 'considers an appended * to mean that the condition may match any number of nodes' do
-      parse(:condition, 'Foo:').matches_many_nodes?.should be_false
-      parse(:condition, 'Foo:*').matches_many_nodes?.should be_true
+      parse(:condition, 'Foo:').matches_multiple_nodes?.should be_false
+      parse(:condition, 'Foo:*').matches_multiple_nodes?.should be_true
     end
 
     it 'allows ordered, exact, and multiple together' do
       condition = parse :condition, 'Foo::=*'
       condition.child_rule.conditions_are_ordered?.should be_true
-      condition.child_rule.requires_exact_match?.should be_true
-      condition.matches_many_nodes?.should be_true
+      condition.child_rule.must_match_all_nodes?.should be_true
+      condition.matches_multiple_nodes?.should be_true
     end
     # TODO: test that the :, =, and * operators must be applied in a specific order
 
