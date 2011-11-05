@@ -39,7 +39,7 @@ class Compiler
       EOS
     end
 
-    def rule_matches rule
+    def rule_matches rule # TODO: rules with no conditions should be able to match
       child_rules_match = ""
       rule_matches = <<-EOS
         Match* rule_#{rule.object_id}_matches(Node* node) {
@@ -97,7 +97,7 @@ class Compiler
           EOS
         elsif condition.prevents_match?
           rule_matches += <<-EOS
-            if (child->type == #{condition.node_type == :root ? "root_node_type" : "node_type_for(\"#{condition.node_type}\")"}) {
+            if (child->type == #{condition.node_type == :root ? "root_node_type" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
           EOS
 
           if condition.child_rule
@@ -127,7 +127,7 @@ class Compiler
 
       if rule.must_match_all_nodes?
         rule_matches += <<-EOS
-          if (false) // TODO: if there are no unmatched nodes
+          if (false) // TODO: if there are any unmatched nodes
             return release_match_memory(first_match);
         EOS
       end
@@ -168,7 +168,7 @@ class Compiler
         EOS
       else
         rule_matches += <<-EOS
-          Match* match = map_condition_#{singly_matched_conditions.first.object_id}(node);
+          Match* match = map_conditions_starting_from_#{singly_matched_conditions.first.object_id}(node, NULL);
           if (match) {
         EOS
       end
@@ -199,16 +199,32 @@ class Compiler
     end
 
     def one_to_one_mapping conditions
+      return "" unless condition = conditions.first
+      other_conditions = conditions[1..-1]
+
       mapping = <<-EOS
-        Match* map_condition_#{conditions.first.object_id}(Node* node) {
+        Match* map_conditions_starting_from_#{condition.object_id}(Node* node, Match* matched) {
+          Node* child = node->children;
+
+          while (child) {
+            if (child->type == node_type_for("#{condition.node_type}") && !already_matched(child, matched)) { // TODO: create a global for each node type in a condition instead of looking it up each time
+              Match* match = (Match*) malloc(sizeof(Match));
+              if (match->child = rule_#{condition.child_rule.object_id}_matches(child)) {
+                match->alternate = NULL;
+                match->next = NULL;
+                #{"if (match->next = map_conditions_starting_from_#{other_conditions.first.object_id}(node, match))" unless other_conditions.empty?}
+                return match;
+              }
+              release_match_memory(match);
+            }
+            child = child->next_sibling;
+          }
+
           return NULL;
         }
       EOS
 
-      "#{one_to_one_mapping_of_unmatched conditions[1..-1]}\n#{mapping}"
-    end
-
-    def one_to_one_mapping_of_unmatched conditions
+      "#{rule_matches condition.child_rule}\n#{one_to_one_mapping other_conditions}\n#{mapping}"
     end
 
     def transform_rule rule

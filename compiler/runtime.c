@@ -405,14 +405,28 @@ Node* new_node(char* type) {
 typedef struct Match {
   struct Match* next;
   struct Match* child;
+  struct Match* alternate;
   Node* node;
 } Match;
 
 Match* release_match_memory(Match* match) {
-  if (match) {
-    release_match_memory(match->next);
-    release_match_memory(match->child);
-    free(match);
+  if (!match)
+    return NULL;
+
+  Match* alternate = match->alternate;
+
+  release_match_memory(match->next);
+  release_match_memory(match->child);
+  free(match);
+
+  return alternate;
+}
+
+bool already_matched(Node* node, Match* match) {
+  while (match) {
+    if (match->node == node)
+      return true;
+    match = match->next;
   }
-  return NULL;
+  return false;
 }
