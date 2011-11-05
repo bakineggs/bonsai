@@ -39,7 +39,7 @@ class Compiler
       EOS
     end
 
-    def rule_matches rule # TODO: rules with no conditions should be able to match
+    def rule_matches rule
       child_rules_match = ""
       rule_matches = <<-EOS
         Match* rule_#{rule.object_id}_matches(Node* node) {
@@ -97,15 +97,15 @@ class Compiler
           EOS
         elsif condition.prevents_match?
           rule_matches += <<-EOS
-            if (child->type == #{condition.node_type == :root ? "root_node_type" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
+            if (child->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
           EOS
 
           if condition.child_rule
             child_rules_match += rule_matches condition.child_rule
             rule_matches += <<-EOS
-              Match* child_match = rule_#{condition.child_rule.object_id}_matches(child);
-              if (child_match) {
-                release_match_memory(child_match);
+              Match* preventing_match = rule_#{condition.child_rule.object_id}_matches(child);
+              if (preventing_match) {
+                release_match_memory(preventing_match);
                 return release_match_memory(first_match);
               }
             EOS
@@ -133,7 +133,7 @@ class Compiler
       end
 
       rule_matches += <<-EOS
-          return first_match;
+          return first_match ? first_match : EMPTY_MATCH;
         }
       EOS
 
@@ -141,39 +141,18 @@ class Compiler
     end
 
     def rule_matches_out_of_order rule
-      child_rules_match = ""
+      singly_matched_conditions = rule.conditions.select &:must_match_a_node?
+
       rule_matches = <<-EOS
         Match* rule_#{rule.object_id}_matches_out_of_order(Node* node) {
-      EOS
+          #{"if (node->children_are_ordered) return NULL;" unless rule.conditions_can_match_ordered_nodes_out_of_order?}
 
-      unless rule.conditions_can_match_ordered_nodes_out_of_order?
-        rule_matches += <<-EOS
-          if (node->children_are_ordered)
-            return NULL;
-        EOS
-      end
-
-      rule_matches += <<-EOS
           if (false) // TODO: if any preventing rule matches one of the node's children
             return NULL;
-      EOS
 
-      singly_matched_conditions = rule.conditions.select &:must_match_a_node?
-      child_rules_match += one_to_one_mapping singly_matched_conditions
-
-      if singly_matched_conditions.empty?
-        rule_matches += <<-EOS
-          Match* match = NULL;
-          if (true) {
-        EOS
-      else
-        rule_matches += <<-EOS
-          Match* match = map_conditions_starting_from_#{singly_matched_conditions.first.object_id}(node, NULL);
+          Match* match = EMPTY_MATCH;
+          #{"match = map_conditions_starting_from_#{singly_matched_conditions.first.object_id}(node, NULL);" unless singly_matched_conditions.empty?}
           if (match) {
-        EOS
-      end
-
-      rule_matches += <<-EOS
             // TODO: greedily map multiply-matched conditions to node's unmatched children
       EOS
 
@@ -186,7 +165,7 @@ class Compiler
 
       rule_matches += <<-EOS
             // TODO: add creating conditions to the match
-            return NULL; // TODO: return the match
+            return match; // TODO: return the match
           }
       EOS
 
@@ -195,7 +174,7 @@ class Compiler
         }
       EOS
 
-      "#{child_rules_match}\n#{rule_matches}"
+      "#{one_to_one_mapping singly_matched_conditions}\n#{rule_matches}"
     end
 
     def one_to_one_mapping conditions
