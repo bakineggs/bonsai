@@ -26,7 +26,7 @@ describe Compiler do
 
     interpreter = source.path.sub(/.c$/, '')
     if system "gcc -o #{interpreter} #{source.path}"
-      `#{interpreter} > #{interpreter}.stdout 2> #{interpreter}.stderr`
+      `ulimit -t 1; #{interpreter} > #{interpreter}.stdout 2> #{interpreter}.stderr`
 
       result[:exit_status] = $?.exitstatus
       result[:stdout] = File.read "#{interpreter}.stdout"

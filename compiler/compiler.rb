@@ -87,6 +87,7 @@ class Compiler
         if condition.creates_node?
           rule_matches += <<-EOS
             Match* creating_match = (Match*) malloc(sizeof(Match));
+            creating_match->condition_id = #{condition.object_id};
             creating_match->next_match = NULL;
             creating_match->child_match = NULL;
             creating_match->matched_node = next_child;
@@ -155,10 +156,8 @@ class Compiler
           while (preventing_child) {
             if (preventing_child->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
               Match* preventing_match = rule_#{condition.child_rule.object_id}_matches(preventing_child);
-              if (preventing_match) {
-                release_match_memory(preventing_match);
-                return NULL;
-              }
+              if (preventing_match)
+                return release_match_memory(preventing_match);
             }
             preventing_child = preventing_child->next_sibling;
           }
@@ -167,6 +166,7 @@ class Compiler
 
       rule_matches += <<-EOS
           Match* match = EMPTY_MATCH;
+          Match* creating_match;
           #{"match = map_conditions_starting_from_#{singly_matched_conditions.first.object_id}(node, NULL);" unless singly_matched_conditions.empty?}
           if (match) {
             // TODO: greedily map multiply-matched conditions to node's unmatched children
@@ -175,13 +175,28 @@ class Compiler
       if rule.must_match_all_nodes?
         rule_matches += <<-EOS
             if (false) // TODO: if there are any unmatched nodes
-              return NULL;
+              return release_match_memory(match);
+        EOS
+      end
+
+      rule.conditions.select(&:creates_node?).each do |condition|
+        rule_matches += <<-EOS
+            creating_match = (Match*) malloc(sizeof(Match));
+            creating_match->condition_id = #{condition.object_id};
+            creating_match->next_match = NULL;
+            creating_match->child_match = NULL;
+            creating_match->matched_node = node->children;
+            creating_match->parent_of_matched_node = node;
+            creating_match->previous_sibling_of_matched_node = NULL;
+
+            if (match != EMPTY_MATCH)
+              creating_match->next_match = match;
+            match = creating_match;
         EOS
       end
 
       rule_matches += <<-EOS
-            // TODO: add creating conditions to the match
-            return match; // TODO: return the match
+            return match;
           }
       EOS
 
@@ -204,6 +219,7 @@ class Compiler
           while (node) {
             if (node->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"} && !already_matched(node, matched)) { // TODO: create a global for each node type in a condition instead of looking it up each time
               Match* match = (Match*) malloc(sizeof(Match));
+              match->condition_id = #{condition.object_id};
               match->matched_node = node;
               if (match->child_match = rule_#{condition.child_rule.object_id}_matches(node)) {
                 match->next_match = NULL;
@@ -223,10 +239,109 @@ class Compiler
     end
 
     def transform_rule rule
-      <<-EOS
+      transform_child_rules = ""
+
+      transform_rule = <<-EOS
         bool transform_rule_#{rule.object_id}(Match* match) {
-          return false;
+          bool transformed = false;
+
+          while (match && match != EMPTY_MATCH) {
+      EOS
+
+      rule.conditions.each do |condition|
+        transform_child_rules += transform_rule condition.child_rule
+        transform_child_rules += create_node condition if condition.creates_node?
+        transform_rule += <<-EOS
+            if (match->condition_id == #{condition.object_id}) {
+              #{"create_node_#{condition.object_id}(match); transformed = true;" if condition.creates_node?}
+              if (transform_rule_#{condition.child_rule.object_id}(match->child_match))
+                transformed = true;
+            }
+        EOS
+      end
+
+      transform_rule += <<-EOS
+            match = match->next_match;
+          }
+
+          return transformed;
         }
       EOS
+
+      "#{transform_child_rules}\n#{transform_rule}"
+    end
+
+    def create_node condition
+      <<-EOS
+        #{create_child_nodes condition.child_rule}
+
+        void create_node_#{condition.object_id}(Match* match) {
+          Node* node = (Node*) malloc(sizeof(Node));
+          node->parent = match->parent_of_matched_node;
+          node->next_sibling = match->matched_node;
+          node->previous_sibling = match->previous_sibling_of_matched_node;
+          node->children_are_ordered = #{condition.child_rule.conditions_are_ordered?};
+          node->children = NULL;
+          node->next_in_poset = NULL;
+          node->type = node_type_for("#{condition.node_type}"); // TODO: use global node type
+          node->value_type = none;
+
+          create_child_nodes_#{condition.child_rule.object_id}(node);
+
+          if (node->previous_sibling)
+            node->previous_sibling->next_sibling = node;
+
+          if (node->next_sibling)
+            node->next_sibling->previous_sibling = node;
+
+          if (!node->parent->children)
+            node->parent->children = node;
+          else if (!node->previous_sibling && !node->next_sibling) {
+            node->next_sibling = node->parent->children;
+            node->next_sibling->previous_sibling = node;
+            node->parent->children = node;
+          }
+        }
+      EOS
+    end
+
+    def create_child_nodes rule
+      create_children_of_child_nodes = ""
+
+      create_child_nodes = <<-EOS
+        void create_child_nodes_#{rule.object_id}(Node* parent) {
+          Node* previous_sibling = NULL;
+          Node* node;
+      EOS
+
+      rule.conditions.each do |condition|
+        create_children_of_child_nodes += create_child_nodes condition.child_rule
+        create_child_nodes += <<-EOS
+          node = (Node*) malloc(sizeof(Node));
+          node->parent = parent;
+          node->next_sibling = NULL;
+          node->previous_sibling = previous_sibling;
+          node->children_are_ordered = #{condition.child_rule.conditions_are_ordered?};
+          node->children = NULL;
+          node->next_in_poset = NULL;
+          node->type = node_type_for("#{condition.node_type}"); // TODO: use global node type
+          node->value_type = none;
+
+          create_child_nodes_#{condition.child_rule.object_id}(node);
+
+          if (previous_sibling)
+            previous_sibling->next_sibling = node;
+          else
+            parent->children = node;
+
+          previous_sibling = node;
+        EOS
+      end
+
+      create_child_nodes += <<-EOS
+        }
+      EOS
+
+      "#{create_children_of_child_nodes}\n#{create_child_nodes}"
     end
 end

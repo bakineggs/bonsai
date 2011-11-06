@@ -64,7 +64,7 @@ int main() {
 }
 
 bool is_ancestor(Node* node, Node* possible_ancestor) {
-  while (node != possible_ancestor)
+  while (node && node != possible_ancestor)
     node = node->parent;
 
   return node != NULL;
@@ -403,6 +403,8 @@ Node* new_node(char* type) {
 }
 
 typedef struct Match {
+  long int condition_id;
+
   struct Match* next_match;
   struct Match* child_match;
 
@@ -414,7 +416,7 @@ typedef struct Match {
 Match* EMPTY_MATCH = (Match*) -1; // TODO: is this ok?
 
 Match* release_match_memory(Match* match) {
-  if (match) {
+  if (match && match != EMPTY_MATCH) {
     release_match_memory(match->next_match);
     release_match_memory(match->child_match);
     free(match);

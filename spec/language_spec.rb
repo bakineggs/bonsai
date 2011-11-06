@@ -25,7 +25,7 @@ shared_examples_for 'an okk implementation' do
       result = run_program :rules => "Foo:", :start_state => "Bar:"
       result[:exit_status].should == 1
       result[:stdout].should == ""
-      result[:stderr].should == "No rules to apply!\nBar:"
+      result[:stderr].should == "No rules to apply!\nBar:\n"
       result[:end_state].should == parse_state('Bar:')
     end
 
@@ -33,7 +33,7 @@ shared_examples_for 'an okk implementation' do
       result = run_program :rules => "Foo:", :start_state => "Foo:"
       result[:exit_status].should == 1
       result[:stdout].should == ""
-      result[:stderr].should == "No rules to apply!\nFoo:"
+      result[:stderr].should == "No rules to apply!\nFoo:\n"
       result[:end_state].should == parse_state('Foo:')
     end
   end
