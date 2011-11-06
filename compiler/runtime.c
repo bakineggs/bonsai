@@ -403,32 +403,31 @@ Node* new_node(char* type) {
 }
 
 typedef struct Match {
-  struct Match* next;
-  struct Match* child;
-  struct Match* alternate;
-  Node* node;
+  struct Match* next_match;
+  struct Match* child_match;
+
+  Node* matched_node;
+  Node* parent_of_matched_node;
+  Node* previous_sibling_of_matched_node;
 } Match;
 
 Match* EMPTY_MATCH = (Match*) -1; // TODO: is this ok?
 
 Match* release_match_memory(Match* match) {
-  if (!match)
-    return NULL;
+  if (match) {
+    release_match_memory(match->next_match);
+    release_match_memory(match->child_match);
+    free(match);
+  }
 
-  Match* alternate = match->alternate;
-
-  release_match_memory(match->next);
-  release_match_memory(match->child);
-  free(match);
-
-  return alternate;
+  return NULL;
 }
 
 bool already_matched(Node* node, Match* match) {
   while (match) {
-    if (match->node == node)
+    if (match->matched_node == node)
       return true;
-    match = match->next;
+    match = match->next_match;
   }
   return false;
 }

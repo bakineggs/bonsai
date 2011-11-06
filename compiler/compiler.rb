@@ -79,18 +79,21 @@ class Compiler
 
           Match* first_match = NULL;
           Match* current_match = NULL;
-          Node* child = node->children;
+          Node* previous_child = NULL;
+          Node* next_child = node->children;
       EOS
 
       rule.conditions.each do |condition|
         if condition.creates_node?
           rule_matches += <<-EOS
             Match* creating_match = (Match*) malloc(sizeof(Match));
-            creating_match->next = NULL;
-            creating_match->child = NULL;
-            creating_match->node = child;
+            creating_match->next_match = NULL;
+            creating_match->child_match = NULL;
+            creating_match->matched_node = next_child;
+            creating_match->parent_of_matched_node = node;
+            creating_match->previous_child_of_matched_node = previous_child;
             if (current_match) {
-              current_match->next = creating_match;
+              current_match->next_match = creating_match;
               current_match = creating_match;
             } else
               first_match = current_match = creating_match;
@@ -123,6 +126,11 @@ class Compiler
         else
           # TODO
         end
+
+        rule_matches += <<-EOS
+          previous_child = next_child ? next_child : previous_child;
+          next_child = next_child ? next_child->next_sibling : next_child;
+        EOS
       end
 
       if rule.must_match_all_nodes?
@@ -188,9 +196,9 @@ class Compiler
           while (node) {
             if (node->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"} && !already_matched(node, matched)) { // TODO: create a global for each node type in a condition instead of looking it up each time
               Match* match = (Match*) malloc(sizeof(Match));
-              if (match->child = rule_#{condition.child_rule.object_id}_matches(node)) {
-                match->alternate = NULL;
-                match->next = NULL;
+              match->matched_node = node;
+              if (match->child_match = rule_#{condition.child_rule.object_id}_matches(node)) {
+                match->next_match = NULL;
                 #{"if (match->next = map_conditions_starting_from_#{other_conditions.first.object_id}(first_node, match))" unless other_conditions.empty?}
                 return match;
               }
