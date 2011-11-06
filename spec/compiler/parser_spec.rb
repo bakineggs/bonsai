@@ -5,22 +5,106 @@ describe Parser do
   def parse type, body, depth = 0
     body.gsub! /^ {#{depth * 2}}/, ''
     body = body.split "\n" if type == :conditions
+    body = body.split(/\n\n+/).map{|rule| rule.split("\n")} if type == :rules
     Parser.new.send :"parse_#{type}", body
   end
 
-  describe '#parse_rules' do
+  describe '#parse_program' do
+    describe 'header' do
+      it 'does not include a header without one' do
+        parse(:program, "")[:header].should == ""
+      end
+
+      it 'includes a header' do
+        program = parse :program, <<-EOS, 5
+          Foo:
+          %{
+          omg;
+
+          hi;
+          %}
+
+          Bar:
+        EOS
+        program[:header].should == <<-EOS.gsub(/ {10}/, '').gsub("hi;\n", 'hi;')
+          omg;
+
+          hi;
+        EOS
+        program[:rules].length.should == 2
+      end
+    end
+
+    describe 'syntax errors' do
+      it 'includes the line of any syntax error' do
+        lambda {
+          parse :program, <<-EOS, 6
+            Foo:
+              Bar:
+                :Baz
+              Qux:
+          EOS
+        }.should raise_error(Parser::Error) { |error|
+          error.line.line_number.should == 3
+          error.line.should == "    :Baz"
+        }
+      end
+
+      it 'requires the first condition to be on the top level' do
+        lambda {
+          parse :program, <<-EOS, 6
+              Foo:
+          EOS
+        }.should raise_error(Parser::Error) { |error|
+          error.line.line_number.should == 1
+          error.line.should == "  Foo:"
+          error.message.should == "The first condition of a rule must be at the top level"
+        }
+      end
+
+      it 'rejects conditions in between levels' do
+        lambda {
+          parse :program, <<-EOS, 6
+            Foo:
+             Bar:
+          EOS
+        }.should raise_error(Parser::Error) { |error|
+          error.line.line_number.should == 2
+          error.line.should == " Bar:"
+          error.message.should == "Conditions can not be in between levels"
+        }
+      end
+
+      it 'rejects conditions more than one level below their parents' do
+        lambda {
+          parse :program, <<-EOS, 6
+            Foo:
+                Bar:
+          EOS
+        }.should raise_error(Parser::Error) { |error|
+          error.line.line_number.should == 2
+          error.line.should == "    Bar:"
+          error.message.should == "Conditions must be at most 1 level below their parents"
+        }
+      end
+
+      it 'errors out with an invalid header' do
+      end
+    end
+
+
     it 'returns an empty list of rules with an empty program' do
-      parse(:rules, "").should be_empty
+      parse(:program, "")[:rules].should be_empty
     end
 
     it 'ignores empty lines' do
-      parse(:rules, <<-EOS, 4).should be_empty
+      parse(:program, <<-EOS, 4)[:rules].should be_empty
 
       EOS
     end
 
     it 'ignores empty lines between rules' do
-      parse(:rules, <<-EOS, 4).length.should == 2
+      parse(:program, <<-EOS, 4)[:rules].length.should == 2
 
         Foo:
 
@@ -31,7 +115,7 @@ describe Parser do
     end
 
     it 'ignores comments' do
-      parse(:rules, <<-EOS, 4).length.should == 2
+      parse(:program, <<-EOS, 4)[:rules].length.should == 2
         Foo: # comment
 
         # another comment
@@ -42,13 +126,15 @@ describe Parser do
     end
 
     it 'treats a whole-line comment as a rule separator' do
-      parse(:rules, <<-EOS, 4).length.should == 2
+      parse(:program, <<-EOS, 4)[:rules].length.should == 2
         Foo:
         # comment
         Bar:
       EOS
     end
+  end
 
+  describe '#parse_rules' do
     it 'considers the top level rule to have unordered children' do
       parse(:rules, 'Foo:').first.conditions_are_ordered?.should be_false
       parse(:rules, 'Foo::').first.conditions_are_ordered?.should be_false
@@ -57,58 +143,6 @@ describe Parser do
     it 'considers the top level rule to not require all nodes to be matched' do
       parse(:rules, 'Foo:').first.must_match_all_nodes?.should be_false
       parse(:rules, 'Foo:=').first.must_match_all_nodes?.should be_false
-    end
-
-    it 'includes the line of any syntax error' do
-      lambda {
-        parse :rules, <<-EOS, 5
-          Foo:
-            Bar:
-              :Baz
-            Qux:
-        EOS
-      }.should raise_error(Parser::Error) { |error|
-        error.line.line_number.should == 3
-        error.line.should == "    :Baz"
-      }
-    end
-
-    it 'requires the first condition to be on the top level' do
-      lambda {
-        parse :rules, <<-EOS, 5
-            Foo:
-        EOS
-      }.should raise_error(Parser::Error) { |error|
-        error.line.line_number.should == 1
-        error.line.should == "  Foo:"
-        error.message.should == "The first condition of a rule must be at the top level"
-      }
-    end
-
-    it 'rejects conditions in between levels' do
-      lambda {
-        parse :rules, <<-EOS, 5
-          Foo:
-           Bar:
-        EOS
-      }.should raise_error(Parser::Error) { |error|
-        error.line.line_number.should == 2
-        error.line.should == " Bar:"
-        error.message.should == "Conditions can not be in between levels"
-      }
-    end
-
-    it 'rejects conditions more than one level below their parents' do
-      lambda {
-        parse :rules, <<-EOS, 5
-          Foo:
-              Bar:
-        EOS
-      }.should raise_error(Parser::Error) { |error|
-        error.line.line_number.should == 2
-        error.line.should == "    Bar:"
-        error.message.should == "Conditions must be at most 1 level below their parents"
-      }
     end
   end
 

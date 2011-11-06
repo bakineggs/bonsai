@@ -19,18 +19,38 @@ class Parser
     end
   end
 
-  def parse_rules program
-    definitions = [[]]
+  def parse_program program
+    lines = []
     program.split("\n").each_with_index do |line, i|
       line.sub!(/ *#.*/, '')
+      lines.push Line.new line, i + 1
+    end
 
+    if end_of_header = lines.index("%}")
+      start_of_header = lines.index "%{"
+      raise Error.new 'Expected start of header to come before end of header', lines[end_of_header] unless start_of_header && start_of_header < end_of_header
+
+      header = lines[start_of_header+1...end_of_header]
+      rule_lines = lines[0...start_of_header] + lines[end_of_header+1..-1]
+    else
+      header = []
+      rule_lines = lines
+    end
+
+    definitions = [[]]
+    rule_lines.each do |line|
       definitions.push [] if line == '' && !definitions.last.empty?
       next if line == ''
-
-      definitions.last.push Line.new line, i + 1
+      definitions.last.push line
     end
-    definitions -= [[]]
 
+    {
+      :header => header.join("\n"),
+      :rules => parse_rules(definitions - [[]])
+    }
+  end
+
+  def parse_rules definitions
     definitions.map do |definition|
       if definition.first.match /^  /
         raise Error.new 'The first condition of a rule must be at the top level', definition.first

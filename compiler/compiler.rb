@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/parser'
 
 class Compiler
   def compile program
-    rules = Parser.new.parse_rules program
+    program = Parser.new.parse_program program
 
     <<-EOS
       #include <stdlib.h>
@@ -13,7 +13,9 @@ class Compiler
 
       #{File.read File.dirname(__FILE__) + '/runtime.c'}
 
-      #{apply_rules rules}
+      #{program[:header]}
+
+      #{apply_rules program[:rules]}
     EOS
   end
 
