@@ -91,7 +91,7 @@ class Compiler
             creating_match->child_match = NULL;
             creating_match->matched_node = next_child;
             creating_match->parent_of_matched_node = node;
-            creating_match->previous_child_of_matched_node = previous_child;
+            creating_match->previous_sibling_of_matched_node = previous_child;
             if (current_match) {
               current_match->next_match = creating_match;
               current_match = creating_match;
@@ -99,26 +99,14 @@ class Compiler
               first_match = current_match = creating_match;
           EOS
         elsif condition.prevents_match?
+          child_rules_match += rule_matches condition.child_rule
           rule_matches += <<-EOS
-            if (child->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
-          EOS
-
-          if condition.child_rule
-            child_rules_match += rule_matches condition.child_rule
-            rule_matches += <<-EOS
-              Match* preventing_match = rule_#{condition.child_rule.object_id}_matches(child);
+            if (next_child && next_child->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
+              Match* preventing_match = rule_#{condition.child_rule.object_id}_matches(next_child);
               if (preventing_match) {
                 release_match_memory(preventing_match);
                 return release_match_memory(first_match);
               }
-            EOS
-          else
-            rule_matches += <<-EOS
-              return release_match_memory(first_match);
-            EOS
-          end
-
-          rule_matches += <<-EOS
             }
           EOS
         elsif condition.matches_multiple_nodes?
@@ -149,15 +137,35 @@ class Compiler
     end
 
     def rule_matches_out_of_order rule
+      preventing_conditions = rule.conditions.select &:prevents_match?
       singly_matched_conditions = rule.conditions.select &:must_match_a_node?
 
+      child_rules_match = ""
       rule_matches = <<-EOS
         Match* rule_#{rule.object_id}_matches_out_of_order(Node* node) {
           #{"if (node->children_are_ordered) return NULL;" unless rule.conditions_can_match_ordered_nodes_out_of_order?}
 
-          if (false) // TODO: if any preventing rule matches one of the node's children
-            return NULL;
+          Node* preventing_child;
+      EOS
 
+      preventing_conditions.each do |condition|
+        child_rules_match += rule_matches condition.child_rule
+        rule_matches += <<-EOS
+          preventing_child = node->children;
+          while (preventing_child) {
+            if (preventing_child->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
+              Match* preventing_match = rule_#{condition.child_rule.object_id}_matches(preventing_child);
+              if (preventing_match) {
+                release_match_memory(preventing_match);
+                return NULL;
+              }
+            }
+            preventing_child = preventing_child->next_sibling;
+          }
+        EOS
+      end
+
+      rule_matches += <<-EOS
           Match* match = EMPTY_MATCH;
           #{"match = map_conditions_starting_from_#{singly_matched_conditions.first.object_id}(node, NULL);" unless singly_matched_conditions.empty?}
           if (match) {
@@ -182,7 +190,7 @@ class Compiler
         }
       EOS
 
-      "#{one_to_one_mapping singly_matched_conditions}\n#{rule_matches}"
+      "#{child_rules_match}\n#{one_to_one_mapping singly_matched_conditions}\n#{rule_matches}"
     end
 
     def one_to_one_mapping conditions
@@ -199,7 +207,7 @@ class Compiler
               match->matched_node = node;
               if (match->child_match = rule_#{condition.child_rule.object_id}_matches(node)) {
                 match->next_match = NULL;
-                #{"if (match->next = map_conditions_starting_from_#{other_conditions.first.object_id}(first_node, match))" unless other_conditions.empty?}
+                #{"if (match->next_match = map_conditions_starting_from_#{other_conditions.first.object_id}(first_node, match))" unless other_conditions.empty?}
                 return match;
               }
               release_match_memory(match);
