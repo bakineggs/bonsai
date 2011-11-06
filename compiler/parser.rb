@@ -11,6 +11,12 @@ class Parser
   end
 
   class Error < StandardError
+    attr_accessor :line
+
+    def initialize message, line
+      self.line = line
+      super message
+    end
   end
 
   def parse_rules program
@@ -21,13 +27,13 @@ class Parser
       definitions.push [] if line == '' && !definitions.last.empty?
       next if line == ''
 
-      definitions.last.push Parser::Line.new line, i + 1
+      definitions.last.push Line.new line, i + 1
     end
     definitions -= [[]]
 
     definitions.map do |definition|
       if definition.first.match /^  /
-        raise Error, 'The first condition of a rule must be at the top level'
+        raise Error.new 'The first condition of a rule must be at the top level', definition.first
       end
 
       Rule.new :top_level => true, :conditions => parse_conditions(definition)
@@ -38,7 +44,7 @@ class Parser
     return [] if lines.empty?
 
     if lines.first.match /^#{'  ' * depth}  /
-      raise Error, 'Conditions must be at most 1 level below their parents'
+      raise Error.new 'Conditions must be at most 1 level below their parents', lines.first
     end
 
     conditions = [lines.shift]
@@ -49,7 +55,7 @@ class Parser
         child_lines.push line
         next
       elsif line.match /^#{'  ' * depth} /
-        raise Error, 'Conditions can not be in between levels'
+        raise Error.new 'Conditions can not be in between levels', line
       end
 
       conditions.push parse_condition(conditions.pop, depth, child_lines)
@@ -63,7 +69,7 @@ class Parser
 
   def parse_condition line, depth = 0, child_lines = []
     unless match = line.match(/^#{'  ' * depth}([!+-])?([A-Za-z0-9 ]+|\^):(:)?(=)?(\*)?( (\d+|(\d+\.\d+)|< (.*)))?$/)
-      raise Error, 'Condition could not be parsed'
+      raise Error.new 'Condition could not be parsed', line
     end
 
     if match[9]

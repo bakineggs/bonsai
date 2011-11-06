@@ -67,10 +67,10 @@ describe Parser do
               :Baz
             Qux:
         EOS
-      }.should raise_error(Parser::Error) do |error|
+      }.should raise_error(Parser::Error) { |error|
         error.line.line_number.should == 3
         error.line.should == "    :Baz"
-      end
+      }
     end
 
     it 'requires the first condition to be on the top level' do
@@ -78,11 +78,11 @@ describe Parser do
         parse :rules, <<-EOS, 5
             Foo:
         EOS
-      }.should raise_error(Parser::Error) do |error|
+      }.should raise_error(Parser::Error) { |error|
         error.line.line_number.should == 1
         error.line.should == "  Foo:"
         error.message.should == "The first condition of a rule must be at the top level"
-      end
+      }
     end
 
     it 'rejects conditions in between levels' do
@@ -91,11 +91,11 @@ describe Parser do
           Foo:
            Bar:
         EOS
-      }.should raise_error(Parser::Error) do |error|
+      }.should raise_error(Parser::Error) { |error|
         error.line.line_number.should == 2
         error.line.should == " Bar:"
         error.message.should == "Conditions can not be in between levels"
-      end
+      }
     end
 
     it 'rejects conditions more than one level below their parents' do
@@ -104,11 +104,11 @@ describe Parser do
           Foo:
               Bar:
         EOS
-      }.should raise_error(Parser::Error) do |error|
+      }.should raise_error(Parser::Error) { |error|
         error.line.line_number.should == 2
         error.line.should == "    Bar:"
         error.message.should == "Conditions must be at most 1 level below their parents"
-      end
+      }
     end
   end
 
