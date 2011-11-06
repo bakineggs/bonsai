@@ -182,21 +182,21 @@ class Compiler
       other_conditions = conditions[1..-1]
 
       mapping = <<-EOS
-        Match* map_conditions_starting_from_#{condition.object_id}(Node* node, Match* matched) {
-          Node* child = node->children;
+        Match* map_conditions_starting_from_#{condition.object_id}(Node* first_node, Match* matched) {
+          Node* node = first_node;
 
-          while (child) {
-            if (child->type == node_type_for("#{condition.node_type}") && !already_matched(child, matched)) { // TODO: create a global for each node type in a condition instead of looking it up each time
+          while (node) {
+            if (node->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"} && !already_matched(node, matched)) { // TODO: create a global for each node type in a condition instead of looking it up each time
               Match* match = (Match*) malloc(sizeof(Match));
-              if (match->child = rule_#{condition.child_rule.object_id}_matches(child)) {
+              if (match->child = rule_#{condition.child_rule.object_id}_matches(node)) {
                 match->alternate = NULL;
                 match->next = NULL;
-                #{"if (match->next = map_conditions_starting_from_#{other_conditions.first.object_id}(node, match))" unless other_conditions.empty?}
+                #{"if (match->next = map_conditions_starting_from_#{other_conditions.first.object_id}(first_node, match))" unless other_conditions.empty?}
                 return match;
               }
               release_match_memory(match);
             }
-            child = child->next_sibling;
+            node = node->next_sibling;
           }
 
           return NULL;
