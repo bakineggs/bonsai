@@ -88,11 +88,13 @@ class Parser
   end
 
   def parse_condition line, depth = 0, child_lines = []
-    unless match = line.match(/^#{'  ' * depth}([!+-])?([A-Za-z0-9 ]+|\^):(:)?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|< (.*)))?$/)
+    unless match = line.match(/^#{'  ' * depth}([!+-])?([A-Za-z0-9 ]+|\^):(:)?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|< (.*)|([A-Za-z]+)))?$/)
       raise Error.new 'Condition could not be parsed', line
     end
 
-    if match[9]
+    if match[10]
+      variable = match[10]
+    elsif match[9]
       code_segment = match[9]
     elsif match[8]
       value = match[8].to_f
@@ -108,6 +110,7 @@ class Parser
       :matches_multiple_nodes => match[5] == '*',
       :value => value,
       :code_segment => code_segment,
+      :variable => variable,
       :child_rule => Rule.new({
         :conditions_are_ordered => match[3] == ':',
         :must_match_all_nodes => match[4] == '=',
