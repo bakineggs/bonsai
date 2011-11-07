@@ -37,23 +37,22 @@ class Parser
       rule_lines = lines
     end
 
-    definitions = [[]]
+    rules = []
+    definition = []
     rule_lines.each do |line|
-      definitions.push [] if line == '' && !definitions.last.empty?
-      next if line == ''
-      definitions.last.push line
+      if line != ''
+        definition.push line
+      elsif !definition.empty?
+        rules.push parse_rule definition, 0, :top_level => true
+        definition = []
+      end
     end
+    rules.push parse_rule definition, 0, :top_level => true unless definition.empty?
 
     {
       :header => header.join("\n"),
-      :rules => parse_rules(definitions - [[]])
+      :rules => rules
     }
-  end
-
-  def parse_rules definitions
-    definitions.map do |definition|
-      parse_rule definition, 0, :top_level => true
-    end
   end
 
   def parse_rule definition, depth = 0, options = {}

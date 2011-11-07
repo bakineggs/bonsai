@@ -5,7 +5,6 @@ describe Parser do
   def parse type, body, depth = 0
     body.gsub! /^ {#{depth * 2}}/, ''
     body = body.split "\n" if type == :conditions
-    body = body.split(/\n\n+/).map{|rule| rule.split("\n")} if type == :rules
     Parser.new.send :"parse_#{type}", body
   end
 
@@ -152,6 +151,16 @@ describe Parser do
       EOS
     end
 
+    it 'considers the top level rule to have unordered children' do
+      parse(:program, 'Foo:')[:rules].first.conditions_are_ordered?.should be_false
+      parse(:program, 'Foo::')[:rules].first.conditions_are_ordered?.should be_false
+    end
+
+    it 'considers the top level rule to not require all nodes to be matched' do
+      parse(:program, 'Foo:')[:rules].first.must_match_all_nodes?.should be_false
+      parse(:program, 'Foo:=')[:rules].first.must_match_all_nodes?.should be_false
+    end
+
     it 'includes the definitions of the rules' do
       rules = parse(:program, <<-EOS, 4)[:rules]
         Foo:
@@ -168,18 +177,6 @@ describe Parser do
 
       rules[0].conditions[0].child_rule.definition.should == ['  Bar:']
       rules[0].conditions[0].child_rule.definition[0].line_number.should == 2
-    end
-  end
-
-  describe '#parse_rules' do
-    it 'considers the top level rule to have unordered children' do
-      parse(:rules, 'Foo:').first.conditions_are_ordered?.should be_false
-      parse(:rules, 'Foo::').first.conditions_are_ordered?.should be_false
-    end
-
-    it 'considers the top level rule to not require all nodes to be matched' do
-      parse(:rules, 'Foo:').first.must_match_all_nodes?.should be_false
-      parse(:rules, 'Foo:=').first.must_match_all_nodes?.should be_false
     end
   end
 
