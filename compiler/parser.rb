@@ -52,20 +52,27 @@ class Parser
 
   def parse_rules definitions
     definitions.map do |definition|
-      if definition.first.match /^  /
-        raise Error.new 'The first condition of a rule must be at the top level', definition.first
-      end
-
-      Rule.new :top_level => true, :conditions => parse_conditions(definition)
+      parse_rule definition, 0, :top_level => true
     end
+  end
+
+  def parse_rule definition, depth = 0, options = {}
+    if !definition.empty? && definition.first.match(/^#{'  ' * depth}  /)
+      if depth == 0
+        raise Error.new 'The first condition of a rule must be at the top level', definition.first
+      else
+        raise Error.new 'Conditions must be at most 1 level below their parents', definition.first
+      end
+    end
+
+    options[:conditions] = parse_conditions definition.clone, depth
+    options[:definition] = definition
+
+    Rule.new options
   end
 
   def parse_conditions lines, depth = 0
     return [] if lines.empty?
-
-    if lines.first.match /^#{'  ' * depth}  /
-      raise Error.new 'Conditions must be at most 1 level below their parents', lines.first
-    end
 
     conditions = [lines.shift]
     child_lines = []
@@ -115,11 +122,10 @@ class Parser
       :value => value,
       :code_segment => code_segment,
       :variable => variable,
-      :child_rule => Rule.new({
+      :child_rule => parse_rule(child_lines, depth + 1,
         :conditions_are_ordered => match[3] == ':',
-        :must_match_all_nodes => match[4] == '=',
-        :conditions => parse_conditions(child_lines, depth + 1)
-      })
+        :must_match_all_nodes => match[4] == '='
+      )
     })
   end
 end
