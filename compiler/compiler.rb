@@ -80,6 +80,7 @@ class Compiler
 
           Match* first_match = NULL;
           Match* current_match = NULL;
+          Match* creating_match;
           Node* previous_child = NULL;
           Node* next_child = node->children;
       EOS
@@ -87,7 +88,7 @@ class Compiler
       rule.conditions.each do |condition|
         if condition.creates_node?
           rule_matches += <<-EOS
-            Match* creating_match = (Match*) malloc(sizeof(Match));
+            creating_match = (Match*) malloc(sizeof(Match));
             creating_match->condition_id = #{condition.object_id};
             creating_match->next_match = NULL;
             creating_match->child_match = NULL;
