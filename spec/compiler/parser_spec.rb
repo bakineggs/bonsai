@@ -89,6 +89,26 @@ describe Parser do
       end
 
       it 'errors out with an invalid header' do
+        lambda {
+          parse :program, <<-EOS, 6
+            %}
+            %{
+          EOS
+        }.should raise_error(Parser::Error) { |error|
+          error.line.line_number.should == 1
+          error.line.should == "%}"
+          error.message.should == "Expected start of header to come before end of header"
+        }
+
+        lambda {
+          parse :program, <<-EOS, 6
+            %}
+          EOS
+        }.should raise_error(Parser::Error) { |error|
+          error.line.line_number.should == 1
+          error.line.should == "%}"
+          error.message.should == "Expected start of header to come before end of header"
+        }
       end
     end
 
