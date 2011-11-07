@@ -215,6 +215,10 @@ describe Parser do
       parse(:condition, '^:').node_type.should == :root
     end
 
+    it 'considers the node type * to mean any node' do
+      parse(:condition, '*:').node_type.should == :any
+    end
+
     it 'considers a prepended + to mean creating a node' do
       parse(:condition, 'Foo:').creates_node?.should be_false
       parse(:condition, '+Foo:').creates_node?.should be_true
