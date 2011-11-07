@@ -42,7 +42,7 @@ class Compiler
     end
 
     def rule_matches rule
-      child_rules_match = ""
+      child_rules_match = rule.conditions.map {|condition| rule_matches condition.child_rule}.join "\n"
       rule_matches = <<-EOS
         Match* rule_#{rule.object_id}_matches(Node* node) {
           Match* match = NULL;
@@ -73,7 +73,6 @@ class Compiler
     end
 
     def rule_matches_in_order rule
-      child_rules_match = ""
       rule_matches = <<-EOS
         Match* rule_#{rule.object_id}_matches_in_order(Node* node) {
           if (!node->children_are_ordered)
@@ -102,7 +101,6 @@ class Compiler
               first_match = current_match = creating_match;
           EOS
         elsif condition.prevents_match?
-          child_rules_match += rule_matches condition.child_rule
           rule_matches += <<-EOS
             if (next_child && next_child->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
               Match* preventing_match = rule_#{condition.child_rule.object_id}_matches(next_child);
@@ -136,14 +134,13 @@ class Compiler
         }
       EOS
 
-      "#{child_rules_match}\n#{rule_matches}"
+      rule_matches
     end
 
     def rule_matches_out_of_order rule
       preventing_conditions = rule.conditions.select &:prevents_match?
       singly_matched_conditions = rule.conditions.select &:must_match_a_node?
 
-      child_rules_match = ""
       rule_matches = <<-EOS
         Match* rule_#{rule.object_id}_matches_out_of_order(Node* node) {
           #{"if (node->children_are_ordered) return NULL;" unless rule.conditions_can_match_ordered_nodes_out_of_order?}
@@ -152,7 +149,6 @@ class Compiler
       EOS
 
       preventing_conditions.each do |condition|
-        child_rules_match += rule_matches condition.child_rule
         rule_matches += <<-EOS
           preventing_child = node->children;
           while (preventing_child) {
@@ -207,7 +203,7 @@ class Compiler
         }
       EOS
 
-      "#{child_rules_match}\n#{one_to_one_mapping singly_matched_conditions}\n#{rule_matches}"
+      "#{one_to_one_mapping singly_matched_conditions}\n#{rule_matches}"
     end
 
     def one_to_one_mapping conditions
@@ -237,7 +233,7 @@ class Compiler
         }
       EOS
 
-      "#{rule_matches condition.child_rule}\n#{one_to_one_mapping other_conditions}\n#{mapping}"
+      "#{one_to_one_mapping other_conditions}\n#{mapping}"
     end
 
     def transform_rule rule
