@@ -277,6 +277,12 @@ describe Parser do
       it 'reads the real value' do
         parse(:condition, 'Foo: 17.34').value.should == 17.34
       end
+
+      it 'reads negative values' do
+        parse(:condition, 'Foo: -17').value.should == -17
+        parse(:condition, 'Foo: -17').value.should be_an(Integer)
+        parse(:condition, 'Foo: -17.34').value.should == -17.34
+      end
     end
 
     describe 'code segments' do
