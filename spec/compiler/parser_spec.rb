@@ -112,7 +112,6 @@ describe Parser do
       end
     end
 
-
     it 'returns an empty list of rules with an empty program' do
       parse(:program, "")[:rules].should be_empty
     end
@@ -151,6 +150,24 @@ describe Parser do
         # comment
         Bar:
       EOS
+    end
+
+    it 'includes the definitions of the rules' do
+      rules = parse(:program, <<-EOS, 4)[:rules]
+        Foo:
+          Bar:
+
+        Baz:
+      EOS
+      rules[0].definition.should == ['Foo:', '  Bar:']
+      rules[0].definition[0].line_number.should == 1
+      rules[0].definition[1].line_number.should == 2
+
+      rules[1].definition.should == ['Baz:']
+      rules[1].definition[0].line_number.should == 4
+
+      rules[0].conditions[0].child_rule.definition.should == ['  Bar:']
+      rules[0].conditions[0].child_rule.definition[0].line_number.should == 2
     end
   end
 
