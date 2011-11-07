@@ -285,6 +285,17 @@ describe Parser do
       end
     end
 
+    describe 'variables' do
+      it 'does not assign a variable without one' do
+        parse(:condition, 'Foo:').variable.should be_nil
+      end
+
+      it 'assigns the specified variable' do
+        parse(:condition, 'Foo: X').variable.should == 'X'
+        parse(:condition, 'Foo: blah').variable.should == 'blah'
+      end
+    end
+
     describe 'code segments' do
       it 'does not assign a code segment without one' do
         parse(:condition, 'Foo:').code_segment.should be_nil
