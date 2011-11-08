@@ -48,4 +48,32 @@ describe Compiler do
   end
 
   it_should_behave_like 'an okk implementation'
+
+  it 'includes the source code of any rule in the generated interpreter' do
+    source = Compiler.new.compile <<-EOS.gsub(/^ {6}/, '')
+      Foo:
+        Bar:
+
+      Baz:
+    EOS
+
+    source.include?(<<-EOS.gsub(/^ {6}/, '')).should be_true
+      /*
+        Foo: (line 1)
+          Bar: (line 2)
+      */
+    EOS
+
+    source.include?(<<-EOS.gsub(/^ {6}/, '')).should be_true
+      /*
+          Bar: (line 2)
+      */
+    EOS
+
+    source.include?(<<-EOS.gsub(/^ {6}/, '')).should be_true
+      /*
+        Baz: (line 4)
+      */
+    EOS
+  end
 end

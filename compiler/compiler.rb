@@ -43,7 +43,10 @@ class Compiler
 
     def rule_matches rule
       child_rules_match = rule.conditions.map {|condition| rule_matches condition.child_rule}.join "\n"
-      rule_matches = <<-EOS
+
+      rule_matches = rule_definition_comment rule
+
+      rule_matches += <<-EOS
         Match* rule_#{rule.object_id}_matches(Node* node) {
           Match* match = NULL;
       EOS
@@ -240,7 +243,9 @@ class Compiler
     def transform_rule rule
       transform_child_rules = ""
 
-      transform_rule = <<-EOS
+      transform_rule = rule_definition_comment rule
+
+      transform_rule += <<-EOS
         bool transform_rule_#{rule.object_id}(Match* match) {
           bool transformed = false;
 
@@ -342,5 +347,13 @@ class Compiler
       EOS
 
       "#{create_children_of_child_nodes}\n#{create_child_nodes}"
+    end
+
+    def rule_definition_comment rule
+      comment = "/*\n"
+      rule.definition.each do |line|
+        comment += "  #{line} (line #{line.line_number})\n"
+      end
+      comment + "*/\n"
     end
 end
