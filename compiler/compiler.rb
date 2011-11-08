@@ -258,6 +258,7 @@ class Compiler
         transform_rule += <<-EOS
             if (match->condition_id == #{condition.object_id}) {
               #{"create_node_#{condition.object_id}(match); transformed = true;" if condition.creates_node?}
+              #{condition.code_segment}
               if (transform_rule_#{condition.child_rule.object_id}(match->child_match))
                 transformed = true;
             }
