@@ -57,23 +57,14 @@ describe Compiler do
       Baz:
     EOS
 
-    source.include?(<<-EOS.gsub(/^ {6}/, '')).should be_true
-      /*
-        Foo: (line 1)
-          Bar: (line 2)
-      */
-    EOS
-
-    source.include?(<<-EOS.gsub(/^ {6}/, '')).should be_true
-      /*
-          Bar: (line 2)
-      */
-    EOS
-
-    source.include?(<<-EOS.gsub(/^ {6}/, '')).should be_true
-      /*
-        Baz: (line 4)
-      */
-    EOS
+    ['Match\* rule_\d+_matches', 'bool transform_rule_\d+'].each do |function|
+      [
+        '\1  Foo: \(line 1\)\n\1    Bar: \(line 2\)',
+        '\1    Bar: \(line 2\)',
+        '\1  Baz: \(line 4\)'
+      ].each do |definition|
+        source.should =~ /^( *)\/\*\n#{definition}\n\1\*\/\n *#{function}/
+      end
+    end
   end
 end
