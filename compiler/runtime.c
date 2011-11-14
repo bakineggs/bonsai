@@ -28,9 +28,9 @@ Node* new_node(char* type);
 bool apply_rules(Node* node);
 Node* add_to_poset(Node* first_in_poset, Node* node_to_add);
 
-char* ROOT_NODE_TYPE = "^";
-
 int main() {
+  setup_node_types();
+
   Node* root = new_node(ROOT_NODE_TYPE);
 
   Node* first_in_poset = root;
@@ -353,10 +353,6 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
 
   return build_offset_node(definition, depth_offset, node, depth);
 }
-
-char** node_types;
-int node_types_length = 0;
-int node_types_capacity = 0;
 
 char* node_type_for(char* definition) {
   size_t length = strspn(definition, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ");

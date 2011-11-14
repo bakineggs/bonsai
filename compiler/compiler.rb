@@ -11,6 +11,8 @@ class Compiler
 
       #{File.read File.dirname(__FILE__) + '/../types.h'}
 
+      #{setup_node_types program[:rules]}
+
       #{File.read File.dirname(__FILE__) + '/runtime.c'}
 
       #{program[:header]}
@@ -20,6 +22,48 @@ class Compiler
   end
 
   private
+    def setup_node_types rules
+      types = rules.map{|rule| node_types rule}.flatten.uniq
+      capacity = (types.length / 64 + 1) * 64
+
+      declarations = <<-EOS
+        char* ROOT_NODE_TYPE = "^";
+        char** node_types;
+        int node_types_length = #{types.length + 1};
+        int node_types_capacity = #{capacity};
+      EOS
+
+      setup_node_types = <<-EOS
+        void setup_node_types() {
+          node_types = (char**) malloc(#{capacity} * sizeof(char*));
+          node_types[0] = ROOT_NODE_TYPE;
+      EOS
+
+      types.each_with_index do |type, index|
+        declarations += "char* #{type_var_for type} = \"#{type}\";\n"
+        setup_node_types += "node_types[#{index + 1}] = #{type_var_for type};\n"
+      end
+
+      <<-EOS
+        #{declarations}
+        #{setup_node_types}
+        }
+      EOS
+    end
+
+    def type_var_for type
+      return 'ROOT_NODE_TYPE' if type == :root
+      "node_type_for_#{type.gsub ' ', '_'}"
+    end
+
+    def node_types rule
+      rule.conditions.map do |condition|
+        types = node_types condition.child_rule
+        types.push condition.node_type unless condition.node_type == :root
+        types
+      end.flatten.uniq
+    end
+
     def apply_rules rules
       apply_rules = rules.map {|rule| "#{rule_matches rule}\n#{transform_rule rule}"}.join "\n"
 
@@ -106,7 +150,7 @@ class Compiler
           EOS
         elsif condition.prevents_match?
           rule_matches += <<-EOS
-            if (next_child && next_child->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
+            if (next_child && next_child->type == #{type_var_for condition.node_type}) {
               Match* preventing_match = rule_#{condition.child_rule.object_id}_matches(next_child);
               if (preventing_match) {
                 release_match_memory(preventing_match);
@@ -156,7 +200,7 @@ class Compiler
         rule_matches += <<-EOS
           preventing_child = node->children;
           while (preventing_child) {
-            if (preventing_child->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"}) { // TODO: global for node type
+            if (preventing_child->type == #{type_var_for condition.node_type}) {
               Match* preventing_match = rule_#{condition.child_rule.object_id}_matches(preventing_child);
               if (preventing_match)
                 return release_match_memory(preventing_match);
@@ -219,7 +263,7 @@ class Compiler
           Node* node = first_node;
 
           while (node) {
-            if (node->type == #{condition.node_type == :root ? "ROOT_NODE_TYPE" : "node_type_for(\"#{condition.node_type}\")"} && !already_matched(node, matched)) { // TODO: create a global for each node type in a condition instead of looking it up each time
+            if (node->type == #{type_var_for condition.node_type} && !already_matched(node, matched)) {
               Match* match = (Match*) malloc(sizeof(Match));
               match->condition_id = #{condition.object_id};
               match->matched_node = node;
@@ -288,7 +332,7 @@ class Compiler
           node->children_are_ordered = #{condition.child_rule.conditions_are_ordered?};
           node->children = NULL;
           node->next_in_poset = NULL;
-          node->type = node_type_for("#{condition.node_type}"); // TODO: use global node type
+          node->type = #{type_var_for condition.node_type};
           node->value_type = none;
 
           create_child_nodes_#{condition.child_rule.object_id}(node);
@@ -329,7 +373,7 @@ class Compiler
           node->children_are_ordered = #{condition.child_rule.conditions_are_ordered?};
           node->children = NULL;
           node->next_in_poset = NULL;
-          node->type = node_type_for("#{condition.node_type}"); // TODO: use global node type
+          node->type = #{type_var_for condition.node_type};
           node->value_type = none;
 
           create_child_nodes_#{condition.child_rule.object_id}(node);
