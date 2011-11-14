@@ -127,26 +127,32 @@ class Compiler
 
           Match* first_match = NULL;
           Match* current_match = NULL;
-          Match* creating_match;
+          Match* new_match;
+          Match* child_match;
           Node* previous_child = NULL;
           Node* next_child = node->children;
+      EOS
+
+      next_child = <<-EOS
+        previous_child = next_child ? next_child : previous_child;
+        next_child = next_child ? next_child->next_sibling : next_child;
       EOS
 
       rule.conditions.each do |condition|
         if condition.creates_node?
           rule_matches += <<-EOS
-            creating_match = (Match*) malloc(sizeof(Match));
-            creating_match->condition_id = #{condition.object_id};
-            creating_match->next_match = NULL;
-            creating_match->child_match = NULL;
-            creating_match->matched_node = next_child;
-            creating_match->parent_of_matched_node = node;
-            creating_match->previous_sibling_of_matched_node = previous_child;
+            new_match = (Match*) malloc(sizeof(Match));
+            new_match->condition_id = #{condition.object_id};
+            new_match->next_match = NULL;
+            new_match->child_match = NULL;
+            new_match->matched_node = next_child;
+            new_match->parent_of_matched_node = node;
+            new_match->previous_sibling_of_matched_node = previous_child;
             if (current_match) {
-              current_match->next_match = creating_match;
-              current_match = creating_match;
+              current_match->next_match = new_match;
+              current_match = new_match;
             } else
-              first_match = current_match = creating_match;
+              first_match = current_match = new_match;
           EOS
         elsif condition.prevents_match?
           rule_matches += <<-EOS
@@ -157,17 +163,32 @@ class Compiler
                 return release_match_memory(first_match);
               }
             }
+            #{next_child}
           EOS
         elsif condition.matches_multiple_nodes?
-          # TODO
+          rule_matches += <<-EOS
+            // TODO
+          EOS
         else
-          # TODO
-        end
+          rule_matches += <<-EOS
+            if (next_child && next_child->type == #{type_var_for condition.node_type}) {
+              child_match = rule_#{condition.child_rule.object_id}_matches(next_child);
+              if (!child_match)
+                return release_match_memory(first_match);
 
-        rule_matches += <<-EOS
-          previous_child = next_child ? next_child : previous_child;
-          next_child = next_child ? next_child->next_sibling : next_child;
-        EOS
+              new_match = (Match*) malloc(sizeof(Match));
+              new_match->condition_id = #{condition.object_id};
+              new_match->next_match = NULL;
+              new_match->child_match = child_match;
+              new_match->matched_node = next_child;
+              new_match->parent_of_matched_node = node;
+              new_match->previous_sibling_of_matched_node = previous_child;
+
+              #{next_child}
+            } else
+              return release_match_memory(first_match);
+          EOS
+        end
       end
 
       if rule.must_match_all_nodes?
