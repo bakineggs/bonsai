@@ -265,12 +265,16 @@ class Compiler
           while (node) {
             if (node->type == #{type_var_for condition.node_type} && !already_matched(node, matched)) {
               Match* match = (Match*) malloc(sizeof(Match));
-              match->condition_id = #{condition.object_id};
-              match->matched_node = node;
               if (match->child_match = rule_#{condition.child_rule.object_id}_matches(node)) {
                 match->next_match = NULL;
-                #{"if (match->next_match = map_conditions_starting_from_#{other_conditions.first.object_id}(first_node, match))" unless other_conditions.empty?}
-                return match;
+                #{"if (match->next_match = map_conditions_starting_from_#{other_conditions.first.object_id}(first_node, match)) {" unless other_conditions.empty?}
+                  #{"match->child_match = release_match_memory(match->child_match);" if condition.removes_node?}
+                  match->condition_id = #{condition.object_id};
+                  match->matched_node = node;
+                  match->parent_of_matched_node = node->parent;
+                  match->previous_sibling_of_matched_node = node->previous_sibling;
+                  return match;
+                #{"}" unless other_conditions.empty?}
               }
               release_match_memory(match);
             }
@@ -305,6 +309,7 @@ class Compiler
               #{condition.code_segment}
               if (transform_rule_#{condition.child_rule.object_id}(match->child_match))
                 transformed = true;
+              #{"remove_node(match); transformed = true;" if condition.removes_node?}
             }
         EOS
       end

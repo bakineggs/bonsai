@@ -398,6 +398,23 @@ Node* new_node(char* type) {
   return node;
 }
 
+void remove_node(Node* node) {
+  if (node->previous_sibling)
+    node->previous_sibling->next_sibling = node->next_sibling;
+  if (node->next_sibling)
+    node->next_sibling->previous_sibling = node->previous_sibling;
+  if (node->parent && node->parent->children == node)
+    node->parent->children = node->next_sibling;
+
+  Node* child;
+  Node* next_child = node->children;
+  while (child = next_child) {
+    next_child = child->next_sibling;
+    remove_node(child);
+  }
+  free(node);
+}
+
 typedef struct Match {
   long int condition_id;
 
