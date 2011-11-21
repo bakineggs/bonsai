@@ -24,12 +24,14 @@ class Compiler
   private
     def setup_node_types rules
       types = rules.map{|rule| node_types rule}.flatten.uniq
-      capacity = (types.length / 64 + 1) * 64
+      length = types.length + 2
+      capacity = ((length - 1) / 64 + 1) * 64
 
       declarations = <<-EOS
         char* ROOT_NODE_TYPE = "^";
+        char* ROOT_PARENT_NODE_TYPE = "^^";
         char** node_types;
-        int node_types_length = #{types.length + 1};
+        int node_types_length = #{length};
         int node_types_capacity = #{capacity};
       EOS
 
@@ -37,11 +39,12 @@ class Compiler
         void setup_node_types() {
           node_types = (char**) malloc(#{capacity} * sizeof(char*));
           node_types[0] = ROOT_NODE_TYPE;
+          node_types[1] = ROOT_PARENT_NODE_TYPE;
       EOS
 
       types.each_with_index do |type, index|
         declarations += "char* #{type_var_for type} = \"#{type}\";\n"
-        setup_node_types += "node_types[#{index + 1}] = #{type_var_for type};\n"
+        setup_node_types += "node_types[#{index + 2}] = #{type_var_for type};\n"
       end
 
       <<-EOS
@@ -280,26 +283,26 @@ class Compiler
       other_conditions = conditions[1..-1]
 
       mapping = <<-EOS
-        Match* map_conditions_starting_from_#{condition.object_id}(Node* first_node, Match* matched) {
-          Node* node = first_node;
+        Match* map_conditions_starting_from_#{condition.object_id}(Node* node, Match* matched) {
+          Node* child = node->children;
 
-          while (node) {
-            if (node->type == #{type_var_for condition.node_type} && !already_matched(node, matched)) {
+          while (child) {
+            if (child->type == #{type_var_for condition.node_type} && !already_matched(child, matched)) {
               Match* match = (Match*) malloc(sizeof(Match));
-              if (match->child_match = rule_#{condition.child_rule.object_id}_matches(node)) {
+              if (match->child_match = rule_#{condition.child_rule.object_id}_matches(child)) {
                 match->next_match = NULL;
-                #{"if (match->next_match = map_conditions_starting_from_#{other_conditions.first.object_id}(first_node, match)) {" unless other_conditions.empty?}
+                #{"if (match->next_match = map_conditions_starting_from_#{other_conditions.first.object_id}(node, match)) {" unless other_conditions.empty?}
                   #{"match->child_match = release_match_memory(match->child_match);" if condition.removes_node?}
                   match->condition_id = #{condition.object_id};
-                  match->matched_node = node;
-                  match->parent_of_matched_node = node->parent;
-                  match->previous_sibling_of_matched_node = node->previous_sibling;
+                  match->matched_node = child;
+                  match->parent_of_matched_node = node;
+                  match->previous_sibling_of_matched_node = child->previous_sibling;
                   return match;
                 #{"}" unless other_conditions.empty?}
               }
               release_match_memory(match);
             }
-            node = node->next_sibling;
+            child = child->next_sibling;
           }
 
           return NULL;

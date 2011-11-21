@@ -31,9 +31,11 @@ Node* add_to_poset(Node* first_in_poset, Node* node_to_add);
 int main() {
   setup_node_types();
 
-  Node* root = new_node(ROOT_NODE_TYPE);
+  Node* root_parent = new_node(ROOT_PARENT_NODE_TYPE);
+  root_parent->children = new_node(ROOT_NODE_TYPE);
+  root_parent->children->parent = root_parent;
 
-  Node* first_in_poset = root;
+  Node* first_in_poset = root_parent;
   while (first_in_poset) {
     Node* node = first_in_poset;
     first_in_poset = node->next_in_poset;
@@ -52,14 +54,14 @@ int main() {
     }
   }
 
-  Node* child = root->children;
+  Node* child = root_parent->children->children;
   while (child) {
     child->parent = NULL;
     child = child->next_sibling;
   }
 
   fprintf(stderr, "No rules to apply!\n");
-  print_node(root->children, stderr);
+  print_node(root_parent->children->children, stderr);
   return 1;
 }
 
