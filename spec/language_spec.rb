@@ -532,6 +532,101 @@ shared_examples_for 'an okk implementation' do
     # TODO
   end
 
+  describe 'variables' do
+    it 'allows a node integer value to be duplicated' do
+      rules = <<-EOS
+        Foo: X
+        !Bar:
+        +Bar: X
+      EOS
+      result = run_program :rules => rules, :start_state => 'Foo: 5'
+      result[:exit_status].should == 1
+      result[:end_state].should == parse_state("Foo: 5\nBar: 5")
+    end
+
+    it 'allows a node real value to be duplicated' do
+      rules = <<-EOS
+        Foo: X
+        !Bar:
+        +Bar: X
+      EOS
+      result = run_program :rules => rules, :start_state => 'Foo: 5.7'
+      result[:exit_status].should == 1
+      result[:end_state].should == parse_state("Foo: 5.7\nBar: 5.7")
+    end
+
+    it 'allows child nodes to be duplicated'
+    describe 'matched multiple times' do
+      let(:rules) do
+        <<-EOS
+          Foo: X
+          -Bar: X
+        EOS
+      end
+
+      describe 'matching a value and a node\'s children' do
+        it 'prevents the rule from matching' do
+          start_state = <<-EOS
+            Foo: 5
+            Bar:
+              Baz:
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state(start_state)
+        end
+      end
+
+      describe 'matching values' do
+        describe 'of different types' do
+          it 'prevents the rule from matching' do
+            start_state = <<-EOS
+              Foo: 5
+              Bar: 5.0
+            EOS
+            result = run_program :rules => rules, :start_state => start_state
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state(start_state)
+          end
+        end
+
+        describe 'that are equal' do
+          it 'allows the rule to match' do
+            start_state = <<-EOS
+              Foo: 5
+              Bar: 5
+            EOS
+            result = run_program :rules => rules, :start_state => start_state
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state('Foo: 5')
+          end
+        end
+
+        describe 'that are unequal' do
+          it 'prevents the rule from matching' do
+            start_state = <<-EOS
+              Foo: 5
+              Bar: 6
+            EOS
+            result = run_program :rules => rules, :start_state => start_state
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state(start_state)
+          end
+        end
+      end
+
+      describe 'matching the nodes\' children' do
+        # TODO
+        describe 'that are equal' do
+          it 'allows the rule to match'
+        end
+        describe 'that have equal mentioned children, but have differing unmentioned children' do
+          it 'prevents the rule from matching'
+        end
+      end
+    end
+  end
+
   describe 'conditions at the top level of a rule' do
     let(:rules) do
       <<-EOS
