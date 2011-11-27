@@ -3,7 +3,7 @@ require File.dirname(__FILE__) + '/../../compiler/rule'
 require File.dirname(__FILE__) + '/../../compiler/parser'
 
 describe Rule do
-  let(:top_level_rule) { Parser.new.parse_rules("Foo:\nBar::").first }
+  let(:top_level_rule) { Parser.new.parse_program("Foo:\nBar::")[:rules].first }
   let(:unordered_rule) { top_level_rule.conditions[0].child_rule }
   let(:ordered_rule) { top_level_rule.conditions[1].child_rule }
 
