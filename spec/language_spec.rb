@@ -533,29 +533,105 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'variables' do
-    it 'allows a node integer value to be duplicated' do
-      rules = <<-EOS
-        Foo: X
-        !Bar:
-        +Bar: X
-      EOS
-      result = run_program :rules => rules, :start_state => 'Foo: 5'
-      result[:exit_status].should == 1
-      result[:end_state].should == parse_state("Foo: 5\nBar: 5")
+    describe 'that duplicate' do
+      let(:rules) do
+        <<-EOS
+          Foo: X
+          !Bar:
+          +Bar: X
+        EOS
+      end
+
+      describe 'integer values' do
+        it 'allows a node to be duplicated' do
+          result = run_program :rules => rules, :start_state => 'Foo: 5'
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state("Foo: 5\nBar: 5")
+        end
+
+        it 'does not link the original and duplicated value' do
+          rules = <<-EOS
+            Foo: X
+            !Bar:
+            +Bar: X
+
+            Bar: X
+            Foo: < $X->integer_value = $X->integer_value + 1;
+          EOS
+          result = run_program :rules => rules, :start_state => 'Foo: 5'
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state("Foo: 5\nBar: 6")
+        end
+      end
+
+      describe 'real values' do
+        it 'allows a node to be duplicated' do
+          result = run_program :rules => rules, :start_state => 'Foo: 5.7'
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state("Foo: 5.7\nBar: 5.7")
+        end
+
+        it 'does not link the original and duplicated value' do
+          rules = <<-EOS
+            Foo: X
+            !Bar:
+            +Bar: X
+
+            Bar: X
+            Foo: < $X->real_value = $X->real_value + 1;
+          EOS
+          result = run_program :rules => rules, :start_state => 'Foo: 5.7'
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state("Foo: 5.7\nBar: 6.7")
+        end
+      end
+
+      describe 'child nodes' do
+        let(:start_state) do
+          <<-EOS
+            Foo:
+              Bar:
+                Baz:
+              Qux: 5.7
+          EOS
+        end
+
+        it 'allows a node to be duplicated' do
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state("#{start_state}\n#{start_state.sub('Foo','Bar')}")
+        end
+
+        it 'does not link the original and duplicated children' do
+          rules = <<-EOS
+            Foo: X
+            !Bar:
+            +Bar: X
+
+            Bar:
+              Bar:
+                -Baz:
+
+            Foo:
+              Qux: X
+            Bar: < $X->real_value = $X->real_value + 1;
+          EOS
+          end_state = <<-EOS
+            Foo:
+              Bar:
+                Baz:
+              Qux: 6.7
+            Bar:
+              Bar:
+              Qux: 5.7
+          EOS
+          result = run_program :rules => rules, :start_state => start_state
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state(end_state)
+        end
+      end
     end
 
-    it 'allows a node real value to be duplicated' do
-      rules = <<-EOS
-        Foo: X
-        !Bar:
-        +Bar: X
-      EOS
-      result = run_program :rules => rules, :start_state => 'Foo: 5.7'
-      result[:exit_status].should == 1
-      result[:end_state].should == parse_state("Foo: 5.7\nBar: 5.7")
-    end
-
-    it 'allows child nodes to be duplicated'
     describe 'matched multiple times' do
       let(:rules) do
         <<-EOS
@@ -616,10 +692,62 @@ shared_examples_for 'an okk implementation' do
       end
 
       describe 'matching the nodes\' children' do
-        # TODO
         describe 'that are equal' do
+          it 'allows the rule to match' do
+            start_state = <<-EOS
+              Foo:
+                Baz:
+              Bar:
+                Baz:
+            EOS
+            result = run_program :rules => rules, :start_state => start_state
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state("Foo:\n  Baz:")
+          end
+        end
+
+        describe 'with values' do
+          describe 'that are equal' do
+            it 'allows the rule to match'
+          end
+
+          describe 'that are unequal' do
+            it 'prevents the rule from matching'
+          end
+
+          describe 'that are different types' do
+            it 'prevents the rule from matching'
+          end
+        end
+
+        describe 'and grandchildren' do
+          describe 'that are equal' do
+            it 'allows the rule to match'
+          end
+
+          describe 'that are unequal' do
+            it 'prevents the rule from matching'
+          end
+
+          describe 'with values' do
+            describe 'that are equal' do
+              it 'allows the rule to match'
+            end
+
+            describe 'that are unequal' do
+              it 'prevents the rule from matching'
+            end
+
+            describe 'that are different types' do
+              it 'prevents the rule from matching'
+            end
+          end
+        end
+
+        describe 'that have equal mentioned and unmentioned children' do
           it 'allows the rule to match'
         end
+
         describe 'that have equal mentioned children, but have differing unmentioned children' do
           it 'prevents the rule from matching'
         end
