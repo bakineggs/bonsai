@@ -109,6 +109,19 @@ describe Parser do
           error.message.should == "Expected start of header to come before end of header"
         }
       end
+
+      it 'does not allow nodes with values to have children' do
+        lambda {
+          parse :program, <<-EOS, 6
+            Foo: 16
+              Bar:
+          EOS
+        }.should raise_error(Parser::Error) { |error|
+          error.line.line_number.should == 2
+          error.line.should == '  Bar:'
+          error.message.should == 'Nodes with values can not have children'
+        }
+      end
     end
 
     it 'returns an empty list of rules with an empty program' do
