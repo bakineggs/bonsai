@@ -708,48 +708,130 @@ shared_examples_for 'an okk implementation' do
 
         describe 'with values' do
           describe 'that are equal' do
-            it 'allows the rule to match'
+            it 'allows the rule to match' do
+              start_state = <<-EOS
+                Foo:
+                  Baz: 5
+                Bar:
+                  Baz: 5
+              EOS
+              result = run_program :rules => rules, :start_state => start_state
+              result[:exit_status].should == 1
+              result[:end_state].should == parse_state("Foo:\n  Baz: 5")
+            end
           end
 
           describe 'that are unequal' do
-            it 'prevents the rule from matching'
+            it 'prevents the rule from matching' do
+              start_state = <<-EOS
+                Foo:
+                  Baz: 5
+                Bar:
+                  Baz: 6
+              EOS
+              result = run_program :rules => rules, :start_state => start_state
+              result[:exit_status].should == 1
+              result[:end_state].should == parse_state(start_state)
+            end
           end
 
           describe 'that are different types' do
-            it 'prevents the rule from matching'
+            it 'prevents the rule from matching' do
+              start_state = <<-EOS
+                Foo:
+                  Baz: 5
+                Bar:
+                  Baz: 5.0
+              EOS
+              result = run_program :rules => rules, :start_state => start_state
+              result[:exit_status].should == 1
+              result[:end_state].should == parse_state(start_state)
+            end
           end
         end
 
         describe 'and grandchildren' do
           describe 'that are equal' do
-            it 'allows the rule to match'
+            it 'allows the rule to match' do
+              start_state = <<-EOS
+                Foo:
+                  Baz:
+                    Qux:
+                Bar:
+                  Baz:
+                    Qux:
+              EOS
+              result = run_program :rules => rules, :start_state => start_state
+              result[:exit_status].should == 1
+              result[:end_state].should == parse_state("Foo:\n  Baz:\n    Qux:")
+            end
           end
 
           describe 'that are unequal' do
-            it 'prevents the rule from matching'
+            it 'prevents the rule from matching' do
+              start_state = <<-EOS
+                Foo:
+                  Baz:
+                    Qux:
+                Bar:
+                  Baz:
+                    FooQux:
+              EOS
+              result = run_program :rules => rules, :start_state => start_state
+              result[:exit_status].should == 1
+              result[:end_state].should == parse_state(start_state)
+            end
           end
 
           describe 'with values' do
             describe 'that are equal' do
-              it 'allows the rule to match'
+              it 'allows the rule to match' do
+                start_state = <<-EOS
+                  Foo:
+                    Baz:
+                      Qux: 5
+                  Bar:
+                    Baz:
+                      Qux: 5
+                EOS
+                result = run_program :rules => rules, :start_state => start_state
+                result[:exit_status].should == 1
+                result[:end_state].should == parse_state("Foo:\n  Baz:\n    Qux: 5")
+              end
             end
 
             describe 'that are unequal' do
-              it 'prevents the rule from matching'
+              it 'prevents the rule from matching' do
+                start_state = <<-EOS
+                  Foo:
+                    Baz:
+                      Qux: 5
+                  Bar:
+                    Baz:
+                      Qux: 6
+                EOS
+                result = run_program :rules => rules, :start_state => start_state
+                result[:exit_status].should == 1
+                result[:end_state].should == parse_state(start_state)
+              end
             end
 
             describe 'that are different types' do
-              it 'prevents the rule from matching'
+              it 'prevents the rule from matching' do
+                start_state = <<-EOS
+                  Foo:
+                    Baz:
+                      Qux: 5
+                  Bar:
+                    Baz:
+                      Qux: 5.0
+                EOS
+                result = run_program :rules => rules, :start_state => start_state
+                result[:exit_status].should == 1
+                result[:end_state].should == parse_state(start_state)
+              end
             end
           end
-        end
-
-        describe 'that have equal mentioned and unmentioned children' do
-          it 'allows the rule to match'
-        end
-
-        describe 'that have equal mentioned children, but have differing unmentioned children' do
-          it 'prevents the rule from matching'
         end
       end
     end
