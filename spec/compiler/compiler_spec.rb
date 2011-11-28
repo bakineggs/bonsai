@@ -25,26 +25,34 @@ describe Compiler do
     result = {}
 
     interpreter = source.path.sub(/.c$/, '')
-    if system "gcc -o #{interpreter} #{source.path}"
-      `ulimit -t 1; #{interpreter} > #{interpreter}.stdout 2> #{interpreter}.stderr`
+    if system "gcc -o #{interpreter} #{source.path} > #{interpreter}.gcc.stdout 2> #{interpreter}.gcc.stderr"
+      system "sh -c 'ulimit -t 1; #{interpreter} > #{interpreter}.stdout 2> #{interpreter}.stderr' 2> #{interpreter}.sh.stderr"
 
       result[:exit_status] = $?.exitstatus
       result[:stdout] = File.read "#{interpreter}.stdout"
       result[:stderr] = File.read("#{interpreter}.stderr").gsub(/^Started:\n/, '')
+      result[:shell_stderr] = File.read "#{interpreter}.sh.stderr"
 
       if result[:stderr].include? "No rules to apply!"
         result[:end_state] = parse_state(result[:stderr].split("No rules to apply!\n")[1] || "")
       end
 
-      File.delete interpreter
-      File.delete "#{interpreter}.stdout"
-      File.delete "#{interpreter}.stderr"
     else
       result[:gcc_error] = true
+      result[:gcc_stdout] = File.read "#{interpreter}.gcc.stdout"
+      result[:gcc_stderr] = File.read "#{interpreter}.gcc.stderr"
     end
 
-    source.close
     result
+
+  ensure
+    source.close
+    File.delete "#{interpreter}.gcc.stdout"
+    File.delete "#{interpreter}.gcc.stderr"
+    File.delete interpreter
+    File.delete "#{interpreter}.stdout"
+    File.delete "#{interpreter}.stderr"
+    File.delete "#{interpreter}.sh.stderr"
   end
 
   it_should_behave_like 'an okk implementation'
