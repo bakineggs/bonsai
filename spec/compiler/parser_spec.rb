@@ -191,6 +191,22 @@ describe Parser do
       rules[0].conditions[0].child_rule.definition.should == ['  Bar:']
       rules[0].conditions[0].child_rule.definition[0].line_number.should == 2
     end
+
+    it 'associates code segments with rules' do
+      rules = parse(:program, <<-EOS, 4)[:rules]
+        Foo:
+          Bar:
+        < exit(0);
+
+        Baz:
+        < printf("hi");
+        < exit(1);
+      EOS
+
+      rules[0].code_segment.should == "exit(0);"
+      rules[0].conditions[0].child_rule.code_segment.should be_nil
+      rules[1].code_segment.should == "printf(\"hi\");\nexit(1);"
+    end
   end
 
   describe '#parse_conditions' do
@@ -324,16 +340,6 @@ describe Parser do
       it 'assigns the specified variable' do
         parse(:condition, 'Foo: X').variable.should == 'X'
         parse(:condition, 'Foo: blah').variable.should == 'blah'
-      end
-    end
-
-    describe 'code segments' do
-      it 'does not assign a code segment without one' do
-        parse(:condition, 'Foo:').code_segment.should be_nil
-      end
-
-      it 'reads the code segment' do
-        parse(:condition, 'Foo: < exit(0);').code_segment.should == 'exit(0);'
       end
     end
   end

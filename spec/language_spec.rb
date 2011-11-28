@@ -40,7 +40,7 @@ shared_examples_for 'an okk implementation' do
 
   describe 'executing code' do
     it 'executes code of a matched rule' do
-      result = run_program :rules => "Foo: < exit(0);", :start_state => "Foo:"
+      result = run_program :rules => "Foo:\n< exit(0);", :start_state => "Foo:"
       result[:exit_status].should == 0
       result[:stdout].should == ""
       result[:stderr].should == ""
@@ -48,7 +48,7 @@ shared_examples_for 'an okk implementation' do
     end
 
     it 'does not execute code of an unmatched rule' do
-      result = run_program :rules => "Foo: < exit(0);", :start_state => "Bar:"
+      result = run_program :rules => "Foo:\n< exit(0);", :start_state => "Bar:"
       result[:exit_status].should == 1
       result[:stdout].should == ""
       result[:stderr].should == "No rules to apply!\nBar:\n"
@@ -56,7 +56,7 @@ shared_examples_for 'an okk implementation' do
     end
 
     it 'causes a gcc error with invalid code' do
-      result = run_program :rules => "Foo: < not_valid_code;", :start_state => "Bar:"
+      result = run_program :rules => "Foo:\n< not_valid_code;", :start_state => "Bar:"
       result[:gcc_error].should be_true
       result[:exit_status].should be_nil
       result[:stdout].should be_nil
@@ -72,7 +72,7 @@ shared_examples_for 'an okk implementation' do
           void e() { exit(0); }
         %}
       EOS
-      result = run_program :rules => "Foo: < e();", :start_state => "Foo:", :header => header
+      result = run_program :rules => "Foo:\n< e();", :start_state => "Foo:", :header => header
       result[:exit_status].should == 0
       result[:stdout].should == ""
       result[:stderr].should == ""
@@ -85,7 +85,7 @@ shared_examples_for 'an okk implementation' do
           void e() { not_valid_code; }
         %}
       EOS
-      result = run_program :rules => "Foo: < exit(0);", :start_state => "Foo:", :header => header
+      result = run_program :rules => "Foo:\n< exit(0);", :start_state => "Foo:", :header => header
       result[:gcc_error].should be_true
       result[:exit_status].should be_nil
       result[:stdout].should be_nil
@@ -98,7 +98,8 @@ shared_examples_for 'an okk implementation' do
     it 'applies the rule when conditions match at the root level' do
       rules = <<-EOS
         ^:
-          Foo: < exit(0);
+          Foo:
+        < exit(0);
       EOS
       start_state = <<-EOS
         Bar:
@@ -112,7 +113,8 @@ shared_examples_for 'an okk implementation' do
     it 'does not apply the rule when conditions match below the root level' do
       rules = <<-EOS
         ^:
-          Foo: < exit(0);
+          Foo:
+        < exit(0);
       EOS
       start_state = <<-EOS
         Bar:
@@ -129,7 +131,8 @@ shared_examples_for 'an okk implementation' do
     describe 'at the root level' do
       it 'creates the node' do
         rules = <<-EOS
-          Foo: < exit(0);
+          Foo:
+          < exit(0);
 
           +Foo:
         EOS
@@ -142,7 +145,8 @@ shared_examples_for 'an okk implementation' do
       describe 'with a matching parent' do
         it 'creates the node' do
           rules = <<-EOS
-            Foo: < exit(0);
+            Foo:
+            < exit(0);
 
             Bar:
               +Foo:
@@ -155,7 +159,8 @@ shared_examples_for 'an okk implementation' do
       describe 'without a matching parent' do
         it 'does not create the node' do
           rules = <<-EOS
-            Foo: < exit(0);
+            Foo:
+            < exit(0);
 
             Bar:
               +Foo:
@@ -170,7 +175,8 @@ shared_examples_for 'an okk implementation' do
     describe 'with children' do
       it 'creates the children' do
         rules = <<-EOS
-          Foo: < exit(0);
+          Foo:
+          < exit(0);
 
           +Bar:
             Foo:
@@ -274,7 +280,8 @@ shared_examples_for 'an okk implementation' do
       <<-EOS
         Foo:
           Bar:
-          Baz: < exit(0);
+          Baz:
+        < exit(0);
       EOS
     end
 
@@ -336,7 +343,8 @@ shared_examples_for 'an okk implementation' do
       <<-EOS
         Foo::
           Bar:
-          Baz: < exit(0);
+          Baz:
+        < exit(0);
       EOS
     end
 
@@ -462,7 +470,8 @@ shared_examples_for 'an okk implementation' do
       <<-EOS
         Foo:
           Bar:
-          Baz: < exit(0);
+          Baz:
+        < exit(0);
       EOS
     end
 
@@ -497,7 +506,8 @@ shared_examples_for 'an okk implementation' do
       <<-EOS
         Foo:=
           Bar:
-          Baz: < exit(0);
+          Baz:
+        < exit(0);
       EOS
     end
 
@@ -556,7 +566,9 @@ shared_examples_for 'an okk implementation' do
             +Bar: X
 
             Bar: X
-            Foo: < $X->integer_value = $X->integer_value + 1;
+            !Baz:
+            +Baz:
+            < $X->integer_value++;
           EOS
           result = run_program :rules => rules, :start_state => 'Foo: 5'
           result[:exit_status].should == 1
@@ -578,7 +590,9 @@ shared_examples_for 'an okk implementation' do
             +Bar: X
 
             Bar: X
-            Foo: < $X->decimal_value = $X->decimal_value + 1;
+            !Baz:
+            +Baz:
+            < $X->decimal_value++;
           EOS
           result = run_program :rules => rules, :start_state => 'Foo: 5.7'
           result[:exit_status].should == 1
@@ -614,7 +628,9 @@ shared_examples_for 'an okk implementation' do
 
             Foo:
               Qux: X
-            Bar: < $X->decimal_value = $X->decimal_value + 1;
+            !Baz:
+            +Baz:
+            < $X->decimal_value++;
           EOS
           end_state = <<-EOS
             Foo:
@@ -834,6 +850,10 @@ shared_examples_for 'an okk implementation' do
           end
         end
       end
+    end
+
+    describe 'used in a code segment' do
+      # TODO
     end
   end
 
