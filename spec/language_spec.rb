@@ -10,14 +10,14 @@ shared_examples_for 'an okk implementation' do
     children = []
     nodes.each do |node|
       if node.match /^ {#{depth}}[^ ]/
-        state += [{:label => parent.gsub(' ', ''), :children => parse_state(children.join "\n")}]
+        state += [{:label => parent.sub(/^ {#{depth}}/, ''), :children => parse_state(children.join "\n")}]
         parent = node
         children = []
       else
         children += [node]
       end
     end
-    state + [{:label => parent.gsub(' ', ''), :children => parse_state(children.join "\n")}]
+    state + [{:label => parent.sub(/^ {#{depth}}/, ''), :children => parse_state(children.join "\n")}]
   end
 
   describe 'halting' do
