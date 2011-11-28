@@ -47,6 +47,14 @@ shared_examples_for 'an okk implementation' do
       result[:end_state].should be_nil
     end
 
+    it 'executes lines of code in order' do
+      result = run_program :rules => "Foo:\n< printf(\"bar\");\n< exit(0);", :start_state => "Foo:"
+      result[:exit_status].should == 0
+      result[:stdout].should == "bar"
+      result[:stderr].should == ""
+      result[:end_state].should be_nil
+    end
+
     it 'does not execute code of an unmatched rule' do
       result = run_program :rules => "Foo:\n< exit(0);", :start_state => "Bar:"
       result[:exit_status].should == 1
