@@ -32,8 +32,8 @@ describe Compiler do
       result[:stdout] = File.read "#{interpreter}.stdout"
       result[:stderr] = File.read("#{interpreter}.stderr").gsub(/^Started:\n/, '')
 
-      if end_state = result[:stderr].split("No rules to apply!\n")[1]
-        result[:end_state] = parse_state end_state
+      if result[:stderr].include? "No rules to apply!"
+        result[:end_state] = parse_state(result[:stderr].split("No rules to apply!\n")[1] || "")
       end
 
       File.delete interpreter

@@ -333,7 +333,7 @@ class Compiler
               #{condition.code_segment}
               if (transform_rule_#{condition.child_rule.object_id}(match->child_match))
                 transformed = true;
-              #{"remove_node(match); transformed = true;" if condition.removes_node?}
+              #{"remove_node(match->matched_node); transformed = true;" if condition.removes_node?}
             }
         EOS
       end
