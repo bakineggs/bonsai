@@ -305,7 +305,7 @@ describe Parser do
         parse(:condition, 'Foo: 17').value.should be_an(Integer)
       end
 
-      it 'reads the real value' do
+      it 'reads the decimal value' do
         parse(:condition, 'Foo: 17.34').value.should == 17.34
       end
 

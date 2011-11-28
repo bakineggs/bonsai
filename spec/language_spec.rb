@@ -564,7 +564,7 @@ shared_examples_for 'an okk implementation' do
         end
       end
 
-      describe 'real values' do
+      describe 'decimal values' do
         it 'allows a node to be duplicated' do
           result = run_program :rules => rules, :start_state => 'Foo: 5.7'
           result[:exit_status].should == 1
@@ -578,7 +578,7 @@ shared_examples_for 'an okk implementation' do
             +Bar: X
 
             Bar: X
-            Foo: < $X->real_value = $X->real_value + 1;
+            Foo: < $X->decimal_value = $X->decimal_value + 1;
           EOS
           result = run_program :rules => rules, :start_state => 'Foo: 5.7'
           result[:exit_status].should == 1
@@ -614,7 +614,7 @@ shared_examples_for 'an okk implementation' do
 
             Foo:
               Qux: X
-            Bar: < $X->real_value = $X->real_value + 1;
+            Bar: < $X->decimal_value = $X->decimal_value + 1;
           EOS
           end_state = <<-EOS
             Foo:
