@@ -330,7 +330,6 @@ class Compiler
         transform_rule += <<-EOS
             if (match->condition_id == #{condition.object_id}) {
               #{"create_node_#{condition.object_id}(match); transformed = true;" if condition.creates_node?}
-              #{condition.code_segment}
               if (transform_rule_#{condition.child_rule.object_id}(match->child_match))
                 transformed = true;
               #{"remove_node(match->matched_node); transformed = true;" if condition.removes_node?}
@@ -341,6 +340,8 @@ class Compiler
       transform_rule += <<-EOS
             match = match->next_match;
           }
+
+          #{rule.code_segment}
 
           return transformed;
         }

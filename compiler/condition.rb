@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/rule'
 
 class Condition
-  attr_reader :node_type, :child_rule, :value, :code_segment, :variable
+  attr_reader :node_type, :child_rule, :value, :variable
 
   def initialize options = {}
     @node_type = options[:node_type]
@@ -11,7 +11,6 @@ class Condition
     @prevents_match = options[:prevents_match]
     @matches_multiple_nodes = options[:matches_multiple_nodes]
     @value = options[:value]
-    @code_segment = options[:code_segment]
     @variable = options[:variable]
   end
 

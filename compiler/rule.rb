@@ -1,13 +1,14 @@
 require File.dirname(__FILE__) + '/condition'
 
 class Rule
-  attr_reader :conditions, :definition
+  attr_reader :conditions, :code_segment, :definition
 
   def initialize options = {}
     @top_level = options[:top_level]
     @conditions_are_ordered = options[:conditions_are_ordered]
     @must_match_all_nodes = options[:must_match_all_nodes]
     @conditions = options[:conditions]
+    @code_segment = options[:code_segment]
     @definition = options[:definition]
   end
 

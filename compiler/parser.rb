@@ -56,6 +56,14 @@ class Parser
   end
 
   def parse_rule definition, depth = 0, options = {}
+    options[:definition] = definition.clone
+
+    if options[:top_level]
+      code_lines = []
+      code_lines.unshift definition.pop while definition.last && definition.last.match(/^< /)
+      options[:code_segment] = code_lines.map{|line| line.sub /^< /, ''}.join("\n")
+    end
+
     if !definition.empty? && definition.first.match(/^#{'  ' * depth}  /)
       if depth == 0
         raise Error.new 'The first condition of a rule must be at the top level', definition.first
@@ -64,8 +72,7 @@ class Parser
       end
     end
 
-    options[:conditions] = parse_conditions definition.clone, depth
-    options[:definition] = definition
+    options[:conditions] = parse_conditions definition, depth
 
     Rule.new options
   end
