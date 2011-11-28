@@ -362,7 +362,8 @@ class Compiler
           node->children = NULL;
           node->next_in_poset = NULL;
           node->type = #{type_var_for condition.node_type};
-          node->value_type = none;
+          node->value_type = #{condition.value_type};
+          #{"node->#{condition.value_type}_value = #{condition.value};" if [:integer, :decimal].include? condition.value_type}
 
           create_child_nodes_#{condition.child_rule.object_id}(node);
 

@@ -34,4 +34,16 @@ class Condition
   def matches_multiple_nodes?
     @matches_multiple_nodes
   end
+
+  def value_type
+    if value.is_a? Fixnum
+      :integer
+    elsif value.is_a? Float
+      :decimal
+    elsif value.is_a? String
+      :string
+    elsif value.nil?
+      :none
+    end
+  end
 end
