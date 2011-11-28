@@ -49,10 +49,13 @@ describe Compiler do
     source.close
     File.delete "#{interpreter}.gcc.stdout"
     File.delete "#{interpreter}.gcc.stderr"
-    File.delete interpreter
-    File.delete "#{interpreter}.stdout"
-    File.delete "#{interpreter}.stderr"
-    File.delete "#{interpreter}.sh.stderr"
+
+    unless result[:gcc_error]
+      File.delete interpreter
+      File.delete "#{interpreter}.stdout"
+      File.delete "#{interpreter}.stderr"
+      File.delete "#{interpreter}.sh.stderr"
+    end
   end
 
   it_should_behave_like 'an okk implementation'
