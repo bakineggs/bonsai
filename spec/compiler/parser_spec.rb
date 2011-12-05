@@ -207,6 +207,20 @@ describe Parser do
       rules[0].conditions[0].child_rule.code_segment.should be_nil
       rules[1].code_segment.should == "printf(\"hi\");\nexit(1);"
     end
+
+    it 'disallows variables matched multiple times in code segments' do
+      lambda {
+        parse :program, <<-EOS, 5
+          Foo: X
+          Bar: X
+          < $X->integer_value++;
+        EOS
+      }.should raise_error(Parser::Error) { |error|
+        error.line.line_number.should == 3
+        error.line.should == '< $X->integer_value++;'
+        error.message.should == 'Multiply-referenced variable in code segment'
+      }
+    end
   end
 
   describe '#parse_conditions' do
