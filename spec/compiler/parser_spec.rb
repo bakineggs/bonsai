@@ -4,8 +4,10 @@ require File.dirname(__FILE__) + '/../../compiler/parser'
 describe Parser do
   def parse type, body, depth = 0
     body.gsub! /^ {#{depth * 2}}/, ''
-    body = body.split "\n" if type == :conditions
-    Parser.new.send :"parse_#{type}", body
+    body = body.split "\n" if [:rule, :conditions].include?(type)
+    args = [:"parse_#{type}", body]
+    args += [0, {:top_level => true}] if type == :rule
+    Parser.new.send *args
   end
 
   describe '#parse_program' do
@@ -206,6 +208,28 @@ describe Parser do
       rules[0].code_segment.should == "exit(0);"
       rules[0].conditions[0].child_rule.code_segment.should be_nil
       rules[1].code_segment.should == "printf(\"hi\");\nexit(1);"
+    end
+  end
+
+  describe '#parse_rules' do
+    it 'allows variables matched once in code segments' do
+      lambda {
+        parse :rule, <<-EOS, 5
+          Foo: X
+          < $X->integer_value++;
+        EOS
+      }.should_not raise_error
+    end
+
+    it 'allows variables matched once and referenced multiple times in code segments' do
+      lambda {
+        parse :rule, <<-EOS, 5
+          Foo: X
+          +Bar: X
+          +Baz: X
+          < $X->integer_value++;
+        EOS
+      }.should_not raise_error
     end
 
     it 'disallows variables matched multiple times in code segments' do
