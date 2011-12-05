@@ -861,7 +861,17 @@ shared_examples_for 'an okk implementation' do
     end
 
     describe 'used in a code segment' do
-      # TODO
+      it 'allows the matched node to be accessed' do
+        rules = <<-EOS
+          Foo: X
+          !Bar:
+          +Bar:
+          < $X->integer_value++;
+        EOS
+        result = run_program :rules => rules, :start_state => "Foo: 5"
+        result[:exit_status].should == 1
+        result[:end_state].should == parse_state("Foo: 6\nBar:")
+      end
     end
   end
 
