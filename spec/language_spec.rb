@@ -890,80 +890,287 @@ shared_examples_for 'an okk implementation' do
 
     describe 'used in a code segment' do
       describe 'referenced in a matching condition' do
-        it 'allows the variable to be accessed'
+        it 'allows the variable to be accessed' do
+          rules = <<-EOS
+            Foo: X
+            !Bar:
+            +Bar:
+            < $X->integer_value++;
+          EOS
+          result = run_program :rules => rules, :start_state => 'Foo: 5'
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state("Foo: 6\nBar:")
+        end
 
         describe 'and another matching condition' do
-          it 'does not allow the variable to be accessed'
+          it 'does not allow the variable to be accessed' do
+            rules = <<-EOS
+              Foo: X
+              Bar: X
+              < $X->integer_value++;
+            EOS
+            result = run_program :rules => rules, :start_state => "Foo: 5\nBar: 5"
+            result[:gcc_error].should be_true
+          end
         end
 
         describe 'and a removing condition' do
-          it 'does not allow the variable to be accessed'
+          it 'does not allow the variable to be accessed' do
+            rules = <<-EOS
+              Foo: X
+              -Bar: X
+              < $X->integer_value++;
+            EOS
+            result = run_program :rules => rules, :start_state => "Foo: 5\nBar: 5"
+            result[:gcc_error].should be_true
+          end
 
           describe 'and a creating condition' do
-            it 'does not allow the variable to be accessed'
+            it 'does not allow the variable to be accessed' do
+              rules = <<-EOS
+                Foo: X
+                -Bar: X
+                +Baz: X
+                < $X->integer_value++;
+              EOS
+              result = run_program :rules => rules, :start_state => "Foo: 5\nBar: 5"
+              result[:gcc_error].should be_true
+            end
 
             describe 'and a preventing condition' do
-              it 'does not allow the variable to be accessed'
+              it 'does not allow the variable to be accessed' do
+                rules = <<-EOS
+                  Foo: X
+                  -Bar: X
+                  +Baz: X
+                  !Qux: X
+                  < $X->integer_value++;
+                EOS
+                result = run_program :rules => rules, :start_state => "Foo: 5\nBar: 5"
+                result[:gcc_error].should be_true
+              end
             end
           end
 
           describe 'and a preventing condition' do
-            it 'does not allow the variable to be accessed'
+            it 'does not allow the variable to be accessed' do
+              rules = <<-EOS
+                Foo: X
+                -Bar: X
+                !Baz: X
+                < $X->integer_value++;
+              EOS
+              result = run_program :rules => rules, :start_state => "Foo: 5\nBar: 5"
+              result[:gcc_error].should be_true
+            end
           end
         end
 
         describe 'and a creating condition' do
-          it 'allows the variable to be accessed'
-          it 'applies changes to both nodes'
-          it 'does not link the nodes'
+          it 'allows the variable to be accessed' do
+            rules = <<-EOS
+              Foo: X
+              !Bar:
+              +Bar: X
+              < $X->integer_value++;
+            EOS
+            result = run_program :rules => rules, :start_state => 'Foo: 5'
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state("Foo: 6\nBar: 6")
+          end
+
+          it 'does not link the nodes' do
+            rules = <<-EOS
+              Foo: X
+              !Bar:
+              +Bar: X
+              < $X->integer_value++;
+
+              Bar: X
+              !Baz:
+              +Baz:
+              < $X->integer_value++;
+            EOS
+            result = run_program :rules => rules, :start_state => 'Foo: 5'
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state("Foo: 6\nBar: 7\nBaz:")
+          end
 
           describe 'and a preventing condition' do
-            it 'allows the variable to be accessed'
+            it 'allows the variable to be accessed' do
+              rules = <<-EOS
+                Foo: X
+                !Bar: X
+                +Bar: X
+                < $X->integer_value++;
+              EOS
+              result = run_program :rules => rules, :start_state => 'Foo: 5'
+              result[:exit_status].should == 1
+              result[:end_state].should == parse_state("Foo: 6\nBar: 6")
+            end
           end
         end
 
         describe 'and a preventing condition' do
-          it 'allows the variable to be accessed'
+          it 'allows the variable to be accessed' do
+            rules = <<-EOS
+              Foo: X
+              !Bar: X
+              !Baz:
+              +Baz:
+              < $X->integer_value++;
+            EOS
+            result = run_program :rules => rules, :start_state => 'Foo: 5'
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state("Foo: 6\nBaz:")
+          end
         end
       end
 
       describe 'referenced in a removing condition' do
-        it 'allows the variable to be accessed'
+        it 'allows the variable to be accessed' do
+          rules = <<-EOS
+            %{
+              #include <stdio.h>
+            %}
+
+            -Foo: X
+            < printf("%d", $X->integer_value);
+          EOS
+          result = run_program :rules => rules, :start_state => 'Foo: 5'
+          result[:exit_status].should == 1
+          result[:stdout].should == '5'
+          result[:end_state].should == parse_state('')
+        end
 
         describe 'and another removing condition' do
-          it 'does not allow the variable to be accessed'
+          it 'does not allow the variable to be accessed' do
+            rules = <<-EOS
+              -Foo: X
+              -Bar: X
+              < $X->integer_value++;
+            EOS
+            result = run_program :rules => rules, :start_state => "Foo: 5\nBar: 5"
+            result[:gcc_error].should be_true
+          end
         end
 
         describe 'and a creating condition' do
-          it 'allows the variable to be accessed'
-          it 'applies changes to the created node'
+          it 'allows the variable to be accessed' do
+            rules = <<-EOS
+              -Foo: X
+              +Bar: X
+              < $X->integer_value++;
+            EOS
+            result = run_program :rules => rules, :start_state => 'Foo: 5'
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state('Bar: 6')
+          end
 
           describe 'and a preventing condition' do
-            it 'allows the variable to be accessed'
+            it 'allows the variable to be accessed' do
+              rules = <<-EOS
+                -Foo: X
+                +Bar: X
+                !Baz: X
+                < $X->integer_value++;
+              EOS
+              result = run_program :rules => rules, :start_state => 'Foo: 5'
+              result[:exit_status].should == 1
+              result[:end_state].should == parse_state('Bar: 6')
+            end
           end
         end
 
         describe 'and a preventing condition' do
-          it 'allows the variable to be accessed'
+          it 'allows the variable to be accessed' do
+            rules = <<-EOS
+              %{
+                #include <stdio.h>
+              %}
+
+              -Foo: X
+              !Bar: X
+              < printf("%d", $X->integer_value);
+            EOS
+            result = run_program :rules => rules, :start_state => 'Foo: 5'
+            result[:exit_status].should == 1
+            result[:stdout].should == '5'
+            result[:end_state].should == parse_state('')
+          end
         end
       end
 
       describe 'referenced in a creating condition' do
-        it 'allows the variable to be accessed'
+        it 'allows the variable to be accessed' do
+          rules = <<-EOS
+            !Foo:
+            +Foo: X
+            < $X->value_type = integer;
+            < $X->integer_value = 5;
+          EOS
+          result = run_program :rules => rules, :start_state => ''
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state('Foo: 5')
+        end
 
         describe 'and another creating condition' do
-          it 'allows the variable to be accessed'
-          it 'applies the change to both nodes'
-          it 'does not link the nodes'
+          it 'allows the variable to be accessed' do
+            rules = <<-EOS
+              !Foo:
+              +Foo: X
+              +Bar: X
+              < $X->value_type = integer;
+              < $X->integer_value = 5;
+            EOS
+            result = run_program :rules => rules, :start_state => ''
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state("Foo: 5\nBar: 5")
+          end
+
+          it 'does not link the nodes' do
+            rules = <<-EOS
+              !Foo:
+              +Foo: X
+              +Bar: X
+              < $X->value_type = integer;
+              < $X->integer_value = 5;
+
+              Bar: X
+              !Baz:
+              +Baz:
+              < $X->integer_value++;
+            EOS
+            result = run_program :rules => rules, :start_state => ''
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state("Foo: 5\nBar: 6\nBaz:")
+          end
         end
 
         describe 'and a preventing condition' do
-          it 'allows the variable to be accessed'
+          it 'allows the variable to be accessed' do
+            rules = <<-EOS
+              !Foo: X
+              +Foo: X
+              < $X->value_type = integer;
+              < $X->integer_value = 5;
+            EOS
+            result = run_program :rules => rules, :start_state => ''
+            result[:exit_status].should == 1
+            result[:end_state].should == parse_state('Foo: 5')
+          end
         end
       end
 
       describe 'referenced in a preventing condition' do
-        it 'does not allow the variable to be accessed'
+        it 'does not allow the variable to be accessed' do
+          rules = <<-EOS
+            !Foo: X
+            < $X->integer_value++;
+          EOS
+          result = run_program :rules => rules, :start_state => ''
+          result[:gcc_error].should be_true
+        end
       end
     end
   end
