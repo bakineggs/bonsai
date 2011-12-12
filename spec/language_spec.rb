@@ -889,27 +889,81 @@ shared_examples_for 'an okk implementation' do
     end
 
     describe 'used in a code segment' do
-      it 'allows the matched node to be accessed' do
-        rules = <<-EOS
-          Foo: X
-          !Bar:
-          +Bar:
-          < $X->integer_value++;
-        EOS
-        result = run_program :rules => rules, :start_state => "Foo: 5"
-        result[:exit_status].should == 1
-        result[:end_state].should == parse_state("Foo: 6\nBar:")
+      describe 'referenced in a matching condition' do
+        it 'allows the variable to be accessed'
+
+        describe 'and another matching condition' do
+          it 'does not allow the variable to be accessed'
+        end
+
+        describe 'and a removing condition' do
+          it 'does not allow the variable to be accessed'
+
+          describe 'and a creating condition' do
+            it 'does not allow the variable to be accessed'
+
+            describe 'and a preventing condition' do
+              it 'does not allow the variable to be accessed'
+            end
+          end
+
+          describe 'and a preventing condition' do
+            it 'does not allow the variable to be accessed'
+          end
+        end
+
+        describe 'and a creating condition' do
+          it 'allows the variable to be accessed'
+          it 'applies changes to both nodes'
+          it 'does not link the nodes'
+
+          describe 'and a preventing condition' do
+            it 'allows the variable to be accessed'
+          end
+        end
+
+        describe 'and a preventing condition' do
+          it 'allows the variable to be accessed'
+        end
       end
 
-      it 'does not allow a node matched multiple times to be accessed' do
-        rules = <<-EOS
-          Foo: X
-          Bar: X
-          < $X->integer_value++;
-        EOS
-        lambda {
-          run_program :rules => rules, :start_state => "Foo: 5\nBar: 5"
-        }.should raise_error # TODO: what kind of error?
+      describe 'referenced in a removing condition' do
+        it 'allows the variable to be accessed'
+
+        describe 'and another removing condition' do
+          it 'does not allow the variable to be accessed'
+        end
+
+        describe 'and a creating condition' do
+          it 'allows the variable to be accessed'
+          it 'applies changes to the created node'
+
+          describe 'and a preventing condition' do
+            it 'allows the variable to be accessed'
+          end
+        end
+
+        describe 'and a preventing condition' do
+          it 'allows the variable to be accessed'
+        end
+      end
+
+      describe 'referenced in a creating condition' do
+        it 'allows the variable to be accessed'
+
+        describe 'and another creating condition' do
+          it 'allows the variable to be accessed'
+          it 'applies the change to both nodes'
+          it 'does not link the nodes'
+        end
+
+        describe 'and a preventing condition' do
+          it 'allows the variable to be accessed'
+        end
+      end
+
+      describe 'referenced in a preventing condition' do
+        it 'does not allow the variable to be accessed'
       end
     end
   end
