@@ -664,6 +664,30 @@ shared_examples_for 'an okk implementation' do
         EOS
       end
 
+      describe 'matching leaf nodes' do
+        it 'allows the rule to match' do
+          result = run_program :rules => rules, :start_state => "Foo:\nBar:"
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state('Bar:')
+        end
+      end
+
+      describe 'matching a leaf node and a value' do
+        it 'prevents the rule from matching' do
+          result = run_program :rules => rules, :start_state => "Foo:\nBar: 5"
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state("Foo:\nBar: 5")
+        end
+      end
+
+      describe 'matching a leaf node and a node\'s children' do
+        it 'prevents the rule from matching' do
+          result = run_program :rules => rules, :start_state => "Foo:\nBar:\n  Baz:"
+          result[:exit_status].should == 1
+          result[:end_state].should == parse_state("Foo:\nBar:\n  Baz:")
+        end
+      end
+
       describe 'matching a value and a node\'s children' do
         it 'prevents the rule from matching' do
           start_state = <<-EOS
@@ -860,6 +884,10 @@ shared_examples_for 'an okk implementation' do
       end
     end
 
+    describe 'used in a preventing condition' do
+      # TODO
+    end
+
     describe 'used in a code segment' do
       it 'allows the matched node to be accessed' do
         rules = <<-EOS
@@ -871,6 +899,17 @@ shared_examples_for 'an okk implementation' do
         result = run_program :rules => rules, :start_state => "Foo: 5"
         result[:exit_status].should == 1
         result[:end_state].should == parse_state("Foo: 6\nBar:")
+      end
+
+      it 'does not allow a node matched multiple times to be accessed' do
+        rules = <<-EOS
+          Foo: X
+          Bar: X
+          < $X->integer_value++;
+        EOS
+        lambda {
+          run_program :rules => rules, :start_state => "Foo: 5\nBar: 5"
+        }.should raise_error # TODO: what kind of error?
       end
     end
   end
