@@ -551,6 +551,80 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'variables' do
+    describe 'referenced in a matching condition' do
+      it 'allows the variable to be used in a code segment'
+
+      describe 'and another matching condition' do
+        it 'does not allow the variable to be used in a code segment'
+      end
+
+      describe 'and a removing condition' do
+        it 'does not allow the variable to be used in a code segment'
+
+        describe 'and a creating condition' do
+          it 'does not allow the variable to be used in a code segment'
+
+          describe 'and a preventing condition' do
+            it 'does not allow the variable to be used in a code segment'
+          end
+        end
+      end
+
+      describe 'and a creating condition' do
+        it 'allows the variable to be used in a code segment'
+        it 'does not link the nodes'
+
+        describe 'and a preventing condition' do
+          it 'allows the variable to be used in a code segment'
+        end
+      end
+
+      describe 'and a preventing condition' do
+        it 'allows the variable to be used in a code segment'
+      end
+    end
+
+    describe 'referenced in a removing condition' do
+      it 'allows the variable to be used in a code segment'
+
+      describe 'and another removing condition' do
+        it 'does not allow the variable to be used in a code segment'
+      end
+
+      describe 'and a creating condition' do
+        it 'allows the variable to be used in a code segment'
+
+        describe 'and a preventing condition' do
+          it 'allows the variable to be used in a code segment'
+        end
+      end
+
+      describe 'and a preventing condition' do
+        it 'allows the variable to be used in a code segment'
+      end
+    end
+
+    describe 'referenced in a creating condition' do
+      it 'allows the variable to be used in a code segment'
+
+      describe 'and another creating condition' do
+        it 'allows the variable to be used in a code segment'
+        it 'does not link the nodes'
+      end
+
+      describe 'and a preventing condition' do
+        it 'allows the variable to be used in a code segment'
+      end
+    end
+
+    describe 'referenced in a preventing condition' do
+      it 'does not allow the variable to be used in a code segment'
+
+      describe 'and another preventing condition' do
+        it 'does not allow the variable to be used in a code segment'
+      end
+    end
+
     describe 'that duplicate' do
       let(:rules) do
         <<-EOS
