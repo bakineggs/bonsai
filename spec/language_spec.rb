@@ -554,18 +554,110 @@ shared_examples_for 'an okk implementation' do
     describe 'referenced in a matching condition' do
       it 'allows the variable to be used in a code segment'
 
+      # TODO: test node matching
+
       describe 'and another matching condition' do
         it 'does not allow the variable to be used in a code segment'
+
+        describe 'matching two leaf nodes' do
+          it 'applies the rule'
+        end
+
+        describe 'matching a leaf node and a value' do
+          it 'does not apply the rule'
+        end
+
+        describe 'matching a leaf node and a node\'s children' do
+          it 'does not apply the rule'
+        end
+
+        describe 'matching two values' do
+          describe 'that are equal integers' do
+            it 'applies the rule'
+          end
+
+          describe 'that are unequal integers' do
+            it 'does not apply the rule'
+          end
+
+          describe 'that are equal decimals' do
+            it 'applies the rule'
+          end
+
+          describe 'that are unequal decimals' do
+            it 'does not apply the rule'
+          end
+
+          describe 'that are an integer and a decimal' do
+            it 'does not apply the rule'
+          end
+        end
+
+        describe 'matching a value and a node\'s children' do
+          it 'does not apply the rule'
+        end
+
+        describe 'matching two nodes\' children' do
+          # TODO
+        end
+
+        describe 'and a removing condition' do
+          it 'does not allow the variable to be used in a code segment'
+
+          # TODO: test node matching
+
+          describe 'and a creating condition' do
+            it 'does not allow the variable to be used in a code segment'
+
+            # TODO: test node matching
+
+            describe 'and a preventing condition' do
+              it 'does not allow the variable to be used in a code segment'
+
+              # TODO: test node matching
+            end
+          end
+
+          describe 'and a preventing condition' do
+            it 'does not allow the variable to be used in a code segment'
+
+            # TODO: test node matching
+          end
+        end
+
+        describe 'and a creating condition' do
+          it 'does not allow the variable to be used in a code segment'
+
+          # TODO: test node matching
+
+          describe 'and a preventing condition' do
+            it 'does not allow the variable to be used in a code segment'
+
+            # TODO: test node matching
+          end
+        end
+
+        describe 'and a preventing condition' do
+          it 'does not allow the variable to be used in a code segment'
+
+          # TODO: test node matching
+        end
       end
 
       describe 'and a removing condition' do
         it 'does not allow the variable to be used in a code segment'
 
+        # TODO: test node matching
+
         describe 'and a creating condition' do
           it 'does not allow the variable to be used in a code segment'
 
+          # TODO: test node matching
+
           describe 'and a preventing condition' do
             it 'does not allow the variable to be used in a code segment'
+
+            # TODO: test node matching
           end
         end
       end
@@ -574,54 +666,80 @@ shared_examples_for 'an okk implementation' do
         it 'allows the variable to be used in a code segment'
         it 'does not link the nodes'
 
+        # TODO: test node matching
+
         describe 'and a preventing condition' do
           it 'allows the variable to be used in a code segment'
+
+          # TODO: test node matching
         end
       end
 
       describe 'and a preventing condition' do
         it 'allows the variable to be used in a code segment'
+
+        # TODO: test node matching
       end
     end
 
     describe 'referenced in a removing condition' do
       it 'allows the variable to be used in a code segment'
 
+      # TODO: test node matching
+
       describe 'and another removing condition' do
         it 'does not allow the variable to be used in a code segment'
+
+        # TODO: test node matching
       end
 
       describe 'and a creating condition' do
         it 'allows the variable to be used in a code segment'
 
+        # TODO: test node matching
+
         describe 'and a preventing condition' do
           it 'allows the variable to be used in a code segment'
+
+          # TODO: test node matching
         end
       end
 
       describe 'and a preventing condition' do
         it 'allows the variable to be used in a code segment'
+
+        # TODO: test node matching
       end
     end
 
     describe 'referenced in a creating condition' do
       it 'allows the variable to be used in a code segment'
 
+      # TODO: test node matching
+
       describe 'and another creating condition' do
         it 'allows the variable to be used in a code segment'
         it 'does not link the nodes'
+
+        # TODO: test node matching
       end
 
       describe 'and a preventing condition' do
         it 'allows the variable to be used in a code segment'
+
+        # TODO: test node matching
       end
     end
 
     describe 'referenced in a preventing condition' do
       it 'does not allow the variable to be used in a code segment'
 
+      # TODO: test node matching
+
       describe 'and another preventing condition' do
         it 'does not allow the variable to be used in a code segment'
+
+        # TODO: test node matching
       end
     end
 
