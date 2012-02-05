@@ -4,8 +4,8 @@
 #ifdef __cplusplus
   enum value { none, integer, decimal, string };
 #else
-  typedef enum BOOL { false = 0, true = 1 } bool;
-  typedef enum VALUE { none, integer, decimal, string } value;
+  typedef enum { false = 0, true = 1 } bool;
+  typedef enum { none, integer, decimal, string } value;
 #endif
 
 #ifndef NULL
