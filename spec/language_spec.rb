@@ -559,46 +559,52 @@ shared_examples_for 'an okk implementation' do
       describe 'and another matching condition' do
         it 'does not allow the variable to be used in a code segment'
 
-        describe 'matching two leaf nodes' do
-          it 'applies the rule'
-        end
-
-        describe 'matching a leaf node and a value' do
-          it 'does not apply the rule'
-        end
-
-        describe 'matching a leaf node and a node\'s children' do
-          it 'does not apply the rule'
-        end
-
-        describe 'matching two values' do
-          describe 'that are equal integers' do
+        describe 'matching a leaf node' do
+          describe 'and a leaf node' do
             it 'applies the rule'
           end
 
-          describe 'that are unequal integers' do
+          describe 'and a value' do
             it 'does not apply the rule'
           end
 
-          describe 'that are equal decimals' do
-            it 'applies the rule'
-          end
-
-          describe 'that are unequal decimals' do
-            it 'does not apply the rule'
-          end
-
-          describe 'that are an integer and a decimal' do
+          describe 'and a node\'s children' do
             it 'does not apply the rule'
           end
         end
 
-        describe 'matching a value and a node\'s children' do
-          it 'does not apply the rule'
+        describe 'matching a value' do
+          describe 'and a value' do
+            describe 'that are equal integers' do
+              it 'applies the rule'
+            end
+
+            describe 'that are unequal integers' do
+              it 'does not apply the rule'
+            end
+
+            describe 'that are equal decimals' do
+              it 'applies the rule'
+            end
+
+            describe 'that are unequal decimals' do
+              it 'does not apply the rule'
+            end
+
+            describe 'that are an integer and a decimal' do
+              it 'does not apply the rule'
+            end
+          end
+
+          describe 'and a node\'s children' do
+            it 'does not apply the rule'
+          end
         end
 
-        describe 'matching two nodes\' children' do
-          # TODO
+        describe 'matching a node\'s children' do
+          describe 'and a node\'s children' do
+            # TODO
+          end
         end
 
         describe 'and a removing condition' do
