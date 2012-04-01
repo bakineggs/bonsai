@@ -552,9 +552,21 @@ shared_examples_for 'an okk implementation' do
 
   describe 'variables' do
     describe 'referenced in a matching condition' do
-      it 'allows the variable to be used in a code segment'
 
-      # TODO: test node matching
+      describe 'matching a leaf node' do
+        it 'applies the rule'
+        it 'allows the variable to be used in a code segment'
+      end
+
+      describe 'matching a node with children' do
+        it 'applies the rule'
+        it 'allows the variable to be used in a code segment'
+      end
+
+      describe 'matching a node with a value' do
+        it 'applies the rule'
+        it 'allows the variable to be used in a code segment'
+      end
 
       describe 'and another matching condition' do
         it 'does not allow the variable to be used in a code segment'
@@ -564,17 +576,27 @@ shared_examples_for 'an okk implementation' do
             it 'applies the rule'
           end
 
-          describe 'and a value' do
+          describe 'and a node with children' do
             it 'does not apply the rule'
           end
 
-          describe 'and a node\'s children' do
+          describe 'and a node with a value' do
             it 'does not apply the rule'
           end
         end
 
-        describe 'matching a value' do
-          describe 'and a value' do
+        describe 'matching a node with children' do
+          describe 'and a node with children' do
+            # TODO
+          end
+
+          describe 'and a node with a value' do
+            it 'does not apply the rule'
+          end
+        end
+
+        describe 'matching a node with a value' do
+          describe 'and a node with a value' do
             describe 'that are equal integers' do
               it 'applies the rule'
             end
@@ -595,27 +617,229 @@ shared_examples_for 'an okk implementation' do
               it 'does not apply the rule'
             end
           end
-
-          describe 'and a node\'s children' do
-            it 'does not apply the rule'
-          end
-        end
-
-        describe 'matching a node\'s children' do
-          describe 'and a node\'s children' do
-            # TODO
-          end
         end
 
         describe 'and a removing condition' do
           it 'does not allow the variable to be used in a code segment'
 
-          # TODO: test node matching
+          describe 'matching a leaf node' do
+            describe 'and a leaf node' do
+              describe 'and a leaf node' do
+                it 'applies the rule'
+              end
+
+              describe 'and a node with children' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with a value' do
+                it 'does not apply the rule'
+              end
+            end
+
+            describe 'and a node with children' do
+              describe 'and a leaf node' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with children' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with a value' do
+                it 'does not apply the rule'
+              end
+            end
+
+            describe 'and a node with a value' do
+              describe 'and a leaf node' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with children' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with a value' do
+                it 'does not apply the rule'
+              end
+            end
+          end
+
+          describe 'matching a node with children' do
+            describe 'and a node with children' do
+              describe 'and a leaf node' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with children' do
+                # TODO
+              end
+
+              describe 'and a node with a value' do
+                it 'does not apply the rule'
+              end
+            end
+
+            describe 'and a node with a value' do
+              describe 'and a leaf node' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with children' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with a value' do
+                it 'does not apply the rule'
+              end
+            end
+          end
+
+          describe 'matching a node with a value' do
+            describe 'and a node with a value' do
+              describe 'and a leaf node' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with children' do
+                it 'does not apply the rule'
+              end
+
+              describe 'and a node with a value' do
+                describe 'that are equal integers' do
+                  it 'applies the rule'
+                end
+
+                describe 'that are unequal integers' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'that are equal decimals' do
+                  it 'applies the rule'
+                end
+
+                describe 'that are unequal decimals' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'that are integers and decimals' do
+                  it 'does not apply the rule'
+                end
+              end
+            end
+          end
 
           describe 'and a creating condition' do
             it 'does not allow the variable to be used in a code segment'
 
-            # TODO: test node matching
+            describe 'matching a leaf node' do
+              describe 'and a leaf node' do
+                describe 'and a leaf node' do
+                  it 'applies the rule'
+                end
+
+                describe 'and a node with children' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with a value' do
+                  it 'does not apply the rule'
+                end
+              end
+
+              describe 'and a node with children' do
+                describe 'and a leaf node' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with children' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with a value' do
+                  it 'does not apply the rule'
+                end
+              end
+
+              describe 'and a node with a value' do
+                describe 'and a leaf node' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with children' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with a value' do
+                  it 'does not apply the rule'
+                end
+              end
+            end
+
+            describe 'matching a node with children' do
+              describe 'and a node with children' do
+                describe 'and a leaf node' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with children' do
+                  # TODO
+                end
+
+                describe 'and a node with a value' do
+                  it 'does not apply the rule'
+                end
+              end
+
+              describe 'and a node with a value' do
+                describe 'and a leaf node' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with children' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with a value' do
+                  it 'does not apply the rule'
+                end
+              end
+            end
+
+            describe 'matching a node with a value' do
+              describe 'and a node with a value' do
+                describe 'and a leaf node' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with children' do
+                  it 'does not apply the rule'
+                end
+
+                describe 'and a node with a value' do
+                  describe 'that are equal integers' do
+                    it 'applies the rule'
+                  end
+
+                  describe 'that are unequal integers' do
+                    it 'does not apply the rule'
+                  end
+
+                  describe 'that are equal decimals' do
+                    it 'applies the rule'
+                  end
+
+                  describe 'that are unequal decimals' do
+                    it 'does not apply the rule'
+                  end
+
+                  describe 'that are integers and decimals' do
+                    it 'does not apply the rule'
+                  end
+                end
+              end
+            end
 
             describe 'and a preventing condition' do
               it 'does not allow the variable to be used in a code segment'
