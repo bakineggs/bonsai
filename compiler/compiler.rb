@@ -24,12 +24,13 @@ class Compiler
   private
     def setup_node_types rules
       types = rules.map{|rule| node_types rule}.flatten.uniq
-      length = types.length + 2
+      length = types.length + 3
       capacity = ((length - 1) / 64 + 1) * 64
 
       declarations = <<-EOS
         char* ROOT_NODE_TYPE = "^";
         char* ROOT_PARENT_NODE_TYPE = "^^";
+        char* ANY_NODE_TYPE = "*";
         char** node_types;
         int node_types_length = #{length};
         int node_types_capacity = #{capacity};
@@ -40,11 +41,12 @@ class Compiler
           node_types = (char**) malloc(#{capacity} * sizeof(char*));
           node_types[0] = ROOT_NODE_TYPE;
           node_types[1] = ROOT_PARENT_NODE_TYPE;
+          node_types[2] = ANY_NODE_TYPE;
       EOS
 
       types.each_with_index do |type, index|
         declarations += "char* #{type_var_for type} = \"#{type}\";\n"
-        setup_node_types += "node_types[#{index + 2}] = #{type_var_for type};\n"
+        setup_node_types += "node_types[#{index + 3}] = #{type_var_for type};\n"
       end
 
       <<-EOS
@@ -55,14 +57,14 @@ class Compiler
     end
 
     def type_var_for type
-      return 'ROOT_NODE_TYPE' if type == :root
+      return "#{type.to_s.upcase}_NODE_TYPE" if type.is_a? Symbol
       "node_type_for_#{type.gsub ' ', '_'}"
     end
 
     def node_types rule
       rule.conditions.map do |condition|
         types = node_types condition.child_rule
-        types.push condition.node_type unless condition.node_type == :root
+        types.push condition.node_type unless condition.node_type.is_a? Symbol
         types
       end.flatten.uniq
     end
