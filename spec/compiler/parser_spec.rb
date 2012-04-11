@@ -377,7 +377,7 @@ describe Parser do
 
       it 'assigns the specified variable' do
         parse(:condition, 'Foo: X').variable.should == 'X'
-        parse(:condition, 'Foo: blah').variable.should == 'blah'
+        parse(:condition, 'Foo: blah2you').variable.should == 'blah2you'
       end
     end
   end
