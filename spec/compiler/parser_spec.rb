@@ -379,6 +379,12 @@ describe Parser do
         parse(:condition, 'Foo: X').variable.should == 'X'
         parse(:condition, 'Foo: blah2you').variable.should == 'blah2you'
       end
+
+      it 'does not allow variable names to start with a number' do
+        lambda {
+          parse :condition, 'Foo: 2you'
+        }.should raise_error(Parser::Error, /variable names can't start with a number/)
+      end
     end
   end
 end
