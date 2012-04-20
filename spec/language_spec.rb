@@ -1,4 +1,8 @@
 shared_examples_for 'an okk implementation' do
+  let(:header) { "" }
+  subject { run_program :rules => rules, :start_state => start_state, :header => header }
+  before { @assignments ||= {} }
+
   def parse_state definition
     nodes = definition.split "\n"
     state = []
@@ -21,84 +25,104 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'halting' do
-    it 'errors out when no rules match' do
-      result = run_program :rules => "Foo:", :start_state => "Bar:"
-      result[:exit_status].should == 1
-      result[:stdout].should == ""
-      result[:stderr].should == "No rules to apply!\nBar:\n"
-      result[:end_state].should == parse_state('Bar:')
+    let(:rules) { "Foo:" }
+
+    describe 'when no rules match' do
+      let(:start_state) { "Bar:" }
+      it 'errors out' do
+        subject[:exit_status].should == 1
+        subject[:stdout].should == ""
+        subject[:stderr].should == "No rules to apply!\n#{start_state}\n"
+        subject[:end_state].should == parse_state(start_state)
+      end
     end
 
-    it 'errors out when no rules make a change' do
-      result = run_program :rules => "Foo:", :start_state => "Foo:"
-      result[:exit_status].should == 1
-      result[:stdout].should == ""
-      result[:stderr].should == "No rules to apply!\nFoo:\n"
-      result[:end_state].should == parse_state('Foo:')
+    describe 'when no rules make a change' do
+      let(:start_state) { "Foo:" }
+      it 'errors out' do
+        subject[:exit_status].should == 1
+        subject[:stdout].should == ""
+        subject[:stderr].should == "No rules to apply!\n#{start_state}\n"
+        subject[:end_state].should == parse_state(start_state)
+      end
     end
   end
 
   describe 'executing code' do
-    it 'executes code of a matched rule' do
-      result = run_program :rules => "Foo:\n< exit(0);", :start_state => "Foo:"
-      result[:exit_status].should == 0
-      result[:stdout].should == ""
-      result[:stderr].should == ""
-      result[:end_state].should be_nil
+    let(:start_state) { "Foo:" }
+
+    describe 'of a matched rule' do
+      let(:rules) { "Foo:\n< exit(0);" }
+      it 'executes the code' do
+        subject[:exit_status].should == 0
+        subject[:stdout].should == ""
+        subject[:stderr].should == ""
+        subject[:end_state].should be_nil
+      end
+
+      describe 'with multiple lines of code' do
+        let(:rules) { "Foo:\n< printf(\"bar\");\n< exit(0);" }
+        it 'executes the code' do
+          subject[:exit_status].should == 0
+          subject[:stdout].should == "bar"
+          subject[:stderr].should == ""
+          subject[:end_state].should be_nil
+        end
+      end
     end
 
-    it 'executes lines of code in order' do
-      result = run_program :rules => "Foo:\n< printf(\"bar\");\n< exit(0);", :start_state => "Foo:"
-      result[:exit_status].should == 0
-      result[:stdout].should == "bar"
-      result[:stderr].should == ""
-      result[:end_state].should be_nil
+    describe 'of an unmatched rule' do
+      let(:rules) { "Bar:\n< exit(0);" }
+      it 'does not execute the code' do
+        subject[:exit_status].should == 1
+        subject[:stdout].should == ""
+        subject[:stderr].should == "No rules to apply!\n#{start_state}\n"
+        subject[:end_state].should == parse_state(start_state)
+      end
     end
 
-    it 'does not execute code of an unmatched rule' do
-      result = run_program :rules => "Foo:\n< exit(0);", :start_state => "Bar:"
-      result[:exit_status].should == 1
-      result[:stdout].should == ""
-      result[:stderr].should == "No rules to apply!\nBar:\n"
-      result[:end_state].should == parse_state('Bar:')
-    end
-
-    it 'causes a gcc error with invalid code' do
-      result = run_program :rules => "Foo:\n< not_valid_code;", :start_state => "Bar:"
-      result[:gcc_error].should be_true
-      result[:exit_status].should be_nil
-      result[:stdout].should be_nil
-      result[:stderr].should be_nil
-      result[:end_state].should be_nil
+    describe 'that is invalid' do
+      let(:rules) { "Bar:\n< not_valid_code;" }
+      it 'causes a compile error' do
+        subject[:compile_error].should be_true
+        subject[:exit_status].should be_nil
+        subject[:stdout].should be_nil
+        subject[:stderr].should be_nil
+        subject[:end_state].should be_nil
+      end
     end
   end
 
   describe 'header' do
-    it 'makes included code callable' do
-      header = <<-EOS
-        %{
-          void e() { exit(0); }
-        %}
-      EOS
-      result = run_program :rules => "Foo:\n< e();", :start_state => "Foo:", :header => header
-      result[:exit_status].should == 0
-      result[:stdout].should == ""
-      result[:stderr].should == ""
-      result[:end_state].should be_nil
+    let(:header) { <<-EOS }
+      %{
+        void f() {
+          #{code}
+        }
+      %}
+    EOS
+    let(:rules) { "Foo:\n< f();" }
+    let(:start_state) { "Foo:" }
+
+    describe 'with valid code' do
+      let(:code) { "exit(0);" }
+      it 'exectutes the code' do
+        subject[:exit_status].should == 0
+        subject[:stdout].should == ""
+        subject[:stderr].should == ""
+        subject[:end_state].should be_nil
+      end
     end
 
-    it 'causes a gcc error with invalid code' do
-      header = <<-EOS
-        %{
-          void e() { not_valid_code; }
-        %}
-      EOS
-      result = run_program :rules => "Foo:\n< exit(0);", :start_state => "Foo:", :header => header
-      result[:gcc_error].should be_true
-      result[:exit_status].should be_nil
-      result[:stdout].should be_nil
-      result[:stderr].should be_nil
-      result[:end_state].should be_nil
+    describe 'with invalid code' do
+      let(:code) { "not_valid_code;" }
+      it 'causes a compile error' do
+        subject[:compile_error].should be_true
+        subject[:exit_status].should be_nil
+        subject[:stdout].should be_nil
+        subject[:stderr].should be_nil
+        subject[:end_state].should be_nil
+      end
     end
   end
 
@@ -552,20 +576,72 @@ shared_examples_for 'an okk implementation' do
 
   describe 'variables' do
     describe 'referenced in a matching condition' do
+      let(:rules) { <<-EOS }
+        Foo: X
+        !Bar:
+        +Bar:
+      EOS
 
       describe 'matching a leaf node' do
-        it 'applies the rule'
-        it 'allows the variable to be used in a code segment'
+        let(:start_state) { "Foo:" }
+
+        it 'applies the rule' do
+          subject[:exit_status].should == 1
+          subject[:end_state].should == parse_state("Foo:\nBar:")
+        end
+
+        it 'allows the variable to be used in a code segment' do
+          @assignments[:rules] = <<-EOS
+            Foo: X
+            !Bar:
+            +Bar:
+            < $X->value_type = integer;
+            < $X->integer_value = 5;
+          EOS
+          subject[:exit_status].should == 1
+          subject[:end_state].should == parse_state("Foo: 5\nBar:")
+        end
       end
 
       describe 'matching a node with children' do
-        it 'applies the rule'
-        it 'allows the variable to be used in a code segment'
+        let(:start_state) { "Foo:\n  Baz:" }
+
+        it 'applies the rule' do
+          subject[:exit_status].should == 1
+          subject[:end_state].should == parse_state("Foo:\n  Baz:\nBar:")
+        end
+
+        it 'allows the variable to be used in a code segment' do
+          @assignments[:rules] = <<-EOS
+            Foo: X
+            !Bar:
+            +Bar:
+            < $X->children->value_type = integer;
+            < $X->children->integer_value = 5;
+          EOS
+          subject[:exit_status].should == 1
+          subject[:end_state].should == parse_state("Foo:\n  Baz: 5\nBar:")
+        end
       end
 
       describe 'matching a node with a value' do
-        it 'applies the rule'
-        it 'allows the variable to be used in a code segment'
+        let(:start_state) { "Foo: 4" }
+
+        it 'applies the rule' do
+          subject[:exit_status].should == 1
+          subject[:end_state].should == parse_state("Foo: 4\nBar:")
+        end
+
+        it 'allows the variable to be used in a code segment' do
+          @assignments[:rules] = <<-EOS
+            Foo: X
+            !Bar:
+            +Bar:
+            < $X->integer_value = 5;
+          EOS
+          subject[:exit_status].should == 1
+          subject[:end_state].should == parse_state("Foo: 5\nBar:")
+        end
       end
 
       describe 'and another matching condition' do
