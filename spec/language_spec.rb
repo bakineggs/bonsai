@@ -1,7 +1,6 @@
 shared_examples_for 'an okk implementation' do
   let(:header) { "" }
   subject { run_program :rules => rules, :start_state => start_state, :header => header }
-  before { @assignments ||= {} }
 
   def parse_state definition
     nodes = definition.split "\n"
@@ -582,24 +581,51 @@ shared_examples_for 'an okk implementation' do
         +Bar:
       EOS
 
+      describe 'used in a code segment' do
+        let(:rules) { <<-EOS }
+          Foo: X
+          !Bar:
+          +Bar:
+          < #{target}->value_type = integer;
+          < #{target}->integer_value = 5;
+        EOS
+        let(:target) { '$X' }
+
+        describe 'matching a leaf node' do
+          let(:start_state) { "Foo:" }
+
+          it 'applies the rule' do
+            subject[:exit_status].should == 1
+            subject[:end_state].should == parse_state("Foo: 5\nBar:")
+          end
+        end
+
+        describe 'matching a node with children' do
+          let(:start_state) { "Foo:\n  Baz:" }
+          let(:target) { '$X->children' }
+
+          it 'applies the rule' do
+            subject[:exit_status].should == 1
+            subject[:end_state].should == parse_state("Foo:\n  Baz: 5\nBar:")
+          end
+        end
+
+        describe 'matching a node with a value' do
+          let(:start_state) { "Foo: 4" }
+
+          it 'applies the rule' do
+            subject[:exit_status].should == 1
+            subject[:end_state].should == parse_state("Foo: 5\nBar:")
+          end
+        end
+      end
+
       describe 'matching a leaf node' do
         let(:start_state) { "Foo:" }
 
         it 'applies the rule' do
           subject[:exit_status].should == 1
-          subject[:end_state].should == parse_state("Foo:\nBar:")
-        end
-
-        it 'allows the variable to be used in a code segment' do
-          @assignments[:rules] = <<-EOS
-            Foo: X
-            !Bar:
-            +Bar:
-            < $X->value_type = integer;
-            < $X->integer_value = 5;
-          EOS
-          subject[:exit_status].should == 1
-          subject[:end_state].should == parse_state("Foo: 5\nBar:")
+          subject[:end_state].should == parse_state("#{start_state}\nBar:")
         end
       end
 
@@ -608,19 +634,7 @@ shared_examples_for 'an okk implementation' do
 
         it 'applies the rule' do
           subject[:exit_status].should == 1
-          subject[:end_state].should == parse_state("Foo:\n  Baz:\nBar:")
-        end
-
-        it 'allows the variable to be used in a code segment' do
-          @assignments[:rules] = <<-EOS
-            Foo: X
-            !Bar:
-            +Bar:
-            < $X->children->value_type = integer;
-            < $X->children->integer_value = 5;
-          EOS
-          subject[:exit_status].should == 1
-          subject[:end_state].should == parse_state("Foo:\n  Baz: 5\nBar:")
+          subject[:end_state].should == parse_state("#{start_state}\nBar:")
         end
       end
 
@@ -629,35 +643,59 @@ shared_examples_for 'an okk implementation' do
 
         it 'applies the rule' do
           subject[:exit_status].should == 1
-          subject[:end_state].should == parse_state("Foo: 4\nBar:")
-        end
-
-        it 'allows the variable to be used in a code segment' do
-          @assignments[:rules] = <<-EOS
-            Foo: X
-            !Bar:
-            +Bar:
-            < $X->integer_value = 5;
-          EOS
-          subject[:exit_status].should == 1
-          subject[:end_state].should == parse_state("Foo: 5\nBar:")
+          subject[:end_state].should == parse_state("#{start_state}\nBar:")
         end
       end
 
       describe 'and another matching condition' do
-        it 'does not allow the variable to be used in a code segment'
+        let(:rules) { <<-EOS }
+          Foo: X
+          Bar: X
+          !Baz:
+          +Baz:
+        EOS
+
+        describe 'used in a code segment' do
+          let(:rules) { <<-EOS }
+            Foo: X
+            Bar: X
+            !Baz:
+            +Baz:
+            < $X->value_type = none;
+          EOS
+          let(:start_state) { "Foo:\nBar:" }
+
+          it 'causes a compile error' do
+            subject[:compile_error].should be_true
+          end
+        end
 
         describe 'matching a leaf node' do
           describe 'and a leaf node' do
-            it 'applies the rule'
+            let(:start_state) { "Foo:\nBar:" }
+
+            it 'applies the rule' do
+              subject[:exit_status].should == 1
+              subject[:end_state].should == parse_state("#{start_state}\nBaz:")
+            end
           end
 
           describe 'and a node with children' do
-            it 'does not apply the rule'
+            let(:start_state) { "Foo:\nBar:\n  Qux:" }
+
+            it 'does not apply the rule' do
+              subject[:exit_status].should == 1
+              subject[:end_state].should == parse_state(start_state)
+            end
           end
 
           describe 'and a node with a value' do
-            it 'does not apply the rule'
+            let(:start_state) { "Foo:\nBar: 5" }
+
+            it 'does not apply the rule' do
+              subject[:exit_status].should == 1
+              subject[:end_state].should == parse_state(start_state)
+            end
           end
         end
 
@@ -667,30 +705,60 @@ shared_examples_for 'an okk implementation' do
           end
 
           describe 'and a node with a value' do
-            it 'does not apply the rule'
+            let(:start_state) { "Foo:\n  Baz:\nBar: 5" }
+
+            it 'does not apply the rule' do
+              subject[:exit_status].should == 1
+              subject[:end_state].should == parse_state(start_state)
+            end
           end
         end
 
         describe 'matching a node with a value' do
           describe 'and a node with a value' do
             describe 'that are equal integers' do
-              it 'applies the rule'
+              let(:start_state) { "Foo: 5\nBar: 5" }
+
+              it 'applies the rule' do
+                subject[:exit_status].should == 1
+                subject[:end_state].should == parse_state("#{start_state}\nBar:")
+              end
             end
 
             describe 'that are unequal integers' do
-              it 'does not apply the rule'
+              let(:start_state) { "Foo: 4\nBar: 5" }
+
+              it 'does not apply the rule' do
+                subject[:exit_status].should == 1
+                subject[:end_state].should == parse_state(start_state)
+              end
             end
 
             describe 'that are equal decimals' do
-              it 'applies the rule'
+              let(:start_state) { "Foo: 5.0\nBar: 5.0" }
+
+              it 'applies the rule' do
+                subject[:exit_status].should == 1
+                subject[:end_state].should == parse_state("#{start_state}\nBar:")
+              end
             end
 
             describe 'that are unequal decimals' do
-              it 'does not apply the rule'
+              let(:start_state) { "Foo: 4.0\nBar: 5.0" }
+
+              it 'does not apply the rule' do
+                subject[:exit_status].should == 1
+                subject[:end_state].should == parse_state(start_state)
+              end
             end
 
             describe 'that are an integer and a decimal' do
-              it 'does not apply the rule'
+              let(:start_state) { "Foo: 5\nBar: 5.0" }
+
+              it 'does not apply the rule' do
+                subject[:exit_status].should == 1
+                subject[:end_state].should == parse_state(start_state)
+              end
             end
           end
         end
