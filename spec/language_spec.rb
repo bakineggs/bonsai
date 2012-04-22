@@ -17,6 +17,12 @@ shared_examples_for 'an okk implementation' do
     end
   end
 
+  def self.it_applies_the_rule end_state
+    it 'applies the rule' do
+      subject[:end_state].should == parse_state(end_state)
+    end
+  end
+
   def self.it_does_not_apply_the_rule
     it 'does not apply the rule' do
       subject[:end_state].should == parse_state(start_state)
@@ -614,58 +620,34 @@ shared_examples_for 'an okk implementation' do
 
         describe 'matching a leaf node' do
           let(:start_state) { "Foo:" }
-
-          it 'applies the rule' do
-            subject[:exit_status].should == 1
-            subject[:end_state].should == parse_state("Foo: 5\nBar:")
-          end
+          it_applies_the_rule "Foo: 5\nBar:"
         end
 
         describe 'matching a node with children' do
           let(:start_state) { "Foo:\n  Baz:" }
           let(:target) { '$X->children' }
-
-          it 'applies the rule' do
-            subject[:exit_status].should == 1
-            subject[:end_state].should == parse_state("Foo:\n  Baz: 5\nBar:")
-          end
+          it_applies_the_rule "Foo:\n  Baz: 5\nBar:"
         end
 
         describe 'matching a node with a value' do
           let(:start_state) { "Foo: 4" }
-
-          it 'applies the rule' do
-            subject[:exit_status].should == 1
-            subject[:end_state].should == parse_state("Foo: 5\nBar:")
-          end
+          it_applies_the_rule "Foo: 5\nBar:"
         end
       end
 
       describe 'matching a leaf node' do
         let(:start_state) { "Foo:" }
-
-        it 'applies the rule' do
-          subject[:exit_status].should == 1
-          subject[:end_state].should == parse_state("#{start_state}\nBar:")
-        end
+        it_applies_the_rule "Foo:\nBar:"
       end
 
       describe 'matching a node with children' do
         let(:start_state) { "Foo:\n  Baz:" }
-
-        it 'applies the rule' do
-          subject[:exit_status].should == 1
-          subject[:end_state].should == parse_state("#{start_state}\nBar:")
-        end
+        it_applies_the_rule "Foo:\n  Baz:\nBar:"
       end
 
       describe 'matching a node with a value' do
         let(:start_state) { "Foo: 4" }
-
-        it 'applies the rule' do
-          subject[:exit_status].should == 1
-          subject[:end_state].should == parse_state("#{start_state}\nBar:")
-        end
+        it_applies_the_rule "Foo: 4\nBar:"
       end
 
       describe 'and another matching condition' do
@@ -694,11 +676,7 @@ shared_examples_for 'an okk implementation' do
         describe 'matching a leaf node' do
           describe 'and a leaf node' do
             let(:start_state) { "Foo:\nBar:" }
-
-            it 'applies the rule' do
-              subject[:exit_status].should == 1
-              subject[:end_state].should == parse_state("#{start_state}\nBaz:")
-            end
+            it_applies_the_rule "Foo:\nBar:\nBaz:"
           end
 
           describe 'and a node with children' do
@@ -727,11 +705,7 @@ shared_examples_for 'an okk implementation' do
           describe 'and a node with a value' do
             describe 'that are equal integers' do
               let(:start_state) { "Foo: 5\nBar: 5" }
-
-              it 'applies the rule' do
-                subject[:exit_status].should == 1
-                subject[:end_state].should == parse_state("#{start_state}\nBar:")
-              end
+              it_applies_the_rule "Foo: 5\nBar: 5\nBar:"
             end
 
             describe 'that are unequal integers' do
@@ -741,11 +715,7 @@ shared_examples_for 'an okk implementation' do
 
             describe 'that are equal decimals' do
               let(:start_state) { "Foo: 5.0\nBar: 5.0" }
-
-              it 'applies the rule' do
-                subject[:exit_status].should == 1
-                subject[:end_state].should == parse_state("#{start_state}\nBar:")
-              end
+              it_applies_the_rule "Foo: 5.0\nBar: 5.0\nBar:"
             end
 
             describe 'that are unequal decimals' do
@@ -785,11 +755,7 @@ shared_examples_for 'an okk implementation' do
             describe 'and a leaf node' do
               describe 'and a leaf node' do
                 let(:start_state) { "Foo:\nBar:\nBaz:" }
-
-                it 'applies the rule' do
-                  subject[:exit_status].should == 1
-                  subject[:end_state].should == parse_state("Foo:\nBar")
-                end
+                it_applies_the_rule "Foo:\nBar"
               end
 
               describe 'and a node with children' do
