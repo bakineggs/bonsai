@@ -663,7 +663,7 @@ shared_examples_for 'an okk implementation' do
             +Baz:
             < $X->value_type = none;
           EOS
-          let(:start_state) { "Foo:\nBar:" }
+          let(:start_state) { "Qux:" }
 
           it 'causes a compile error' do
             subject[:compile_error].should be_true
@@ -764,48 +764,111 @@ shared_examples_for 'an okk implementation' do
         end
 
         describe 'and a removing condition' do
-          it 'does not allow the variable to be used in a code segment'
+          let(:rules) { <<-EOS }
+            Foo: X
+            Bar: X
+            -Baz: X
+          EOS
+
+          describe 'used in a code segment' do
+            let(:rules) { <<-EOS }
+              Foo: X
+              Bar: X
+              -Baz: X
+              < $X->value_type = none;
+            EOS
+            let(:start_state) { "Qux:" }
+
+            it 'causes a compile error' do
+              subject[:compile_error].should be_true
+            end
+          end
 
           describe 'matching a leaf node' do
             describe 'and a leaf node' do
               describe 'and a leaf node' do
-                it 'applies the rule'
+                let(:start_state) { "Foo:\nBar:\nBaz:" }
+
+                it 'applies the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state("Foo:\nBar")
+                end
               end
 
               describe 'and a node with children' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\nBar:\nBaz:\n  Qux:" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
 
               describe 'and a node with a value' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\nBar:\nBaz: 5" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
             end
 
             describe 'and a node with children' do
               describe 'and a leaf node' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\nBar:\n  Qux:\nBaz:" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
 
               describe 'and a node with children' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\nBar:\n  Qux:\nBaz:\n  Qux:" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
 
               describe 'and a node with a value' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\nBar:\n  Qux:\nBaz: 5" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
             end
 
             describe 'and a node with a value' do
               describe 'and a leaf node' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\nBar: 5\nBaz:" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
 
               describe 'and a node with children' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\nBar: 5\nBaz:\n  Qux:" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
 
               describe 'and a node with a value' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\nBar: 5\nBaz: 5" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
             end
           end
@@ -813,7 +876,12 @@ shared_examples_for 'an okk implementation' do
           describe 'matching a node with children' do
             describe 'and a node with children' do
               describe 'and a leaf node' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\n  Qux:\nBar:\n  Qux:\nBaz:" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
 
               describe 'and a node with children' do
@@ -821,7 +889,12 @@ shared_examples_for 'an okk implementation' do
               end
 
               describe 'and a node with a value' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\n  Qux:\nBar:\n  Qux:\nBaz: 5" }
+
+                it 'does not apply the rule' do
+                  subject[:exit_status].should == 1
+                  subject[:end_state].should == parse_state(start_state)
+                end
               end
             end
 
