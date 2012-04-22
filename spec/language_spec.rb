@@ -29,6 +29,12 @@ shared_examples_for 'an okk implementation' do
     end
   end
 
+  def self.it_causes_a_compile_error
+    it 'causes a compile error' do
+      subject[:compile_error].should be_true
+    end
+  end
+
   def parse_state definition
     nodes = definition.split "\n"
     state = []
@@ -83,7 +89,6 @@ shared_examples_for 'an okk implementation' do
         subject[:exit_status].should == 0
         subject[:stdout].should == ""
         subject[:stderr].should == ""
-        subject[:end_state].should be_nil
       end
 
       describe 'with multiple lines of code' do
@@ -92,7 +97,6 @@ shared_examples_for 'an okk implementation' do
           subject[:exit_status].should == 0
           subject[:stdout].should == "bar"
           subject[:stderr].should == ""
-          subject[:end_state].should be_nil
         end
       end
     end
@@ -109,13 +113,7 @@ shared_examples_for 'an okk implementation' do
 
     describe 'that is invalid' do
       let(:rules) { "Bar:\n< not_valid_code;" }
-      it 'causes a compile error' do
-        subject[:compile_error].should be_true
-        subject[:exit_status].should be_nil
-        subject[:stdout].should be_nil
-        subject[:stderr].should be_nil
-        subject[:end_state].should be_nil
-      end
+      it_causes_a_compile_error
     end
   end
 
@@ -136,200 +134,137 @@ shared_examples_for 'an okk implementation' do
         subject[:exit_status].should == 0
         subject[:stdout].should == ""
         subject[:stderr].should == ""
-        subject[:end_state].should be_nil
       end
     end
 
     describe 'with invalid code' do
       let(:code) { "not_valid_code;" }
-      it 'causes a compile error' do
-        subject[:compile_error].should be_true
-        subject[:exit_status].should be_nil
-        subject[:stdout].should be_nil
-        subject[:stderr].should be_nil
-        subject[:end_state].should be_nil
-      end
+      it_causes_a_compile_error
     end
   end
 
   describe 'root label' do
-    it 'applies the rule when conditions match at the root level' do
-      rules = <<-EOS
-        ^:
-          Foo:
-        < exit(0);
-      EOS
-      start_state = <<-EOS
+    let(:rules) { <<-EOS }
+      ^:
+        Foo:
+      < exit(0);
+    EOS
+
+    describe 'when conditions match at the root level' do
+      let(:start_state) { <<-EOS }
         Bar:
         Foo:
         Baz:
       EOS
-      result = run_program :rules => rules, :start_state => start_state
-      result[:exit_status].should == 0
+
+      it 'applies the rule' do
+        subject[:exit_status].should == 0
+      end
     end
 
-    it 'does not apply the rule when conditions match below the root level' do
-      rules = <<-EOS
-        ^:
-          Foo:
-        < exit(0);
-      EOS
-      start_state = <<-EOS
+    describe 'when the conditions match below the root level' do
+      let(:start_state) { <<-EOS }
         Bar:
           Foo:
         Baz:
       EOS
-      result = run_program :rules => rules, :start_state => start_state
-      result[:exit_status].should == 1
-      result[:end_state].should == parse_state(start_state)
+
+      it_does_not_apply_the_rule
     end
   end
 
   describe 'creating nodes' do
     describe 'at the root level' do
-      it 'creates the node' do
-        rules = <<-EOS
-          Foo:
-          < exit(0);
+      let(:rules) { <<-EOS }
+        Foo:
+        < exit(0);
 
-          +Foo:
-        EOS
-        result = run_program :rules => rules, :start_state => ''
-        result[:exit_status].should == 0
+        +Foo:
+      EOS
+      let(:start_state) { "" }
+
+      it 'creates the node' do
+        subject[:exit_status].should == 0
       end
     end
 
     describe 'in a child condition' do
-      describe 'with a matching parent' do
-        it 'creates the node' do
-          rules = <<-EOS
-            Foo:
-            < exit(0);
+      let(:rules) { <<-EOS }
+        Foo:
+        < exit(0);
 
-            Bar:
-              +Foo:
-          EOS
-          result = run_program :rules => rules, :start_state => 'Bar:'
-          result[:exit_status].should == 0
+        Bar:
+          +Foo:
+      EOS
+
+      describe 'with a matching parent' do
+        let(:start_state) { "Bar:" }
+
+        it 'creates the node' do
+          subject[:exit_status].should == 0
         end
       end
 
       describe 'without a matching parent' do
-        it 'does not create the node' do
-          rules = <<-EOS
-            Foo:
-            < exit(0);
-
-            Bar:
-              +Foo:
-          EOS
-          result = run_program :rules => rules, :start_state => 'Baz:'
-          result[:exit_status].should == 1
-          result[:end_state].should == parse_state('Baz:')
-        end
+        let(:start_state) { "Baz:" }
+        it_does_not_apply_the_rule
       end
     end
 
     describe 'with children' do
-      it 'creates the children' do
-        rules = <<-EOS
-          Foo:
-          < exit(0);
+      let(:rules) { <<-EOS }
+        Foo:
+        < exit(0);
 
-          +Bar:
-            Foo:
-        EOS
-        result = run_program :rules => rules, :start_state => ''
-        result[:exit_status].should == 0
+        +Bar:
+          Foo:
+      EOS
+
+      it 'creates the children' do
+        subject[:exit_status].should == 0
       end
     end
   end
 
   describe 'removing nodes' do
     describe 'at the root level' do
-      it 'removes the node' do
-        result = run_program :rules => '-Foo:', :start_state => 'Foo:'
-        result[:exit_status].should == 1
-        result[:end_state].should == parse_state('')
-      end
+      let(:rules) { "-Foo:" }
+      let(:start_state) { "Foo:" }
+      it_applies_the_rule ""
     end
 
     describe 'in a child condition' do
-      it 'removes the node' do
-        rules = <<-EOS
-          Foo:
-            -Bar:
-        EOS
-        start_state = <<-EOS
-          Foo:
-            Bar:
-        EOS
-        result = run_program :rules => rules, :start_state => start_state
-        result[:exit_status].should == 1
-        result[:end_state].should == parse_state('Foo:')
-      end
+      let(:rules) { "Foo:\n  -Bar:" }
+      let(:start_state) { "Foo:\n  Bar:" }
+      it_applies_the_rule "Foo:"
     end
 
     describe 'with children' do
+      let(:rules) { "-Foo:\n  Bar:" }
+
       describe 'that match' do
-        it 'removes the node' do
-          rules = <<-EOS
-            -Foo:
-              Bar:
-          EOS
-          start_state = <<-EOS
-            Foo:
-              Bar:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 1
-          result[:end_state].should == parse_state('')
-        end
+        let(:start_state) { "Foo:\n  Bar:" }
+        it_applies_the_rule ""
       end
 
       describe 'that do not match' do
-        it 'does not remove the node' do
-          rules = <<-EOS
-            -Foo:
-              Bar:
-          EOS
-          start_state = <<-EOS
-            Foo:
-              Baz:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 1
-          result[:end_state].should == parse_state(start_state)
-        end
+        let(:start_state) { "Foo:\n  Baz:" }
+        it_does_not_apply_the_rule
       end
     end
   end
 
   describe 'preventing a match' do
-    it 'applies the rule if a match-preventing condition does not match' do
-      rules = <<-EOS
-        !Foo:
-        -Bar:
-      EOS
-      start_state = <<-EOS
-        Bar:
-        Baz:
-      EOS
-      result = run_program :rules => rules, :start_state => start_state
-      result[:end_state].should == parse_state("Baz:")
+    let(:rules) { "!Foo:\n-Bar:" }
+
+    describe 'when a match-preventing condition does not match' do
+      let(:start_state) { "Bar:\nBaz:" }
+      it_applies_the_rule "Baz:"
     end
 
-    it 'does not apply the rule if a match-preventing condition matches' do
-      rules = <<-EOS
-        !Foo:
-        -Bar:
-      EOS
-      start_state = <<-EOS
-        Bar:
-        Foo:
-      EOS
-      result = run_program :rules => rules, :start_state => start_state
-      result[:end_state].should == parse_state(start_state)
+    describe 'when a match-preventing condition matches' do
+      let(:start_state) { "Bar:\nFoo:" }
+      it_does_not_apply_the_rule
     end
   end
 
@@ -746,9 +681,7 @@ shared_examples_for 'an okk implementation' do
             EOS
             let(:start_state) { "Qux:" }
 
-            it 'causes a compile error' do
-              subject[:compile_error].should be_true
-            end
+            it_causes_a_compile_error
           end
 
           describe 'matching a leaf node' do
@@ -854,7 +787,7 @@ shared_examples_for 'an okk implementation' do
               describe 'and a node with a value' do
                 describe 'that are equal integers' do
                   let(:start_state) { "Foo: 5\nBar: 5\nBaz: 5" }
-                  it_applies_the_rule
+                  it_applies_the_rule "Foo: 5\nBar: 5"
                 end
 
                 describe 'that are unequal integers' do
@@ -864,7 +797,7 @@ shared_examples_for 'an okk implementation' do
 
                 describe 'that are equal decimals' do
                   let(:start_state) { "Foo: 5.3\nBar: 5.3\nBaz: 5.3" }
-                  it_applies_the_rule
+                  it_applies_the_rule "Foo: 5.3\nBar: 5.3"
                 end
 
                 describe 'that are unequal decimals' do
