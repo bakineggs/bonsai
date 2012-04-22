@@ -823,15 +823,18 @@ shared_examples_for 'an okk implementation' do
 
             describe 'and a node with a value' do
               describe 'and a leaf node' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\n  Qux:\nBar: 5\nBaz:" }
+                it_does_not_apply_the_rule
               end
 
               describe 'and a node with children' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\n  Qux:\nBar: 5\nBaz:\n  Qux:" }
+                it_does_not_apply_the_rule
               end
 
               describe 'and a node with a value' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo:\n  Qux:\nBar: 5\nBaz: 5" }
+                it_does_not_apply_the_rule
               end
             end
           end
@@ -839,32 +842,39 @@ shared_examples_for 'an okk implementation' do
           describe 'matching a node with a value' do
             describe 'and a node with a value' do
               describe 'and a leaf node' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo: 5\nBar: 5\nBaz:" }
+                it_does_not_apply_the_rule
               end
 
               describe 'and a node with children' do
-                it 'does not apply the rule'
+                let(:start_state) { "Foo: 5\nBar: 5\nBaz:\n  Qux:" }
+                it_does_not_apply_the_rule
               end
 
               describe 'and a node with a value' do
                 describe 'that are equal integers' do
-                  it 'applies the rule'
+                  let(:start_state) { "Foo: 5\nBar: 5\nBaz: 5" }
+                  it_applies_the_rule
                 end
 
                 describe 'that are unequal integers' do
-                  it 'does not apply the rule'
+                  let(:start_state) { "Foo: 5\nBar: 4\nBaz: 5" }
+                  it_does_not_apply_the_rule
                 end
 
                 describe 'that are equal decimals' do
-                  it 'applies the rule'
+                  let(:start_state) { "Foo: 5.3\nBar: 5.3\nBaz: 5.3" }
+                  it_applies_the_rule
                 end
 
                 describe 'that are unequal decimals' do
-                  it 'does not apply the rule'
+                  let(:start_state) { "Foo: 5.3\nBar: 4.3\nBaz: 5.3" }
+                  it_does_not_apply_the_rule
                 end
 
                 describe 'that are integers and decimals' do
-                  it 'does not apply the rule'
+                  let(:start_state) { "Foo: 5.0\nBar: 5\nBaz: 5.0" }
+                  it_does_not_apply_the_rule
                 end
               end
             end
