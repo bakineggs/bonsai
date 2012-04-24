@@ -269,265 +269,214 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'unordered child conditions' do
-    let(:rules) do
-      <<-EOS
-        Foo:
-          Bar:
-          Baz:
-        < exit(0);
-      EOS
-    end
+    let(:rules) { <<-EOS }
+      Foo:
+        Bar:
+        Baz:
+      < exit(0);
+    EOS
 
     describe 'matching unordered child nodes' do
       describe 'that match in order' do
+        let(:start_state) { <<-EOS }
+          Foo:
+            Bar:
+            Baz:
+        EOS
+
         it 'applies the rule' do
-          start_state = <<-EOS
-            Foo:
-              Bar:
-              Baz:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 0
+          subject[:exit_status].should == 0
         end
       end
 
       describe 'that match out of order' do
+        let(:start_state) { <<-EOS }
+          Foo:
+            Baz:
+            Bar:
+        EOS
+
         it 'applies the rule' do
-          start_state = <<-EOS
-            Foo:
-              Baz:
-              Bar:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 0
+          subject[:exit_status].should == 0
         end
       end
     end
 
     describe 'matching ordered child nodes' do
       describe 'that match in order' do
+        let(:start_state) { <<-EOS }
+          Foo::
+            Bar:
+            Baz:
+        EOS
+
         it 'applies the rule' do
-          start_state = <<-EOS
-            Foo::
-              Bar:
-              Baz:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 0
+          subject[:exit_status].should == 0
         end
       end
 
       describe 'that match out of order' do
+        let(:start_state) { <<-EOS }
+          Foo::
+            Baz:
+            Bar:
+        EOS
+
         it 'applies the rule' do
-          start_state = <<-EOS
-            Foo::
-              Baz:
-              Bar:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 0
+          subject[:exit_status].should == 0
         end
       end
     end
   end
 
   describe 'ordered child conditions' do
-    let(:rules) do
-      <<-EOS
-        Foo::
-          Bar:
-          Baz:
-        < exit(0);
-      EOS
-    end
+    let(:rules) { <<-EOS }
+      Foo::
+        Bar:
+        Baz:
+      < exit(0);
+    EOS
 
     describe 'matching unordered child nodes' do
       describe 'that match in order' do
-        it 'does not apply the rule' do
-          start_state = <<-EOS
-            Foo:
-              Bar:
-              Baz:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 1
-          result[:end_state].should == parse_state(start_state)
-        end
+        let(:start_state) { <<-EOS }
+          Foo:
+            Bar:
+            Baz:
+        EOS
+        it_does_not_apply_the_rule
       end
 
       describe 'that match out of order' do
-        it 'does not apply the rule' do
-          start_state = <<-EOS
-            Foo:
-              Baz:
-              Bar:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 1
-          result[:end_state].should == parse_state(start_state)
-        end
+        let(:start_state) { <<-EOS }
+          Foo:
+            Baz:
+            Bar:
+        EOS
+        it_does_not_apply_the_rule
       end
     end
 
     describe 'matching ordered child nodes' do
       describe 'that match in order' do
         describe 'from the beginning' do
+          let(:start_state) { <<-EOS }
+            Foo::
+              Bar:
+              Baz:
+          EOS
+
           it 'applies the rule' do
-            start_state = <<-EOS
-              Foo::
-                Bar:
-                Baz:
-            EOS
-            result = run_program :rules => rules, :start_state => start_state
-            result[:exit_status].should == 0
+            subject[:exit_status].should == 0
           end
         end
 
         describe 'from the middle' do
-          it 'does not apply the rule' do
-            start_state = <<-EOS
-              Foo::
-                Qux:
-                Bar:
-                Baz:
-            EOS
-            result = run_program :rules => rules, :start_state => start_state
-            result[:exit_status].should == 1
-            result[:end_state].should == parse_state(start_state)
-          end
+          let(:start_state) { <<-EOS }
+            Foo::
+              Qux:
+              Bar:
+              Baz:
+          EOS
+          it_does_not_apply_the_rule
         end
       end
 
       describe 'that match out of order' do
-        it 'does not apply the rule' do
-          start_state = <<-EOS
-            Foo::
-              Baz:
-              Bar:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:exit_status].should == 1
-          result[:end_state].should == parse_state(start_state)
-        end
+        let(:start_state) { <<-EOS }
+          Foo::
+            Baz:
+            Bar:
+        EOS
+        it_does_not_apply_the_rule
       end
     end
   end
 
   describe 'matching multiple nodes' do
-    let(:rules) do
-      <<-EOS
-        -Foo:
-        -Bar:*
-      EOS
-    end
+    let(:rules) { <<-EOS }
+      -Foo:
+      -Bar:*
+    EOS
 
     describe 'with no nodes that match' do
-      it 'applies the rule' do
-        start_state = <<-EOS
-          Foo:
-        EOS
-        result = run_program :rules => rules, :start_state => start_state
-        result[:exit_status].should == 1
-        result[:end_state].should == parse_state('')
-      end
+      let(:start_state) { "Foo:" }
+      it_applies_the_rule ""
     end
 
     describe 'with one node that matches' do
-      it 'applies the rule' do
-        start_state = <<-EOS
-          Foo:
-          Bar:
-        EOS
-        result = run_program :rules => rules, :start_state => start_state
-        result[:exit_status].should == 1
-        result[:end_state].should == parse_state('')
-      end
+      let(:start_state) { "Foo:\nBar:" }
+      it_applies_the_rule ""
     end
 
     describe 'with multiple nodes that match' do
-      it 'applies the rule' do
-        start_state = <<-EOS
-          Foo:
-          Bar:
-          Bar:
-        EOS
-        result = run_program :rules => rules, :start_state => start_state
-        result[:exit_status].should == 1
-        result[:end_state].should == parse_state('')
-      end
+      let(:start_state) { "Foo:\nBar:\nBar:" }
+      it_applies_the_rule ""
     end
   end
 
   describe 'not matching all nodes with a condition' do
-    let(:rules) do
-      <<-EOS
+    let(:rules) { <<-EOS }
+      Foo:
+        Bar:
+        Baz:
+      < exit(0);
+    EOS
+
+    describe 'with all child nodes matching' do
+      let(:start_state) { <<-EOS }
         Foo:
           Bar:
           Baz:
-        < exit(0);
       EOS
-    end
 
-    describe 'with all child nodes matching' do
       it 'applies the rule' do
-        start_state = <<-EOS
-          Foo:
-            Bar:
-            Baz:
-        EOS
-        result = run_program :rules => rules, :start_state => start_state
-        result[:exit_status].should == 0
+        subject[:exit_status].should == 0
       end
     end
 
     describe 'with some child nodes not matching' do
+      let(:start_state) { <<-EOS }
+        Foo:
+          Bar:
+          Baz:
+          Qux:
+      EOS
+
       it 'applies the rule' do
-        start_state = <<-EOS
-          Foo:
-            Bar:
-            Baz:
-            Qux:
-        EOS
-        result = run_program :rules => rules, :start_state => start_state
-        result[:exit_status].should == 0
+        subject[:exit_status].should == 0
       end
     end
   end
 
   describe 'matching all nodes with a condition' do
-    let(:rules) do
-      <<-EOS
-        Foo:=
-          Bar:
-          Baz:
-        < exit(0);
-      EOS
-    end
+    let(:rules) { <<-EOS }
+      Foo:=
+        Bar:
+        Baz:
+      < exit(0);
+    EOS
 
     describe 'with all child nodes matching' do
+      let(:start_state) { <<-EOS }
+        Foo:
+          Bar:
+          Baz:
+      EOS
+
       it 'applies the rule' do
-        start_state = <<-EOS
-          Foo:
-            Bar:
-            Baz:
-        EOS
-        result = run_program :rules => rules, :start_state => start_state
-        result[:exit_status].should == 0
+        subject[:exit_status].should == 0
       end
     end
 
     describe 'with some child nodes not matching' do
-      it 'does not apply the rule' do
-        start_state = <<-EOS
-          Foo:
-            Bar:
-            Baz:
-            Qux:
-        EOS
-        result = run_program :rules => rules, :start_state => start_state
-        result[:exit_status].should == 1
-        result[:end_state].should == parse_state(start_state)
-      end
+      let(:start_state) { <<-EOS }
+        Foo:
+          Bar:
+          Baz:
+          Qux:
+      EOS
+      it_does_not_apply_the_rule
     end
   end
 
