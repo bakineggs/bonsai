@@ -2903,61 +2903,47 @@ shared_examples_for 'an okk implementation' do
   end
 
   describe 'conditions at the top level of a rule' do
-    let(:rules) do
-      <<-EOS
-        -Foo:
-        -Bar:
-      EOS
-    end
+    let(:rules) { <<-EOS }
+      -Foo:
+      -Bar:
+    EOS
 
     describe 'in unordered contexts' do
-      it 'matches them' do
-        start_state = <<-EOS
-          Baz:
-            Bar:
-            Foo:
-        EOS
-        result = run_program :rules => rules, :start_state => start_state
-        result[:end_state].should == parse_state('Baz:')
-      end
+      let(:start_state) { <<-EOS }
+        Baz:
+          Bar:
+          Foo:
+      EOS
+      it_applies_the_rule "Baz:"
     end
 
     describe 'in ordered contexts' do
       describe 'matching from the beginning' do
-        it 'matches them' do
-          start_state = <<-EOS
-            Baz::
-              Foo:
-              Bar:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:end_state].should == parse_state('Baz:')
-        end
+        let(:start_state) { <<-EOS }
+          Baz::
+            Foo:
+            Bar:
+        EOS
+        it_applies_the_rule "Baz::"
       end
 
       describe 'matching from the middle' do
-        it 'matches them' do
-          start_state = <<-EOS
-            Baz::
-              Qux:
-              Foo:
-              Bar:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:end_state].should == parse_state('Baz:')
-        end
+        let(:start_state) { <<-EOS }
+          Baz::
+            Qux:
+            Foo:
+            Bar:
+        EOS
+        it_applies_the_rule "Baz::"
       end
 
       describe 'matching out of order' do
-        it 'does not match them' do
-          start_state = <<-EOS
-            Baz::
-              Bar:
-              Foo:
-          EOS
-          result = run_program :rules => rules, :start_state => start_state
-          result[:end_state].should == parse_state(start_state)
-        end
+        let(:start_state) { <<-EOS }
+          Baz::
+            Bar:
+            Foo:
+        EOS
+        it_does_not_apply_the_rule
       end
     end
   end
