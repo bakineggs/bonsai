@@ -487,70 +487,70 @@ shared_examples_for 'an okk implementation' do
   describe 'variables' do
     describe 'referenced in a matching condition' do
       let(:rules) { <<-EOS }
-        Foo: X
-        !Bar:
-        +Bar:
+        Matching: X
+        !Matched:
+        +Matched:
       EOS
 
       describe 'used in a code segment' do
         let(:rules) { <<-EOS }
-          Foo: X
-          !Bar:
-          +Bar:
+          Matching: X
+          !Matched:
+          +Matched:
           < #{target}->value_type = integer;
           < #{target}->integer_value = 5;
         EOS
         let(:target) { '$X' }
 
         describe 'matching a leaf node' do
-          let(:start_state) { "Foo:" }
-          it_applies_the_rule "Foo: 5\nBar:"
+          let(:start_state) { "Matching:" }
+          it_applies_the_rule "Matching: 5\nMatched:"
         end
 
         describe 'matching a node with children' do
-          let(:start_state) { "Foo:\n  Baz:" }
+          let(:start_state) { "Matching:\n  Child:" }
           let(:target) { '$X->children' }
-          it_applies_the_rule "Foo:\n  Baz: 5\nBar:"
+          it_applies_the_rule "Matching:\n  Child: 5\nMatched:"
         end
 
         describe 'matching a node with a value' do
-          let(:start_state) { "Foo: 4" }
-          it_applies_the_rule "Foo: 5\nBar:"
+          let(:start_state) { "Matching: 4" }
+          it_applies_the_rule "Matching: 5\nMatched:"
         end
       end
 
       describe 'matching a leaf node' do
-        let(:start_state) { "Foo:" }
-        it_applies_the_rule "Foo:\nBar:"
+        let(:start_state) { "Matching:" }
+        it_applies_the_rule "Matching:\nMatched:"
       end
 
       describe 'matching a node with children' do
-        let(:start_state) { "Foo:\n  Baz:" }
-        it_applies_the_rule "Foo:\n  Baz:\nBar:"
+        let(:start_state) { "Matching:\n  Child:" }
+        it_applies_the_rule "Matching:\n  Child:\nMatched:"
       end
 
       describe 'matching a node with a value' do
-        let(:start_state) { "Foo: 4" }
-        it_applies_the_rule "Foo: 4\nBar:"
+        let(:start_state) { "Matching: 4" }
+        it_applies_the_rule "Matching: 4\nMatched:"
       end
 
       describe 'and another matching condition' do
         let(:rules) { <<-EOS }
-          Foo: X
-          Bar: X
-          !Baz:
-          +Baz:
+          Matching 1: X
+          Matching 2: X
+          !Matched:
+          +Matched:
         EOS
 
         describe 'used in a code segment' do
           let(:rules) { <<-EOS }
-            Foo: X
-            Bar: X
-            !Baz:
-            +Baz:
+            Matching 1: X
+            Matching 2: X
+            !Matched:
+            +Matched:
             < $X->value_type = none;
           EOS
-          let(:start_state) { "Qux:" }
+          let(:start_state) { "Unmatched:" }
 
           it 'causes a compile error' do
             subject[:compile_error].should be_true
@@ -559,17 +559,17 @@ shared_examples_for 'an okk implementation' do
 
         describe 'matching a leaf node' do
           describe 'and a leaf node' do
-            let(:start_state) { "Foo:\nBar:" }
-            it_applies_the_rule "Foo:\nBar:\nBaz:"
+            let(:start_state) { "Matching 1:\nMatching 2:" }
+            it_applies_the_rule "Matching 1:\nMatching 2:\nMatched:"
           end
 
           describe 'and a node with children' do
-            let(:start_state) { "Foo:\nBar:\n  Qux:" }
+            let(:start_state) { "Matching 1:\nMatching 2:\n  Child:" }
             it_does_not_apply_the_rule
           end
 
           describe 'and a node with a value' do
-            let(:start_state) { "Foo:\nBar: 5" }
+            let(:start_state) { "Matching 1:\nMatching 2: 5" }
             it_does_not_apply_the_rule
           end
         end
@@ -580,7 +580,7 @@ shared_examples_for 'an okk implementation' do
           end
 
           describe 'and a node with a value' do
-            let(:start_state) { "Foo:\n  Baz:\nBar: 5" }
+            let(:start_state) { "Matching 1:\n  Child:\nMatching 2: 5" }
             it_does_not_apply_the_rule
           end
         end
@@ -588,27 +588,27 @@ shared_examples_for 'an okk implementation' do
         describe 'matching a node with a value' do
           describe 'and a node with a value' do
             describe 'that are equal integers' do
-              let(:start_state) { "Foo: 5\nBar: 5" }
-              it_applies_the_rule "Foo: 5\nBar: 5\nBar:"
+              let(:start_state) { "Matching 1: 5\nMatching 2: 5" }
+              it_applies_the_rule "Matching 1: 5\nMatching 2: 5\nMatched:"
             end
 
             describe 'that are unequal integers' do
-              let(:start_state) { "Foo: 4\nBar: 5" }
+              let(:start_state) { "Matching 1: 4\nMatching 2: 5" }
               it_does_not_apply_the_rule
             end
 
             describe 'that are equal decimals' do
-              let(:start_state) { "Foo: 5.0\nBar: 5.0" }
-              it_applies_the_rule "Foo: 5.0\nBar: 5.0\nBar:"
+              let(:start_state) { "Matching 1: 5.0\nMatching 2: 5.0" }
+              it_applies_the_rule "Matching 1: 5.0\nMatching 2: 5.0\nMatched:"
             end
 
             describe 'that are unequal decimals' do
-              let(:start_state) { "Foo: 4.0\nBar: 5.0" }
+              let(:start_state) { "Matching 1: 4.0\nMatching 2: 5.0" }
               it_does_not_apply_the_rule
             end
 
             describe 'that are an integer and a decimal' do
-              let(:start_state) { "Foo: 5\nBar: 5.0" }
+              let(:start_state) { "Matching 1: 5\nMatching 2: 5.0" }
               it_does_not_apply_the_rule
             end
           end
@@ -616,19 +616,19 @@ shared_examples_for 'an okk implementation' do
 
         describe 'and a removing condition' do
           let(:rules) { <<-EOS }
-            Foo: X
-            Bar: X
-            -Baz: X
+            Matching 1: X
+            Matching 2: X
+            -Removing: X
           EOS
 
           describe 'used in a code segment' do
             let(:rules) { <<-EOS }
-              Foo: X
-              Bar: X
-              -Baz: X
+              Matching 1: X
+              Matching 2: X
+              -Removing: X
               < $X->value_type = none;
             EOS
-            let(:start_state) { "Qux:" }
+            let(:start_state) { "Unmatched:" }
 
             it_causes_a_compile_error
           end
@@ -636,51 +636,51 @@ shared_examples_for 'an okk implementation' do
           describe 'matching a leaf node' do
             describe 'and a leaf node' do
               describe 'and a leaf node' do
-                let(:start_state) { "Foo:\nBar:\nBaz:" }
-                it_applies_the_rule "Foo:\nBar"
+                let(:start_state) { "Matching 1:\nMatching 2:\nRemoving:" }
+                it_applies_the_rule "Matching 1:\nMatching 2:"
               end
 
               describe 'and a node with children' do
-                let(:start_state) { "Foo:\nBar:\nBaz:\n  Qux:" }
+                let(:start_state) { "Matching 1:\nMatching 2:\nRemoving:\n  Child:" }
                 it_does_not_apply_the_rule
               end
 
               describe 'and a node with a value' do
-                let(:start_state) { "Foo:\nBar:\nBaz: 5" }
+                let(:start_state) { "Matching 1:\nMatching 2:\nRemoving: 5" }
                 it_does_not_apply_the_rule
               end
             end
 
             describe 'and a node with children' do
               describe 'and a leaf node' do
-                let(:start_state) { "Foo:\nBar:\n  Qux:\nBaz:" }
+                let(:start_state) { "Matching 1:\nMatching 2:\n  Child:\nRemoving:" }
                 it_does_not_apply_the_rule
               end
 
               describe 'and a node with children' do
-                let(:start_state) { "Foo:\nBar:\n  Qux:\nBaz:\n  Qux:" }
+                let(:start_state) { "Matching 1:\nMatching 2:\n  Child:\nRemoving:\n  Child:" }
                 it_does_not_apply_the_rule
               end
 
               describe 'and a node with a value' do
-                let(:start_state) { "Foo:\nBar:\n  Qux:\nBaz: 5" }
+                let(:start_state) { "Matching 1:\nMatching 2:\n  Child:\nRemoving: 5" }
                 it_does_not_apply_the_rule
               end
             end
 
             describe 'and a node with a value' do
               describe 'and a leaf node' do
-                let(:start_state) { "Foo:\nBar: 5\nBaz:" }
+                let(:start_state) { "Matching 1:\nMatching 2: 5\nRemoving:" }
                 it_does_not_apply_the_rule
               end
 
               describe 'and a node with children' do
-                let(:start_state) { "Foo:\nBar: 5\nBaz:\n  Qux:" }
+                let(:start_state) { "Matching 1:\nMatching 2: 5\nRemoving:\n  Child:" }
                 it_does_not_apply_the_rule
               end
 
               describe 'and a node with a value' do
-                let(:start_state) { "Foo:\nBar: 5\nBaz: 5" }
+                let(:start_state) { "Matching 1:\nMatching 2: 5\nRemoving: 5" }
                 it_does_not_apply_the_rule
               end
             end
@@ -689,7 +689,7 @@ shared_examples_for 'an okk implementation' do
           describe 'matching a node with children' do
             describe 'and a node with children' do
               describe 'and a leaf node' do
-                let(:start_state) { "Foo:\n  Qux:\nBar:\n  Qux:\nBaz:" }
+                let(:start_state) { "Matching 1:\n  Child:\nMatching 2:\n  Child:\nRemoving:" }
                 it_does_not_apply_the_rule
               end
 
@@ -698,24 +698,24 @@ shared_examples_for 'an okk implementation' do
               end
 
               describe 'and a node with a value' do
-                let(:start_state) { "Foo:\n  Qux:\nBar:\n  Qux:\nBaz: 5" }
+                let(:start_state) { "Matching 1:\n  Child:\nMatching 2:\n  Child:\nRemoving: 5" }
                 it_does_not_apply_the_rule
               end
             end
 
             describe 'and a node with a value' do
               describe 'and a leaf node' do
-                let(:start_state) { "Foo:\n  Qux:\nBar: 5\nBaz:" }
+                let(:start_state) { "Matching 1:\n  Child:\nMatching 2: 5\nRemoving:" }
                 it_does_not_apply_the_rule
               end
 
               describe 'and a node with children' do
-                let(:start_state) { "Foo:\n  Qux:\nBar: 5\nBaz:\n  Qux:" }
+                let(:start_state) { "Matching 1:\n  Child:\nMatching 2: 5\nRemoving:\n  Child:" }
                 it_does_not_apply_the_rule
               end
 
               describe 'and a node with a value' do
-                let(:start_state) { "Foo:\n  Qux:\nBar: 5\nBaz: 5" }
+                let(:start_state) { "Matching 1:\n  Child:\nMatching 2: 5\nRemoving: 5" }
                 it_does_not_apply_the_rule
               end
             end
@@ -724,38 +724,38 @@ shared_examples_for 'an okk implementation' do
           describe 'matching a node with a value' do
             describe 'and a node with a value' do
               describe 'and a leaf node' do
-                let(:start_state) { "Foo: 5\nBar: 5\nBaz:" }
+                let(:start_state) { "Matching 1: 5\nMatching 2: 5\nRemoving:" }
                 it_does_not_apply_the_rule
               end
 
               describe 'and a node with children' do
-                let(:start_state) { "Foo: 5\nBar: 5\nBaz:\n  Qux:" }
+                let(:start_state) { "Matching 1: 5\nMatching 2: 5\nRemoving:\n  Child:" }
                 it_does_not_apply_the_rule
               end
 
               describe 'and a node with a value' do
                 describe 'that are equal integers' do
-                  let(:start_state) { "Foo: 5\nBar: 5\nBaz: 5" }
-                  it_applies_the_rule "Foo: 5\nBar: 5"
+                  let(:start_state) { "Matching 1: 5\nMatching 2: 5\nRemoving: 5" }
+                  it_applies_the_rule "Matching 1: 5\nMatching 2: 5"
                 end
 
                 describe 'that are unequal integers' do
-                  let(:start_state) { "Foo: 5\nBar: 4\nBaz: 5" }
+                  let(:start_state) { "Matching 1: 5\nMatching 2: 4\nRemoving: 5" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'that are equal decimals' do
-                  let(:start_state) { "Foo: 5.3\nBar: 5.3\nBaz: 5.3" }
-                  it_applies_the_rule "Foo: 5.3\nBar: 5.3"
+                  let(:start_state) { "Matching 1: 5.3\nMatching 2: 5.3\nRemoving: 5.3" }
+                  it_applies_the_rule "Matching 1: 5.3\nMatching 2: 5.3"
                 end
 
                 describe 'that are unequal decimals' do
-                  let(:start_state) { "Foo: 5.3\nBar: 4.3\nBaz: 5.3" }
+                  let(:start_state) { "Matching 1: 5.3\nMatching 2: 4.3\nRemoving: 5.3" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'that are integers and decimals' do
-                  let(:start_state) { "Foo: 5.0\nBar: 5\nBaz: 5.0" }
+                  let(:start_state) { "Matching 1: 5.0\nMatching 2: 5\nRemoving: 5.0" }
                   it_does_not_apply_the_rule
                 end
               end
@@ -764,21 +764,21 @@ shared_examples_for 'an okk implementation' do
 
           describe 'and a creating condition' do
             let(:rules) { <<-EOS }
-              Foo: X
-              Bar: X
-              -Baz: X
-              +Qux: X
+              Matching 1: X
+              Matching 2: X
+              -Removing: X
+              +Creating: X
             EOS
 
             describe 'used in a code segment' do
               let(:rules) { <<-EOS }
-                Foo: X
-                Bar: X
-                -Baz: X
-                +Qux: X
+                Matching 1: X
+                Matching 2: X
+                -Removing: X
+                +Creating: X
                 < $X->value_type = none;
               EOS
-              let(:start_state) { "Qux:" }
+              let(:start_state) { "Unmatched:" }
 
               it_causes_a_compile_error
             end
@@ -786,51 +786,51 @@ shared_examples_for 'an okk implementation' do
             describe 'matching a leaf node' do
               describe 'and a leaf node' do
                 describe 'and a leaf node' do
-                  let(:start_state) { "Foo:\nBar:\nBaz:" }
-                  it_applies_the_rule "Foo:\nBar:\nQux:"
+                  let(:start_state) { "Matching 1:\nMatching 2:\nRemoving:" }
+                  it_applies_the_rule "Matching 1:\nMatching 2:\nCreating:"
                 end
 
                 describe 'and a node with children' do
-                  let(:start_state) { "Foo:\nBar:\nBaz:\n  Qux:" }
+                  let(:start_state) { "Matching 1:\nMatching 2:\nRemoving:\n  Child:" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'and a node with a value' do
-                  let(:start_state) { "Foo:\nBar:\nBaz: 5" }
+                  let(:start_state) { "Matching 1:\nMatching 2:\nRemoving: 5" }
                   it_does_not_apply_the_rule
                 end
               end
 
               describe 'and a node with children' do
                 describe 'and a leaf node' do
-                  let(:start_state) { "Foo:\nBar:\n  Qux:\nBaz:" }
+                  let(:start_state) { "Matching 1:\nMatching 2:\n  Child:\nRemoving:" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'and a node with children' do
-                  let(:start_state) { "Foo:\nBar:\n  Qux:\nBaz:\n  Qux:" }
+                  let(:start_state) { "Matching 1:\nMatching 2:\n  Child:\nRemoving:\n  Child:" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'and a node with a value' do
-                  let(:start_state) { "Foo:\nBar:\n  Qux:\nBaz: 5" }
+                  let(:start_state) { "Matching 1:\nMatching 2:\n  Child:\nRemoving: 5" }
                   it_does_not_apply_the_rule
                 end
               end
 
               describe 'and a node with a value' do
                 describe 'and a leaf node' do
-                  let(:start_state) { "Foo:\nBar: 5\nBaz:" }
+                  let(:start_state) { "Matching 1:\nMatching 2: 5\nRemoving:" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'and a node with children' do
-                  let(:start_state) { "Foo:\nBar: 5\nBaz:\n  Qux:" }
+                  let(:start_state) { "Matching 1:\nMatching 2: 5\nRemoving:\n  Child:" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'and a node with a value' do
-                  let(:start_state) { "Foo:\nBar: 5\nBaz: 5" }
+                  let(:start_state) { "Matching 1:\nMatching 2: 5\nRemoving: 5" }
                   it_does_not_apply_the_rule
                 end
               end
@@ -839,7 +839,7 @@ shared_examples_for 'an okk implementation' do
             describe 'matching a node with children' do
               describe 'and a node with children' do
                 describe 'and a leaf node' do
-                  let(:start_state) { "Foo:\n  Qux:\nBar:\n  Qux:\nBaz:" }
+                  let(:start_state) { "Matching 1:\n  Child:\nMatching 2:\n  Child:\nRemoving:" }
                   it_does_not_apply_the_rule
                 end
 
@@ -848,24 +848,24 @@ shared_examples_for 'an okk implementation' do
                 end
 
                 describe 'and a node with a value' do
-                  let(:start_state) { "Foo:\n  Qux:\nBar:\n  Qux:\nBaz: 5" }
+                  let(:start_state) { "Matching 1:\n  Child:\nMatching 2:\n  Child:\nRemoving: 5" }
                   it_does_not_apply_the_rule
                 end
               end
 
               describe 'and a node with a value' do
                 describe 'and a leaf node' do
-                  let(:start_state) { "Foo:\n  Qux:\nBar: 5\nBaz:" }
+                  let(:start_state) { "Matching 1:\n  Child:\nMatching 2: 5\nRemoving:" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'and a node with children' do
-                  let(:start_state) { "Foo:\n  Qux:\nBar: 5\nBaz:\n  Qux:" }
+                  let(:start_state) { "Matching 1:\n  Child:\nMatching 2: 5\nRemoving:\n  Child:" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'and a node with a value' do
-                  let(:start_state) { "Foo:\n  Qux:\nBar: 5\nBaz: 5" }
+                  let(:start_state) { "Matching 1:\n  Child:\nMatching 2: 5\nRemoving: 5" }
                   it_does_not_apply_the_rule
                 end
               end
@@ -874,38 +874,38 @@ shared_examples_for 'an okk implementation' do
             describe 'matching a node with a value' do
               describe 'and a node with a value' do
                 describe 'and a leaf node' do
-                  let(:start_state) { "Foo: 5\nBar: 5\nBaz:" }
+                  let(:start_state) { "Matching 1: 5\nMatching 2: 5\nRemoving:" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'and a node with children' do
-                  let(:start_state) { "Foo: 5\nBar: 5\nBaz:\n  Qux:" }
+                  let(:start_state) { "Matching 1: 5\nMatching 2: 5\nRemoving:\n  Child:" }
                   it_does_not_apply_the_rule
                 end
 
                 describe 'and a node with a value' do
                   describe 'that are equal integers' do
-                    let(:start_state) { "Foo: 5\nBar: 5\nBaz: 5" }
-                    it_applies_the_rule "Foo: 5\nBar: 5\nQux:"
+                    let(:start_state) { "Matching 1: 5\nMatching 2: 5\nRemoving: 5" }
+                    it_applies_the_rule "Matching 1: 5\nMatching 2: 5\nCreating:"
                   end
 
                   describe 'that are unequal integers' do
-                    let(:start_state) { "Foo: 5\nBar: 4\nBaz: 5" }
+                    let(:start_state) { "Matching 1: 5\nMatching 2: 4\nRemoving: 5" }
                     it_does_not_apply_the_rule
                   end
 
                   describe 'that are equal decimals' do
-                    let(:start_state) { "Foo: 5.3\nBar: 5.3\nBaz: 5.3" }
-                    it_applies_the_rule "Foo: 5.3\nBar: 5.3\nQux:"
+                    let(:start_state) { "Matching 1: 5.3\nMatching 2: 5.3\nRemoving: 5.3" }
+                    it_applies_the_rule "Matching 1: 5.3\nMatching 2: 5.3\nCreating:"
                   end
 
                   describe 'that are unequal decimals' do
-                    let(:start_state) { "Foo: 5.3\nBar: 4.3\nBaz: 5.3" }
+                    let(:start_state) { "Matching 1: 5.3\nMatching 2: 4.3\nRemoving: 5.3" }
                     it_does_not_apply_the_rule
                   end
 
                   describe 'that are integers and decimals' do
-                    let(:start_state) { "Foo: 5.0\nBar: 5\nBaz: 5.0" }
+                    let(:start_state) { "Matching 1: 5.0\nMatching 2: 5\nRemoving: 5.0" }
                     it_does_not_apply_the_rule
                   end
                 end
