@@ -1595,19 +1595,42 @@ shared_examples_for 'an okk implementation' do
         end
 
         describe 'and a creating condition' do
-          it 'does not allow the variable to be used in a code segment'
+          let(:rules) { <<-EOS }
+            Matching 1: X
+            Matching 2: X
+            +Creating: X
+            !Matched:
+            +Matched:
+          EOS
+
+          describe 'used in a code segment' do
+            let(:rules) { <<-EOS }
+              Matching 1: X
+              Matching 2: X
+              +Creating: X
+              !Matched:
+              +Matched:
+              < $X->value_type = none;
+            EOS
+            let(:start_state) { "Unmatched:" }
+
+            it_causes_a_compile_error
+          end
 
           describe 'matching a leaf node' do
             describe 'and a leaf node' do
-              it 'applies the rule'
+              let(:start_state) { "Matching 1:\nMatching 2:" }
+              it_applies_the_rule "Matching 1:\nMatching 2:\nCreating:\nMatched:"
             end
 
             describe 'and a node with children' do
-              it 'does not apply the rule'
+              let(:start_state) { "Matching 1:\nMatching 2:\n  Child:" }
+              it_does_not_apply_the_rule
             end
 
             describe 'and a node with a value' do
-              it 'does not apply the rule'
+              let(:start_state) { "Matching 1:\nMatching 2: 5" }
+              it_does_not_apply_the_rule
             end
           end
 
@@ -1617,30 +1640,36 @@ shared_examples_for 'an okk implementation' do
             end
 
             describe 'and a node with a value' do
-              it 'does not apply the rule'
+              let(:start_state) { "Matching 1:\n  Child:\nMatching 2: 5" }
+              it_does_not_apply_the_rule
             end
           end
 
           describe 'matching a node with a value' do
             describe 'and a node with a value' do
               describe 'that are equal integers' do
-                it 'applies the rule'
+                let(:start_state) { "Matching 1: 5\nMatching 2: 5" }
+                it_applies_the_rule "Matching 1: 5\nMatching 2: 5\nCreating: 5\nMatched:"
               end
 
               describe 'that are unequal integers' do
-                it 'does not apply the rule'
+                let(:start_state) { "Matching 1: 5\nMatching 2: 4" }
+                it_does_not_apply_the_rule
               end
 
               describe 'that are equal decimals' do
-                it 'applies the rule'
+                let(:start_state) { "Matching 1: 5.3\nMatching 2: 5.3" }
+                it_applies_the_rule "Matching 1: 5.3\nMatching 2: 5.3\nCreating: 5.3\nMatched:"
               end
 
               describe 'that are unequal decimals' do
-                it 'does not apply the rule'
+                let(:start_state) { "Matching 1: 5.3\nMatching 2: 4.3" }
+                it_does_not_apply_the_rule
               end
 
               describe 'that are an integer and a decimal' do
-                it 'does not apply the rule'
+                let(:start_state) { "Matching 1: 5\nMatching 2: 5.0" }
+                it_does_not_apply_the_rule
               end
             end
           end
