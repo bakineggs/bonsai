@@ -2424,18 +2424,47 @@ shared_examples_for 'an okk implementation' do
     end
 
     describe 'referenced in a removing condition' do
-      it 'allows the variable to be used in a code segment'
+      let(:rules) { "-Removing: X" }
+
+      describe 'used in a code segment' do
+        let(:rules) { <<-EOS }
+          -Removing: X
+          < printf("%s", $X->type);
+        EOS
+
+        after do
+          subject[:stdout].should == "Removing"
+        end
+
+        describe 'matching a leaf node' do
+          let(:start_state) { "Removing:" }
+          it_applies_the_rule ""
+        end
+
+        describe 'matching a node with children' do
+          let(:start_state) { "Removing:\n  Child:" }
+          it_applies_the_rule ""
+        end
+
+        describe 'matching a node with a value' do
+          let(:start_state) { "Removing: 5" }
+          it_applies_the_rule ""
+        end
+      end
 
       describe 'matching a leaf node' do
-        it 'applies the rule'
+        let(:start_state) { "Removing:" }
+        it_applies_the_rule ""
       end
 
       describe 'matching a node with children' do
-        it 'applies the rule'
+        let(:start_state) { "Removing:\n  Child:" }
+        it_applies_the_rule ""
       end
 
       describe 'matching a node with a value' do
-        it 'applies the rule'
+        let(:start_state) { "Removing: 5" }
+        it_applies_the_rule ""
       end
 
       describe 'and another removing condition' do
