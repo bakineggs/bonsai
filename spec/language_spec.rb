@@ -2207,21 +2207,86 @@ shared_examples_for 'an okk implementation' do
       end
 
       describe 'and a creating condition' do
-        it 'allows the variable to be used in a code segment'
+        let(:rules) { <<-EOS }
+          Matching: X
+          +Creating: X
+          !Matched:
+          +Matched:
+        EOS
+
+        describe 'used in a code segment' do
+          let(:rules) { <<-EOS }
+            Matching: X
+            +Creating: X
+            !Matched:
+            +Matched:
+            < #{target}->value_type = integer;
+            < #{target}->integer_value = 5;
+          EOS
+          let(:target) { '$X' }
+
+          describe 'matching a leaf node' do
+            let(:start_state) { "Matching:" }
+            it_applies_the_rule "Matching: 5\nCreating: 5\nMatched:"
+          end
+
+          describe 'matching a node with children' do
+            let(:start_state) { "Matching:\n  Child:" }
+            let(:target) { '$X->children' }
+            it_applies_the_rule "Matching:\n  Child: 5\nCreating:\n  Child: 5\nMatched:"
+          end
+
+          describe 'matching a node with a value' do
+            let(:start_state) { "Matching: 4" }
+            it_applies_the_rule "Matching: 5\nCreating: 5\nMatched:"
+          end
+        end
+
+        describe 'used independently later' do
+          let(:rules) { <<-EOS }
+            Matching: X
+            +Creating: X
+            !Matched:
+            +Matched:
+
+            Creating: X
+            !Modified:
+            +Modified:
+            < #{target}->value_type = integer;
+            < #{target}->integer_value = 5;
+          EOS
+          let(:target) { '$X' }
+
+          describe 'matching a leaf node' do
+            let(:start_state) { "Matching:" }
+            it_applies_the_rule "Matching:\nCreating: 5\nMatched:\nModified:"
+          end
+
+          describe 'matching a node with children' do
+            let(:start_state) { "Matching:\n  Child:" }
+            let(:target) { '$X->children' }
+            it_applies_the_rule "Matching:\n  Child:\nCreating:\n  Child: 5\nMatched:\nModified:"
+          end
+
+          describe 'matching a node with a value' do
+            let(:start_state) { "Matching: 4" }
+            it_applies_the_rule "Matching: 4\nCreating: 5\nMatched:\nModified:"
+          end
+        end
 
         describe 'matching a leaf node' do
-          it 'applies the rule'
-          it 'does not link the nodes'
+          let(:start_state) { "Matching:" }
+          it_applies_the_rule "Matching:\nCreating:\nMatched:"
         end
 
         describe 'matching a node with children' do
-          it 'applies the rule'
-          it 'does not link the nodes'
+          let(:start_state) { "Matching:" }
+          it_applies_the_rule "Matching:\n  Child:\nCreating:\n  Child:\nMatched:"
         end
 
         describe 'matching a node with a value' do
-          it 'applies the rule'
-          it 'does not link the nodes'
+          let(:start_state) { "Matching:" }
+          it_applies_the_rule "Matching: 5\nCreating: 5\nMatched:"
         end
 
         describe 'and a preventing condition' do
