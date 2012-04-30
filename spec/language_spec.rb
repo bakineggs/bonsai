@@ -2542,18 +2542,50 @@ shared_examples_for 'an okk implementation' do
       end
 
       describe 'and a creating condition' do
-        it 'allows the variable to be used in a code segment'
+        let(:rules) { <<-EOS }
+          -Removing: X
+          +Creating: X
+        EOS
+
+        describe 'used in a code segment' do
+          let(:rules) { <<-EOS }
+            -Removing: X
+            +Creating: X
+            < #{target}->value_type = none;
+            < #{target}->integer_value = 5;
+          EOS
+          let(:target) { '$X' }
+
+          describe 'matching a leaf node' do
+            let(:start_state) { "Removing:" }
+            it_applies_the_rule "Creating: 5"
+          end
+
+          describe 'matching a node with children' do
+            let(:start_state) { "Removing:\n  Child:" }
+            let(:target) { '$X->children' }
+            it_applies_the_rule "Creating:\n  Child: 5"
+          end
+
+          describe 'matching a node with a value' do
+            let(:start_state) { "Removing: 4" }
+            it_applies_the_rule "Creating: 5"
+          end
+        end
 
         describe 'matching a leaf node' do
-          it 'applies the rule'
+          let(:start_state) { "Removing:" }
+          it_applies_the_rule "Creating:"
         end
 
         describe 'matching a node with children' do
-          it 'applies the rule'
+          let(:start_state) { "Removing:\n  Child:" }
+          it_applies_the_rule "Creating:\n  Child:"
         end
 
         describe 'matching a node with a value' do
-          it 'applies the rule'
+          let(:start_state) { "Removing: 5" }
+          it_applies_the_rule "Creating: 5"
         end
 
         describe 'and a preventing condition' do
