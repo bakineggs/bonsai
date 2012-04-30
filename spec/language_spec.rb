@@ -2337,25 +2337,62 @@ shared_examples_for 'an okk implementation' do
       end
 
       describe 'and a preventing condition' do
-        it 'allows the variable to be used in a code segment'
+        let(:rules) { <<-EOS }
+          Matching: X
+          !Preventing: X
+          !Matched:
+          +Matched:
+        EOS
+
+        describe 'used in a code segment' do
+          let(:rules) { <<-EOS }
+            Matching: X
+            !Preventing: X
+            !Matched:
+            +Matched:
+            < #{target}->value_type = integer;
+            < #{target}->integer_value = 5;
+          EOS
+          let(:target) { '$X' }
+
+          describe 'matching a leaf node' do
+            let(:start_state) { "Matching:" }
+            it_applies_the_rule "Matching: 5\nMatched:"
+          end
+
+          describe 'matching a node with children' do
+            let(:start_state) { "Matching:\n  Child:" }
+            let(:target) { '$X->children' }
+            it_applies_the_rule "Matching:\n  Child: 5\nMatched:"
+          end
+
+          describe 'matching a node with a value' do
+            let(:start_state) { "Matching: 4" }
+            it_applies_the_rule "Matching: 5\nMatched:"
+          end
+        end
 
         describe 'matching a leaf node' do
           describe 'and a leaf node' do
-            it 'does not apply the rule'
+            let(:start_state) { "Matching:\nPreventing:" }
+            it_does_not_apply_the_rule
           end
 
           describe 'and a node with children' do
-            it 'applies the rule'
+            let(:start_state) { "Matching:\nPreventing:\n  Child:" }
+            it_applies_the_rule "Matching:\nPreventing:\n  Child:\nMatched:"
           end
 
           describe 'and a node with a value' do
-            it 'applies the rule'
+            let(:start_state) { "Matching:\nPreventing: 5" }
+            it_applies_the_rule "Matching:\nPreventing: 5\nMatched:"
           end
         end
 
         describe 'matching a node with children' do
           describe 'and a leaf node' do
-            it 'applies the rule'
+            let(:start_state) { "Matching:\n  Child:\nPreventing:" }
+            it_applies_the_rule "Matching:\n  Child:\nPreventing:\nMatched:"
           end
 
           describe 'and a node with children' do
@@ -2363,17 +2400,20 @@ shared_examples_for 'an okk implementation' do
           end
 
           describe 'and a node with a value' do
-            it 'applies the rule'
+            let(:start_state) { "Matching:\n  Child:\nPreventing: 5" }
+            it_applies_the_rule "Matching:\n  Child:\nPreventing: 5\nMatched:"
           end
         end
 
         describe 'matching a node with a value' do
           describe 'and a leaf node' do
-            it 'applies the rule'
+            let(:start_state) { "Matching: 5\nPreventing:" }
+            it_applies_the_rule "Matching: 5\nPreventing:\nMatched:"
           end
 
           describe 'and a node with children' do
-            it 'applies the rule'
+            let(:start_state) { "Matching: 5\nPreventing:\n  Child:" }
+            it_applies_the_rule "Matching: 5\nPreventing:\n  Child:\nMatched:"
           end
 
           describe 'and a node with a value' do
