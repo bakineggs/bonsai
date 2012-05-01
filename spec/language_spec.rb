@@ -35,6 +35,29 @@ shared_examples_for 'an okk implementation' do
     end
   end
 
+  def self.it_allows_the_variable_to_be_used_in_a_code_segment variable, type
+    describe 'used in a code segment' do
+      before do
+        depth = rules.match(/^ */)[0]
+        @assignments[:rules] += "#{depth}< printf(\"%s\", $#{variable}->type);"
+      end
+      it 'binds the variable' do
+        subject[:stdout].should == type
+      end
+    end
+  end
+
+  def self.it_does_not_allow_the_variable_to_be_used_in_a_code_segment variable
+    describe 'used in a code segment' do
+      let(:start_state) { "Unmatched:" }
+      before do
+        depth = rules.match(/^ */)[0]
+        @assignments[:rules] += "#{depth}< printf(\"%s\", $#{variable}->type);"
+      end
+      it_causes_a_compile_error
+    end
+  end
+
   def parse_state definition
     nodes = definition.split "\n"
     state = []
@@ -492,46 +515,22 @@ shared_examples_for 'an okk implementation' do
         +Matched:
       EOS
 
-      describe 'used in a code segment' do
-        let(:rules) { <<-EOS }
-          Matching: X
-          !Matched:
-          +Matched:
-          < #{target}->value_type = integer;
-          < #{target}->integer_value = 5;
-        EOS
-        let(:target) { '$X' }
-
-        describe 'matching a leaf node' do
-          let(:start_state) { "Matching:" }
-          it_applies_the_rule "Matching: 5\nMatched:"
-        end
-
-        describe 'matching a node with children' do
-          let(:start_state) { "Matching:\n  Child:" }
-          let(:target) { '$X->children' }
-          it_applies_the_rule "Matching:\n  Child: 5\nMatched:"
-        end
-
-        describe 'matching a node with a value' do
-          let(:start_state) { "Matching: 4" }
-          it_applies_the_rule "Matching: 5\nMatched:"
-        end
-      end
-
       describe 'matching a leaf node' do
         let(:start_state) { "Matching:" }
         it_applies_the_rule "Matching:\nMatched:"
+        it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
       end
 
       describe 'matching a node with children' do
         let(:start_state) { "Matching:\n  Child:" }
         it_applies_the_rule "Matching:\n  Child:\nMatched:"
+        it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
       end
 
       describe 'matching a node with a value' do
         let(:start_state) { "Matching: 4" }
         it_applies_the_rule "Matching: 4\nMatched:"
+        it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
       end
 
       describe 'and another matching condition' do
@@ -542,18 +541,7 @@ shared_examples_for 'an okk implementation' do
           +Matched:
         EOS
 
-        describe 'used in a code segment' do
-          let(:rules) { <<-EOS }
-            Matching 1: X
-            Matching 2: X
-            !Matched:
-            +Matched:
-            < $X->value_type = none;
-          EOS
-          let(:start_state) { "Unmatched:" }
-
-          it_causes_a_compile_error
-        end
+        it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
         describe 'matching a leaf node' do
           describe 'and a leaf node' do
@@ -619,17 +607,7 @@ shared_examples_for 'an okk implementation' do
             -Removing: X
           EOS
 
-          describe 'used in a code segment' do
-            let(:rules) { <<-EOS }
-              Matching 1: X
-              Matching 2: X
-              -Removing: X
-              < $X->value_type = none;
-            EOS
-            let(:start_state) { "Unmatched:" }
-
-            it_causes_a_compile_error
-          end
+          it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
           describe 'matching a leaf node' do
             describe 'and a leaf node' do
@@ -768,18 +746,7 @@ shared_examples_for 'an okk implementation' do
               +Creating: X
             EOS
 
-            describe 'used in a code segment' do
-              let(:rules) { <<-EOS }
-                Matching 1: X
-                Matching 2: X
-                -Removing: X
-                +Creating: X
-                < $X->value_type = none;
-              EOS
-              let(:start_state) { "Unmatched:" }
-
-              it_causes_a_compile_error
-            end
+            it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
             describe 'matching a leaf node' do
               describe 'and a leaf node' do
@@ -919,19 +886,7 @@ shared_examples_for 'an okk implementation' do
                 !Preventing: X
               EOS
 
-              describe 'used in a code segment' do
-                let(:rules) { <<-EOS }
-                  Matching 1: X
-                  Matching 2: X
-                  -Removing: X
-                  +Creating: X
-                  !Preventing: X
-                  < $X->value_type = none;
-                EOS
-                let(:start_state) { "Unmatched:" }
-
-                it_causes_a_compile_error
-              end
+              it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
               describe 'matching a leaf node' do
                 describe 'and a leaf node' do
@@ -1261,18 +1216,7 @@ shared_examples_for 'an okk implementation' do
               !Preventing: X
             EOS
 
-            describe 'used in a code segment' do
-              let(:rules) { <<-EOS }
-                Matching 1: X
-                Matching 2: X
-                -Removing: X
-                !Preventing: X
-                < $X->value_type = none;
-              EOS
-              let(:start_state) { "Unmatched:" }
-
-              it_causes_a_compile_error
-            end
+            it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
             describe 'matching a leaf node' do
               describe 'and a leaf node' do
@@ -1603,19 +1547,7 @@ shared_examples_for 'an okk implementation' do
             +Matched:
           EOS
 
-          describe 'used in a code segment' do
-            let(:rules) { <<-EOS }
-              Matching 1: X
-              Matching 2: X
-              +Creating: X
-              !Matched:
-              +Matched:
-              < $X->value_type = none;
-            EOS
-            let(:start_state) { "Unmatched:" }
-
-            it_causes_a_compile_error
-          end
+          it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
           describe 'matching a leaf node' do
             describe 'and a leaf node' do
@@ -1684,20 +1616,7 @@ shared_examples_for 'an okk implementation' do
               +Matched:
             EOS
 
-            describe 'used in a code segment' do
-              let(:rules) { <<-EOS }
-                Matching 1: X
-                Matching 2: X
-                +Creating: X
-                !Preventing: X
-                !Matched:
-                +Matched:
-                < $X->value_type = none;
-              EOS
-              let(:start_state) { "Unmatched:" }
-
-              it_causes_a_compile_error
-            end
+            it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
             describe 'matching a leaf node' do
               describe 'and a leaf node' do
@@ -1812,19 +1731,7 @@ shared_examples_for 'an okk implementation' do
             +Matched:
           EOS
 
-          describe 'used in a code segment' do
-            let(:rules) { <<-EOS }
-              Matching 1: X
-              Matching 2: X
-              !Preventing: X
-              !Matched:
-              +Matched:
-              < $X->value_type = none;
-            EOS
-            let(:start_state) { "Unmatched:" }
-
-            it_causes_a_compile_error
-          end
+          it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
           describe 'matching a leaf node' do
             describe 'and a leaf node' do
@@ -1936,16 +1843,7 @@ shared_examples_for 'an okk implementation' do
           -Removing: X
         EOS
 
-        describe 'used in a code segment' do
-          let(:rules) { <<-EOS }
-            Matching: X
-            -Removing: X
-            < $X->value_type = none;
-          EOS
-          let(:start_state) { "Unmatched:" }
-
-          it_causes_a_compile_error
-        end
+        it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
         describe 'matching a leaf node' do
           describe 'and a leaf node' do
@@ -2011,17 +1909,7 @@ shared_examples_for 'an okk implementation' do
             +Creating: X
           EOS
 
-          describe 'used in a code segment' do
-            let(:rules) { <<-EOS }
-              Matching: X
-              -Removing: X
-              +Creating: X
-              < $X->value_type = none;
-            EOS
-            let(:start_state) { "Unmatched:" }
-
-            it_causes_a_compile_error
-          end
+          it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
           describe 'matching a leaf node' do
             describe 'and a leaf node' do
@@ -2088,18 +1976,7 @@ shared_examples_for 'an okk implementation' do
               !Preventing: X
             EOS
 
-            describe 'used in a code segment' do
-              let(:rules) { <<-EOS }
-                Matching: X
-                -Removing: X
-                +Creating: X
-                !Preventing: X
-                < $X->value_type = none;
-              EOS
-              let(:start_state) { "Unmatched:" }
-
-              it_causes_a_compile_error
-            end
+            it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
             describe 'matching a leaf node' do
               describe 'and a leaf node' do
@@ -2214,34 +2091,6 @@ shared_examples_for 'an okk implementation' do
           +Matched:
         EOS
 
-        describe 'used in a code segment' do
-          let(:rules) { <<-EOS }
-            Matching: X
-            +Creating: X
-            !Matched:
-            +Matched:
-            < #{target}->value_type = integer;
-            < #{target}->integer_value = 5;
-          EOS
-          let(:target) { '$X' }
-
-          describe 'matching a leaf node' do
-            let(:start_state) { "Matching:" }
-            it_applies_the_rule "Matching: 5\nCreating: 5\nMatched:"
-          end
-
-          describe 'matching a node with children' do
-            let(:start_state) { "Matching:\n  Child:" }
-            let(:target) { '$X->children' }
-            it_applies_the_rule "Matching:\n  Child: 5\nCreating:\n  Child: 5\nMatched:"
-          end
-
-          describe 'matching a node with a value' do
-            let(:start_state) { "Matching: 4" }
-            it_applies_the_rule "Matching: 5\nCreating: 5\nMatched:"
-          end
-        end
-
         describe 'used independently later' do
           let(:rules) { <<-EOS }
             Matching: X
@@ -2277,16 +2126,19 @@ shared_examples_for 'an okk implementation' do
         describe 'matching a leaf node' do
           let(:start_state) { "Matching:" }
           it_applies_the_rule "Matching:\nCreating:\nMatched:"
+          it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
         end
 
         describe 'matching a node with children' do
           let(:start_state) { "Matching:" }
           it_applies_the_rule "Matching:\n  Child:\nCreating:\n  Child:\nMatched:"
+          it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
         end
 
         describe 'matching a node with a value' do
           let(:start_state) { "Matching:" }
           it_applies_the_rule "Matching: 5\nCreating: 5\nMatched:"
+          it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
         end
 
         describe 'and a preventing condition' do
@@ -2344,34 +2196,6 @@ shared_examples_for 'an okk implementation' do
           +Matched:
         EOS
 
-        describe 'used in a code segment' do
-          let(:rules) { <<-EOS }
-            Matching: X
-            !Preventing: X
-            !Matched:
-            +Matched:
-            < #{target}->value_type = integer;
-            < #{target}->integer_value = 5;
-          EOS
-          let(:target) { '$X' }
-
-          describe 'matching a leaf node' do
-            let(:start_state) { "Matching:" }
-            it_applies_the_rule "Matching: 5\nMatched:"
-          end
-
-          describe 'matching a node with children' do
-            let(:start_state) { "Matching:\n  Child:" }
-            let(:target) { '$X->children' }
-            it_applies_the_rule "Matching:\n  Child: 5\nMatched:"
-          end
-
-          describe 'matching a node with a value' do
-            let(:start_state) { "Matching: 4" }
-            it_applies_the_rule "Matching: 5\nMatched:"
-          end
-        end
-
         describe 'matching a leaf node' do
           describe 'and a leaf node' do
             let(:start_state) { "Matching:\nPreventing:" }
@@ -2381,11 +2205,13 @@ shared_examples_for 'an okk implementation' do
           describe 'and a node with children' do
             let(:start_state) { "Matching:\nPreventing:\n  Child:" }
             it_applies_the_rule "Matching:\nPreventing:\n  Child:\nMatched:"
+            it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
           end
 
           describe 'and a node with a value' do
             let(:start_state) { "Matching:\nPreventing: 5" }
             it_applies_the_rule "Matching:\nPreventing: 5\nMatched:"
+            it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
           end
         end
 
@@ -2393,6 +2219,7 @@ shared_examples_for 'an okk implementation' do
           describe 'and a leaf node' do
             let(:start_state) { "Matching:\n  Child:\nPreventing:" }
             it_applies_the_rule "Matching:\n  Child:\nPreventing:\nMatched:"
+            it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
           end
 
           describe 'and a node with children' do
@@ -2402,6 +2229,7 @@ shared_examples_for 'an okk implementation' do
           describe 'and a node with a value' do
             let(:start_state) { "Matching:\n  Child:\nPreventing: 5" }
             it_applies_the_rule "Matching:\n  Child:\nPreventing: 5\nMatched:"
+            it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
           end
         end
 
@@ -2409,11 +2237,13 @@ shared_examples_for 'an okk implementation' do
           describe 'and a leaf node' do
             let(:start_state) { "Matching: 5\nPreventing:" }
             it_applies_the_rule "Matching: 5\nPreventing:\nMatched:"
+            it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
           end
 
           describe 'and a node with children' do
             let(:start_state) { "Matching: 5\nPreventing:\n  Child:" }
             it_applies_the_rule "Matching: 5\nPreventing:\n  Child:\nMatched:"
+            it_allows_the_variable_to_be_used_in_a_code_segment "X", "Matching"
           end
 
           describe 'and a node with a value' do
@@ -2426,45 +2256,22 @@ shared_examples_for 'an okk implementation' do
     describe 'referenced in a removing condition' do
       let(:rules) { "-Removing: X" }
 
-      describe 'used in a code segment' do
-        let(:rules) { <<-EOS }
-          -Removing: X
-          < printf("%s", $X->type);
-        EOS
-
-        after do
-          subject[:stdout].should == "Removing"
-        end
-
-        describe 'matching a leaf node' do
-          let(:start_state) { "Removing:" }
-          it_applies_the_rule ""
-        end
-
-        describe 'matching a node with children' do
-          let(:start_state) { "Removing:\n  Child:" }
-          it_applies_the_rule ""
-        end
-
-        describe 'matching a node with a value' do
-          let(:start_state) { "Removing: 5" }
-          it_applies_the_rule ""
-        end
-      end
-
       describe 'matching a leaf node' do
         let(:start_state) { "Removing:" }
         it_applies_the_rule ""
+        it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
       end
 
       describe 'matching a node with children' do
         let(:start_state) { "Removing:\n  Child:" }
         it_applies_the_rule ""
+        it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
       end
 
       describe 'matching a node with a value' do
         let(:start_state) { "Removing: 5" }
         it_applies_the_rule ""
+        it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
       end
 
       describe 'and another removing condition' do
@@ -2473,15 +2280,7 @@ shared_examples_for 'an okk implementation' do
           -Removing 2: X
         EOS
 
-        describe 'used in a code segment' do
-          let(:rules) { <<-EOS }
-            -Removing 1: X
-            -Removing 2: X
-            < printf("%s", $X->type);
-          EOS
-
-          it_causes_a_compile_error
-        end
+        it_does_not_allow_the_variable_to_be_used_in_a_code_segment "X"
 
         describe 'matching a leaf node' do
           describe 'and a leaf node' do
@@ -2547,45 +2346,22 @@ shared_examples_for 'an okk implementation' do
           +Creating: X
         EOS
 
-        describe 'used in a code segment' do
-          let(:rules) { <<-EOS }
-            -Removing: X
-            +Creating: X
-            < #{target}->value_type = none;
-            < #{target}->integer_value = 5;
-          EOS
-          let(:target) { '$X' }
-
-          describe 'matching a leaf node' do
-            let(:start_state) { "Removing:" }
-            it_applies_the_rule "Creating: 5"
-          end
-
-          describe 'matching a node with children' do
-            let(:start_state) { "Removing:\n  Child:" }
-            let(:target) { '$X->children' }
-            it_applies_the_rule "Creating:\n  Child: 5"
-          end
-
-          describe 'matching a node with a value' do
-            let(:start_state) { "Removing: 4" }
-            it_applies_the_rule "Creating: 5"
-          end
-        end
-
         describe 'matching a leaf node' do
           let(:start_state) { "Removing:" }
           it_applies_the_rule "Creating:"
+          it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
         end
 
         describe 'matching a node with children' do
           let(:start_state) { "Removing:\n  Child:" }
           it_applies_the_rule "Creating:\n  Child:"
+          it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
         end
 
         describe 'matching a node with a value' do
           let(:start_state) { "Removing: 5" }
           it_applies_the_rule "Creating: 5"
+          it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
         end
 
         describe 'and a preventing condition' do
