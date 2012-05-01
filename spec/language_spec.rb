@@ -2384,25 +2384,36 @@ shared_examples_for 'an okk implementation' do
         end
 
         describe 'and a preventing condition' do
-          it 'allows the variable to be used in a code segment'
+          let(:rules) { <<-EOS }
+            -Removing: X
+            +Creating: X
+            !Preventing: X
+          EOS
 
           describe 'matching a leaf node' do
             describe 'and a leaf node' do
-              it 'does not apply the rule'
+              let(:start_state) { "Removing:\nPreventing:" }
+              it_does_not_apply_the_rule
             end
 
             describe 'and a node with children' do
-              it 'applies the rule'
+              let(:start_state) { "Removing:\nPreventing:\n  Child:" }
+              it_applies_the_rule "Creating:\nPreventing:\n  Child:"
+              it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
             end
 
             describe 'and a node with a value' do
-              it 'applies the rule'
+              let(:start_state) { "Removing:\nPreventing: 5" }
+              it_applies_the_rule "Creating:\nPreventing: 5"
+              it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
             end
           end
 
           describe 'matching a node with children' do
             describe 'and a leaf node' do
-              it 'applies the rule'
+              let(:start_state) { "Removing:\n  Child:\nPreventing:" }
+              it_applies_the_rule "Creating:\n  Child:\nPreventing:"
+              it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
             end
 
             describe 'and a node with children' do
@@ -2410,17 +2421,23 @@ shared_examples_for 'an okk implementation' do
             end
 
             describe 'and a node with a value' do
-              it 'applies the rule'
+              let(:start_state) { "Removing:\n  Child:\nPreventing: 5" }
+              it_applies_the_rule "Creating:\n  Child:\nPreventing: 5"
+              it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
             end
           end
 
           describe 'matching a node with a value' do
             describe 'and a leaf node' do
-              it 'applies the rule'
+              let(:start_state) { "Removing: 5\nPreventing:" }
+              it_applies_the_rule "Creating: 5\nPreventing:"
+              it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
             end
 
             describe 'and a node with children' do
-              it 'applies the rule'
+              let(:start_state) { "Removing: 5\nPreventing:\n  Child:" }
+              it_applies_the_rule "Creating: 5\nPreventing:\n  Child:"
+              it_allows_the_variable_to_be_used_in_a_code_segment "X", "Removing"
             end
 
             describe 'and a node with a value' do
