@@ -2519,11 +2519,20 @@ shared_examples_for 'an okk implementation' do
 
       let(:start_state) { "" }
       it_applies_the_rule "Creating:\nMatched:"
-      it_allows_the_variable_to_be_used_in_a_code_segment "X", "Creating"
+      it_allows_the_variable_to_be_used_in_a_code_segment "X", "(null)"
 
       describe 'and another creating condition' do
-        it 'applies the rule'
-        it 'allows the variable to be used in a code segment'
+        let(:rules) { <<-EOS }
+          +Creating 1: X
+          +Creating 2: X
+          !Matched:
+          +Matched:
+        EOS
+
+        let(:start_state) { "" }
+        it_applies_the_rule "Creating 1:\nCreating 2:\nMatched:"
+        it_allows_the_variable_to_be_used_in_a_code_segment "X", "(null)"
+
         it 'does not link the nodes'
       end
 
