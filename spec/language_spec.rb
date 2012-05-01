@@ -2511,8 +2511,15 @@ shared_examples_for 'an okk implementation' do
     end
 
     describe 'referenced in a creating condition' do
-      it 'applies the rule'
-      it 'allows the variable to be used in a code segment'
+      let(:rules) { <<-EOS }
+        +Creating: X
+        !Matched:
+        +Matched:
+      EOS
+
+      let(:start_state) { "" }
+      it_applies_the_rule "Creating:\nMatched:"
+      it_allows_the_variable_to_be_used_in_a_code_segment "X", "Creating"
 
       describe 'and another creating condition' do
         it 'applies the rule'
@@ -2521,15 +2528,38 @@ shared_examples_for 'an okk implementation' do
       end
 
       describe 'and a preventing condition' do
-        it 'causes a compile error'
+        let(:rules) { <<-EOS }
+          +Creating: X
+          !Preventing: X
+          !Matched:
+          +Matched:
+        EOS
+
+        let(:start_state) { "" }
+        it_causes_a_compile_error
       end
     end
 
     describe 'referenced in a preventing condition' do
-      it 'causes a compile error'
+      let(:rules) { <<-EOS }
+        !Preventing: X
+        !Matched:
+        +Matched:
+      EOS
+
+      let(:start_state) { "" }
+      it_causes_a_compile_error
 
       describe 'and another preventing condition' do
-        it 'causes a compile error'
+        let(:rules) { <<-EOS }
+          !Preventing 1: X
+          !Preventing 2: X
+          !Matched:
+          +Matched:
+        EOS
+
+        let(:start_state) { "" }
+        it_causes_a_compile_error
       end
     end
 
