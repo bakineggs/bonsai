@@ -58,7 +58,7 @@ describe Compiler do
     end
   end
 
-  it_should_behave_like 'an okk implementation'
+  it_should_behave_like 'a Bonsai implementation'
 
   it 'includes the source code of any rule in the generated interpreter' do
     source = Compiler.new.compile <<-EOS.gsub(/^ {6}/, '')

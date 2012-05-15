@@ -1,4 +1,4 @@
-shared_examples_for 'an okk implementation' do
+shared_examples_for 'a Bonsai implementation' do
   let(:header) { "" }
   subject { run_program :rules => rules, :start_state => start_state, :header => header }
 

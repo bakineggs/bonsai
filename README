@@ -1,8 +1,10 @@
-Okk Programming Language
+Bonsai Programming Language
 
-Okk is a programming language primarily designed for writing programming languages. It works by applying a set of rules to transform a forest (set of trees) representing the state of a program. While the primary goal of okk is to be able to create a programming language interpreter by writing a set of rules representing the semantics of the language, it could also be helpful for many other types of problems.
+This is a work in progress. There is not yet a fully working implementation (although a subset of the language has been implemented so far).
 
-Before diving into the details of writing a language, let's start off with an easier example. If we wanted to perform a map-reduce operation to compute the sum of the squares of a list of numbers, we could do this with okk. We'll do this by making a forest containing single-node trees representing our list of numbers and specifying rules to square them and sum up those squares.
+Bonsai is a programming language primarily designed for writing programming languages. It works by applying a set of rules to transform a forest (set of trees) representing the state of a program. While the primary goal of Bonsai is to be able to create a programming language interpreter by writing a set of rules representing the semantics of the language, it could also be helpful for many other types of problems.
+
+Before diving into the details of writing a language, let's start off with an easier example. If we wanted to perform a map-reduce operation to compute the sum of the squares of a list of numbers, we could do this with Bonsai. We'll do this by making a forest containing single-node trees representing our list of numbers and specifying rules to square them and sum up those squares.
 
 Here is the forest representing our starting state:
 
