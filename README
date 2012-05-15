@@ -1,33 +1,101 @@
 Bonsai Programming Language
-
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This is a work in progress. There is not yet a fully working implementation (although a subset of the language has been implemented so far).
 
-Bonsai is a programming language primarily designed for writing programming languages. It works by applying a set of rules to transform a forest (set of trees) representing the state of a program. While the primary goal of Bonsai is to be able to create a programming language interpreter by writing a set of rules representing the semantics of the language, it could also be helpful for many other types of problems.
+Bonsai is a programming language in which you define rules to match patterns in a tree and transform the matched part of the tree. These rules are applied over and over until no rules match anywhere in the tree.
 
-Before diving into the details of writing a language, let's start off with an easier example. If we wanted to perform a map-reduce operation to compute the sum of the squares of a list of numbers, we could do this with Bonsai. We'll do this by making a forest containing single-node trees representing our list of numbers and specifying rules to square them and sum up those squares.
+Trees are represented by indented lists. A node's children are indented 2 more spaces than their parent. The children can be either unordered or ordered. Using a single colon after the node's label denotes that the children are an unordered multiset. Using two colons after the node's label denotes that the children are an ordered list.
 
-Here is the forest representing our starting state:
+Nodes can either have children or have a value associated with them. Values can be either integers, decimals, or strings.
 
-Number: 5   # each line is a tree consisting of a single "Number" node that has an associated value
-Number: 12
-Number: 26  # in case you couldn't tell, anything after a # symbol is a comment
-Number: 7
-Number: 18
+A rule is defined by showing the part of the tree that must be matched and should be transformed. Certain nodes can have operators preceding their label which modify how this node affects whether or not the rule matches and how the tree should be transformed. There are 3 operators: !, +, and -. The ! operator says that if this node matches, then the rule does not match. The + operator says that this node need not match for this rule to match and that the node will be created when the tree is transformed. The - operator says that this node must match for this rule to match and that the node will be removed when the tree is transformed.
 
-Here are the rules to transform this list into a sum of squares:
+The special label ^ denotes the root of the tree.
 
-# this rule squares any value in the starting list
--Number: X           # remove a "Number" node and assign its value to the variable X
-+Squared: < X * X    # create a "Squared" node with the value X * X
+Example: Stable Marriage Problem
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Here is an example of how you can use Bonsai to solve the stable marriage problem (http://en.wikipedia.org/wiki/Stable_marriage_problem).
 
-# this rule adds any two values that have already been squared
--Squared: X          # remove a "Squared" node and assign its value to the variable X
--Squared: Y          # remove a "Squared" node and assign its value to the variable Y
-+Squared: < X + Y    # create a "Squared" node with the value X + Y
+# Create a node below the root to list the singles available. This is the input to our problem.
+^:
+  !Available:
+  +Available:
+    Man:
+      Name: "Bob"
+      Needs to Propose To::
+        Woman: "Vanessa"
+        Woman: "Alice"
+    Man:
+      Name: "Joe"
+      Needs to propose to::
+        Woman: "Alice"
+        Woman: "Vanessa"
+    Man:
+      Name: "Dave"
+      Needs to propose to::
+        Woman: "Alice"
+        Woman: "Vanessa"
+    Woman:
+      Name: "Alice"
+      Will accept proposals from::
+        Man: "Bob"
+        Man: "Dave"
+        Man: "Joe"
+    Woman:
+      Name: "Vanessa"
+      Will accept proposals from::
+        Man: "Bob"
+        Man: "Joe"
+        Man: "Dave"
 
-These rules are applied in any order until all that is left is a single "Squared" node with our result as the value.
+# Pair a man with his most preferred woman if she is available.
+Available:
+  -Man: M
+    Needs to propose to::
+      Woman: N
+  -Woman: W
+    Name: N
++Engaged:
+  +Man: M
+  +Woman: W
 
-Here are some rules that could be part of an interpreter:
+# A man proposes to a woman who prefers him more than the man she is currently engaged to.
+Engaged:
+  -Man: Dumped
+    Name: Loser
+  +Man: Newly engaged
+  Woman:
+    Will accept proposals from::
+      *:*
+      Man: Winner
+      *:*
+      Man: Loser
+Available:
+  -Man: Newly engaged
+    Name: Winner
+  +Man: Dumped
+
+# A man proposes to a woman who prefers to stick with the man she is engaged to.
+Engaged:
+  Man:
+    Name: Winner
+  Woman:
+    Will accept proposals from::
+      *:*
+      Man: Winner
+      *:*
+      Man: Loser
+Available:
+  Man:
+    Name: Loser
+    Needs to propose to::
+      -Woman:
+
+For Writing Languages
+^^^^^^^^^^^^^^^^^^^^^
+Bonsai is primarily designed for writing programming languages. By representing the AST, environment, memory, etc. in a single tree, you can define the semantics of a language by writing rules to transform the tree.
+
+Here are some rules that could be part of an interpreter of some language:
 
 # spawn new thread (see see https://gist.github.com/369171 for similar k-framework version)
 Thread:              # node must be matched
@@ -62,7 +130,7 @@ Thread:
 -Plus:
   Integer: A
   Integer: B
-+Integer: < A + B    # the < means do a computation (with the ability to call user-defined functions) - exact syntax and use undecided
++Integer: < A + B    # the < means do a computation (with the ability to call user-defined functions) - syntax and use has changed since this example was written
 
 # decimal addition
 -Plus:
