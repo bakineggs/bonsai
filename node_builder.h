@@ -1,5 +1,5 @@
-#ifndef OKK_NODE_BUILDER_H
-#define OKK_NODE_BUILDER_H
+#ifndef BONSAI_NODE_BUILDER_H
+#define BONSAI_NODE_BUILDER_H
 
 #include "types.h"
 

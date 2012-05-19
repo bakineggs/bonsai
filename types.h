@@ -1,5 +1,5 @@
-#ifndef OKK_TYPES_H
-#define OKK_TYPES_H
+#ifndef BONSAI_TYPES_H
+#define BONSAI_TYPES_H
 
 #ifdef __cplusplus
   enum value { none, integer, decimal, string };

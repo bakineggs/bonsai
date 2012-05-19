@@ -1,5 +1,5 @@
-#ifndef OKK_PRINT_H
-#define OKK_PRINT_H
+#ifndef BONSAI_PRINT_H
+#define BONSAI_PRINT_H
 
 #include "types.h"
 

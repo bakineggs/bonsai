@@ -1,4 +1,6 @@
-#define OKK_NODE_BUILDER_H
+#define BONSAI_NODE_BUILDER_H
+#define BONSAI_PRINT_H
+
 #ifdef __cplusplus
   extern "C" {
 #endif
@@ -8,15 +10,6 @@ void set_integer(char* variable, int value);
 void set_decimal(char* variable, double value);
 void set_string(char* variable, char* value);
 Node* build_node(char* definition);
-
-#ifdef __cplusplus
-  }
-#endif
-
-#define OKK_PRINT_H
-#ifdef __cplusplus
-  extern "C" {
-#endif
 
 void print_node(Node* node, FILE* stream);
 
