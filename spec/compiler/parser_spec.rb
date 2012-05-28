@@ -27,7 +27,7 @@ describe Parser do
 
           Bar:
         EOS
-        program[:header].should == <<-EOS.gsub(/ {10}/, '').gsub("hi;\n", 'hi;')
+        program[:header].should == <<-EOS.gsub(/ {10}/, '').sub("hi;\n", 'hi;')
           omg;
 
           hi;
