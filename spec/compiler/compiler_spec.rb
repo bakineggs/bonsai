@@ -18,43 +18,46 @@ describe Compiler do
     start_state = options[:start_state].gsub(/^([^ ])/, '+\1').gsub /^(.)/, '  \1'
     rules = "^:\n  !Started:\n  +Started:\n#{start_state}\n\n#{options[:rules]}"
 
-    source = Tempfile.new ['interpreter', '.c']
-    source.puts Compiler.new.compile "#{header}\n\n#{rules}"
-    source.flush
-
+    compiled = Compiler.new.compile "#{header}\n\n#{rules}"
     result = {}
 
-    interpreter = source.path.sub(/.c$/, '')
-    if system "gcc -o #{interpreter} #{source.path} > #{interpreter}.gcc.stdout 2> #{interpreter}.gcc.stderr"
-      system "sh -c 'ulimit -t 1; #{interpreter} > #{interpreter}.stdout 2> #{interpreter}.stderr' 2> #{interpreter}.sh.stderr"
+    begin
+      source = Tempfile.new ['interpreter', '.c']
+      source.write compiled
+      source.flush
 
-      result[:exit_status] = $?.exitstatus
-      result[:stdout] = File.read "#{interpreter}.stdout"
-      result[:stderr] = File.read("#{interpreter}.stderr").gsub(/^Started:\n/, '')
-      result[:shell_stderr] = File.read "#{interpreter}.sh.stderr"
+      interpreter = source.path.sub(/.c$/, '')
+      if system "gcc -o #{interpreter} #{source.path} > #{interpreter}.gcc.stdout 2> #{interpreter}.gcc.stderr"
+        system "sh -c 'ulimit -t 1; #{interpreter} > #{interpreter}.stdout 2> #{interpreter}.stderr' 2> #{interpreter}.sh.stderr"
 
-      if result[:stderr].include? "No rules to apply!"
-        result[:end_state] = parse_state(result[:stderr].split("No rules to apply!\n")[1] || "")
+        result[:exit_status] = $?.exitstatus
+        result[:stdout] = File.read "#{interpreter}.stdout"
+        result[:stderr] = File.read("#{interpreter}.stderr").gsub(/^Started:\n/, '')
+        result[:shell_stderr] = File.read "#{interpreter}.sh.stderr"
+
+        if result[:stderr].include? "No rules to apply!"
+          result[:end_state] = parse_state(result[:stderr].split("No rules to apply!\n")[1] || "")
+        end
+
+      else
+        result[:compile_error] = true
+        result[:gcc_stdout] = File.read "#{interpreter}.gcc.stdout"
+        result[:gcc_stderr] = File.read "#{interpreter}.gcc.stderr"
       end
 
-    else
-      result[:gcc_error] = true
-      result[:gcc_stdout] = File.read "#{interpreter}.gcc.stdout"
-      result[:gcc_stderr] = File.read "#{interpreter}.gcc.stderr"
-    end
+      result
 
-    result
+    ensure
+      source.close
+      File.delete "#{interpreter}.gcc.stdout"
+      File.delete "#{interpreter}.gcc.stderr"
 
-  ensure
-    source.close
-    File.delete "#{interpreter}.gcc.stdout"
-    File.delete "#{interpreter}.gcc.stderr"
-
-    unless result[:gcc_error]
-      File.delete interpreter
-      File.delete "#{interpreter}.stdout"
-      File.delete "#{interpreter}.stderr"
-      File.delete "#{interpreter}.sh.stderr"
+      unless result[:compile_error]
+        File.delete interpreter
+        File.delete "#{interpreter}.stdout"
+        File.delete "#{interpreter}.stderr"
+        File.delete "#{interpreter}.sh.stderr"
+      end
     end
   end
 
