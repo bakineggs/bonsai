@@ -27,7 +27,23 @@ class Condition
   end
 
   def must_match_a_node?
-    !creates_node? && !prevents_match? && !matches_multiple_nodes?
+    can_match_a_node? && !prevents_match? && !matches_multiple_nodes?
+  end
+
+  def can_match_a_node?
+    !creates_node?
+  end
+
+  def node_must_match_variable_value?
+    variable && can_match_a_node?
+  end
+
+  def node_sets_variable_value?
+    variable && must_match_a_node?
+  end
+
+  def has_value_set_by_variable?
+    variable && creates_node?
   end
 
   def matches_multiple_nodes?

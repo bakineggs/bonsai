@@ -323,6 +323,8 @@ class Compiler
         bool transform_rule_#{rule.object_id}(Match* match) {
           bool transformed = false;
 
+          #{rule.variables.keys.map{|v| "Node* variable_#{v};"}.join("\n")}
+
           while (match && match != EMPTY_MATCH) {
       EOS
 
@@ -343,7 +345,7 @@ class Compiler
             match = match->next_match;
           }
 
-          #{rule.code_segment}
+          #{rule.code_segment.to_s.gsub '$', 'variable_'}
 
           return transformed;
         }

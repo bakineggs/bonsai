@@ -31,4 +31,21 @@ class Rule
   def conditions_can_match_ordered_nodes_out_of_order?
     !conditions_are_ordered? && !@top_level
   end
+
+  def variables
+    return @variables if @variables
+    @variables = {} # name => conditions
+
+    conditions.each do |condition|
+      condition.child_rule.variables.each do |name, conditions|
+        (@variables[name] ||= []).push *conditions
+      end
+
+      if condition.node_must_match_variable_value? || condition.has_value_set_by_variable?
+        (@variables[condition.variable] ||= []).push condition
+      end
+    end
+
+    @variables
+  end
 end
