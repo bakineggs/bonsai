@@ -20,13 +20,13 @@ void print_node(Node* node, FILE* stream);
 Node* new_node(char* type);
 bool apply_rules(Node* node);
 Node* add_to_poset(Node* first_in_poset, Node* node_to_add);
+void add_child(Node* parent, Node* child);
 
 int main() {
   setup_node_types();
 
   Node* root_parent = new_node(ROOT_PARENT_NODE_TYPE);
-  root_parent->children = new_node(ROOT_NODE_TYPE);
-  root_parent->children->parent = root_parent;
+  add_child(root_parent, new_node(ROOT_NODE_TYPE));
 
   Node* first_in_poset = root_parent;
   while (first_in_poset) {
@@ -249,32 +249,20 @@ Node* build_offset_node(char* definition, int depth_offset, Node* previous, int 
     if (*definition != '\n')
       build_node_error("Unexpected characters after variable", definition);
 
-    if (depth > previous_depth) {
-      build_node_node_values[i]->parent = previous;
-
-      previous->children = build_node_node_values[i];
-    } else { // depth == previous_depth
-      build_node_node_values[i]->parent = previous->parent;
-
-      build_node_node_values[i]->previous_sibling = previous;
-      previous->next_sibling = build_node_node_values[i];
-    }
+    if (depth > previous_depth)
+      add_child(previous, build_node_node_values[i]);
+    else // depth == previous_depth
+      add_child(previous->parent, build_node_node_values[i]);
 
     return build_offset_node(definition, depth_offset, build_node_node_values[i], depth);
   }
 
   Node* node = new_node(node_type_for(definition));
 
-  if (depth > previous_depth) {
-    node->parent = previous;
-
-    previous->children = node;
-  } else { // depth == previous_depth
-    node->parent = previous->parent;
-
-    node->previous_sibling = previous;
-    previous->next_sibling = node;
-  }
+  if (depth > previous_depth)
+    add_child(previous, node);
+  else // depth == previous_depth
+    add_child(previous->parent, node);
 
   node->type = node_type_for(definition);
   definition += strlen(node->type);
@@ -391,6 +379,21 @@ Node* new_node(char* type) {
   node->value_type = none;
 
   return node;
+}
+
+void add_child(Node* parent, Node* child) {
+  child->parent = parent;
+
+  if (!parent->children)
+    parent->children = child;
+  else {
+    Node* sibling = parent->children;
+    while (sibling->next_sibling)
+      sibling = sibling->next_sibling;
+
+    sibling->next_sibling = child;
+    child->previous_sibling = sibling;
+  }
 }
 
 void remove_node_without_updating_pointers(Node* node) {
