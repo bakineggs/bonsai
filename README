@@ -12,6 +12,66 @@ A rule is defined by showing the part of the tree that must be matched and shoul
 
 The special label ^ denotes the root of the tree.
 
+Implementation Overview
+^^^^^^^^^^^^^^^^^^^^^^^
+
+We start with an initial tree and evaluate the tree by applying rules until no more rules match.
+
+There is a queue of nodes to try to apply rules to. Workers can get nodes from the queue and apply rules to the subtree rooted at that node.
+
+When a node is added to the queue, a semaphore is incremented on the node's parent. A node can not be popped from the queue unless its semaphore is at 0.
+
+When a worker tries to evaluate the subtree rooted at a node, it uses different techniques to check if rules match and to apply transformations.
+
+The worker keeps track of whether each rule is known to match the subtree, known to not match the subtree, or if this is unknown.
+
+Different techniques are used (in parallel) until either a valid transformation of the subtree has been found or it is confirmed that no rules match the subtree.
+
+Techniques can be written purely in native code or can use external dependencies (databases, key value stores, queues, counters, etc).
+
+Techniques can either halt when a worker knows what to do with a subtree or keep running (for JIT purposes).
+
+Different implementations of the same set of rules can be compiled with different sets of techniques.
+
+A technique takes as input:
+  - the subtree
+  - a mapping of which rules match the subtree, don't match the subtree, or if this is unknown
+
+A technique can return:
+  - a JITed version of itself
+    - whether the JITed version should replace this technique in the future or if the original should stay as well
+  - a valid transformation
+  - which rules have been determined to match the subtree
+  - which rules have been determined to not match the subtree
+  - whether or not this technique should be tried again for the new state of knowledge about which rules match
+
+Techniques should use knowledge about which rules match to return early if possible.
+
+Things to investigate:
+  What kind of algorithm should be used to walk around the tree?
+  What nodes should start off in the queue? The root node? All the nodes?
+  How should the queue be implemented?
+    Queue that just re-pushes nodes with a nonzero semaphore:
+      might not get a usable node when popping
+      might cause brief stalls due to clusters of nodes that can't be used
+        if we have a wide, deep tree, we could end up with clusters of shallow nodes that have to be skipped and pushed back to the end
+    Priority Queue:
+      Based on Semaphore Value (with reordering):
+        guaranteed to get usable node when popping
+        have to reorder ancestors when adding a node to the queue
+          might cause brief stalls if many actively used nodes have common ancestors
+      Based on Semaphore Value (without reordering; just reinserts unusable nodes with new semaphore value):
+        might not get a usable node when popping
+        should end up with pretty even distribution of unusable nodes
+      Based on Depth (popping deepest first):
+        guaranteed to get usable node when popping
+        might cause brief stalls depending on how tree is structured
+          for instance, if the AST is shallow and the memory is deep, updating memory could block processing the AST for a while
+  If a worker's techniques can not tell it whether or not any rules can be applied to a subtree, how should this be handled?
+    Should it crash?
+    Should it report the error and continue on as if no rules matched the subtree?
+    Should handling this scenario be customizable?
+
 Example: Stable Marriage Problem
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Here is an example of how you can use Bonsai to solve the stable marriage problem (http://en.wikipedia.org/wiki/Stable_marriage_problem).
