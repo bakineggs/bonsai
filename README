@@ -8,7 +8,7 @@ Trees are represented by indented lists. A node's children are indented 2 more s
 
 Nodes can either have children or have a value associated with them. Values can be either integers, decimals, or strings.
 
-A rule is defined by showing the part of the tree that must be matched and should be transformed. Certain nodes can have operators preceding their label which modify how this node affects whether or not the rule matches and how the tree should be transformed. There are 3 operators: !, +, and -. The ! operator says that if this node matches, then the rule does not match. The + operator says that this node need not match for this rule to match and that the node will be created when the tree is transformed. The - operator says that this node must match for this rule to match and that the node will be removed when the tree is transformed.
+A rule is defined by showing a part of the tree that must be matched and how it should be transformed. There are 3 operators that can precede a node's label: !, +, and -. The ! operator says that if this node matches, then the rule does not match. The + operator says that this node will be created if the rule matches and does not affect whether or not the rule matches. The - operator says that this node must match for this rule to match and that the node will be removed if this rule matches.
 
 The special label ^ denotes the root of the tree.
 
