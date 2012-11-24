@@ -21,6 +21,8 @@ There is a queue of nodes to try to apply rules to. Workers can get nodes from t
 
 When a node is added to the queue, a semaphore is incremented on the node's parent. A node can not be popped from the queue unless its semaphore is at 0.
 
+If any part of the subtree rooted at a popped node can be (and is) transformed, that node is added back to the queue. If not, the semaphore on the popped node's parent is decremented.
+
 When a worker tries to evaluate the subtree rooted at a node, it uses different techniques to check if rules match and to apply transformations.
 
 The worker keeps track of whether each rule is known to match the subtree, known to not match the subtree, or if this is unknown.
