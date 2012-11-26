@@ -7,10 +7,10 @@ type Interpreter struct {
 }
 
 func (i *Interpreter) Interpret() {
-	i.queue = make(chan *Node, 1048576)
+	i.queue = make(chan *Node)
 
 	root := &Node{lock: make(chan empty, 1), label: "^", children: make([]*Node, 0)}
-	i.enqueue(root)
+	go i.enqueue(root)
 
 	done := make(chan empty, 1)
 	go i.processQueue(done)
@@ -21,7 +21,7 @@ func (i *Interpreter) Interpret() {
 
 func (i *Interpreter) enqueue(node *Node) {
 	for _, child := range node.children {
-		i.enqueue(child)
+		go i.enqueue(child)
 	}
 	i.queue <- node
 }
@@ -81,7 +81,7 @@ func (i *Interpreter) transform(node *Node) {
 	select {
 	case children := <-transformations:
 		node.children = children
-		i.enqueue(node)
+		go i.enqueue(node)
 	case <-done:
 		node.lock <- empty{}
 	}
