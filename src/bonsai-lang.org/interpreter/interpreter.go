@@ -1,79 +1,106 @@
 package main
 
-import "fmt"
-import "time"
-
-type result struct {
-	transformation *Node
-	newly_matching []*Rule
-	newly_not_matching []*Rule
-	new_techniques []*Technique
-	continue_using bool
+type Interpreter struct {
+	techniques []Technique
+	techniquesLock chan empty
+	queue chan *Node
 }
 
-type Technique interface {
-	apply(
-		rules []*Rule,
-		node *Node,
-		matching map[*Rule]bool,
-		not_matching map[*Rule]bool) (result)
+func (i *Interpreter) Interpret() {
+	i.queue = make(chan *Node, 1048576)
+
+	root := &Node{lock: make(chan empty, 1), label: "^", children: make([]*Node, 0)}
+	i.enqueue(root)
+
+	done := make(chan empty, 1)
+	go i.processQueue(done)
+
+	<-root.lock
+	done <- empty{}
 }
 
-func apply_technique(technique Technique, rules []Rule, node *Node, results chan result) {
-	results <- result{}
-}
-
-func apply(techniques []Technique, rules []Rule, queue *Queue, node *Node) {
-	results := make(chan result)
-	transformed := false
-
-	for _, technique := range techniques {
-		go apply_technique(technique, rules, node, results)
+func (i *Interpreter) enqueue(node *Node) {
+	for _, child := range node.children {
+		i.enqueue(child)
 	}
-	for _, technique := range techniques {
-		r := <-results
-		if (!transformed && r.transformation != nil) {
-			//node = r.transformation
-			transformed = true
-		}
-		if (r.continue_using) {
-			fmt.Println(technique)
-		} else {
+	i.queue <- node
+}
+
+func (i *Interpreter) processQueue(done chan empty) {
+	for {
+		select {
+		case <-done:
+			return
+		case node := <-i.queue:
+			go i.transform(node)
 		}
 	}
-
-	node.in_use = false
-	if (transformed) {
-		queue.insert(node)
-	}
 }
 
-func main() {
-	rules := []Rule{}
-	techniques := []Technique{}
+func (i *Interpreter) transform(node *Node) {
+	for _, child := range node.children {
+		<-child.lock
+	}
 
-	root := Node{}
-	queue := Queue{}
-	queue.lock = make(semaphore, 1)
-	queue.insert(&root)
+	done := make(chan empty, 1)
+	//techniquesDone := make(chan empty, len(i.techniques))
+	techniquesDone := make(chan int, len(i.techniques))
+	go func() {
+		for index := range i.techniques {
+			//<-techniquesDone
+			techniquesDone <- index // TODO: can we iterate over a range w/o using the var?
+		}
+		done <- empty{}
+	}()
 
-	for root.in_use {
-		time.Sleep(1) // otherwise we don't halt
-		node := queue.pop()
-		for node != nil {
-			if (node.children_blocking > 0) {
-				queue.insert(node);
+	transformations := make(chan []*Node)
+	matched := make(map[*Rule]bool)
+	mismatched := make(map[*Rule]bool)
+
+	for _, technique := range i.techniques {
+		go func() {
+			children, techniques, continueUsing := technique.Transform(node, &matched, &mismatched)
+
+			if children == nil {
+				//techniquesDone <- empty{}
+				<-techniquesDone
 			} else {
-				go apply(techniques, rules, &queue, node);
+				transformations <- children
 			}
-			node = queue.pop()
+
+			if techniques != nil {
+				i.learnTechniques(techniques)
+			}
+
+			if !continueUsing {
+				i.unlearnTechnique(&technique)
+			}
+		}()
+	}
+
+	select {
+	case children := <-transformations:
+		node.children = children
+		i.enqueue(node)
+	case <-done:
+		node.lock <- empty{}
+	}
+}
+
+func (i *Interpreter) learnTechniques(techniques []Technique) {
+	i.techniquesLock <- empty{}
+	i.techniques = append(i.techniques, techniques...)
+	<-i.techniquesLock
+}
+
+func (i *Interpreter) unlearnTechnique(technique *Technique) {
+	i.techniquesLock <- empty{}
+	for index, technique := range i.techniques {
+		if i.techniques[index] == technique {
+			i.techniques[index] = i.techniques[len(i.techniques) - 1]
+			i.techniques = i.techniques[:len(i.techniques) - 1]
+			return
 		}
 	}
-
-
-	if root.parent == nil {
-		fmt.Println("nil")
-	} else {
-		fmt.Println("not nil")
-	}
+	<-i.techniquesLock
 }

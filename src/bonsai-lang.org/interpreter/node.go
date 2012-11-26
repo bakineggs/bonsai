@@ -1,15 +1,13 @@
 package main
 
 type Node struct {
-	parent *Node
-
-	in_use bool
-	children_blocking int
-
-	children_are_ordered bool
-	children []*Node
+	lock chan empty
 
 	label string
+
+	parent *Node
+	children []*Node
+	children_are_ordered bool
 
 	value_type int
 	integer_value int64
