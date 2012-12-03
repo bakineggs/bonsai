@@ -49,16 +49,22 @@ func (i *Interpreter) Enqueue(node *Node, transformation *Node) error {
 }
 
 func (i *Interpreter) sendToPeer(node *Node) {
-	peer := <-i.peers
-	i.peers <- peer
+	select {
+	case peer := <-i.peers:
+		i.peers <- peer
 
-	var transformation *Node
-	err := peer.Call("Interpreter.Enqueue", node, transformation)
-	if err != nil {
-		panic(err)
+		var transformation *Node
+		err := peer.Call("Interpreter.Enqueue", node, transformation)
+		if err != nil {
+			panic(err)
+		}
+
+		node.children = transformation.children
+		i.enqueue(node)
+
+	default:
+		i.transform(node)
 	}
-	node.children = transformation.children
-	i.enqueue(node)
 }
 
 func (i *Interpreter) enqueue(node *Node) {
@@ -87,7 +93,7 @@ func (i *Interpreter) processQueue(sendToPeer chan empty) {
 
 // TODO: continuously monitor resources and use sendToPeer to say how many nodes to send away
 func (i *Interpreter) monitorResources(sendToPeer chan empty) {
-	//sendToPeer <- empty{}
+	sendToPeer <- empty{}
 }
 
 func (i *Interpreter) transform(node *Node) {
