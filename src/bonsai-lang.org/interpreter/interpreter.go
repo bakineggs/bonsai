@@ -71,25 +71,26 @@ func (i *Interpreter) enqueue(node *Node) {
 func (i *Interpreter) processQueue(sendToPeer chan empty) {
 	for {
 		node := <-i.queue
-		select {
-		case <-sendToPeer:
-			go i.sendToPeer(node)
-		default:
-			go i.transform(node)
-		}
+		go func() {
+			for _, child := range node.children {
+				<-child.lock
+			}
+			select {
+			case <-sendToPeer:
+				i.sendToPeer(node)
+			default:
+				i.transform(node)
+			}
+		}()
 	}
 }
 
 // TODO: continuously monitor resources and use sendToPeer to say how many nodes to send away
 func (i *Interpreter) monitorResources(sendToPeer chan empty) {
-	sendToPeer <- empty{}
+	//sendToPeer <- empty{}
 }
 
 func (i *Interpreter) transform(node *Node) {
-	for _, child := range node.children {
-		<-child.lock
-	}
-
 	done := make(chan empty, 1)
 	//techniquesDone := make(chan empty, len(i.techniques))
 	techniquesDone := make(chan int, len(i.techniques))
