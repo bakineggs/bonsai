@@ -9,5 +9,5 @@ func main() {
 	}
 
 	interpreter := Interpreter{techniques: techniques}
-	interpreter.Interpret()
+	interpreter.interpret()
 }

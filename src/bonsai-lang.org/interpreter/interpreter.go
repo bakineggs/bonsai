@@ -1,22 +1,65 @@
 package main
 
+import "net"
+import "net/rpc"
+
 type Interpreter struct {
+	peers chan *rpc.Client
 	techniques []Technique
 	techniquesLock chan empty
 	queue chan *Node
 }
 
-func (i *Interpreter) Interpret() {
+func (i *Interpreter) interpret() {
 	i.queue = make(chan *Node)
+
+	listener, err := net.Listen("tcp", ":1234") // TODO: port should be configurable and rpc should be optional
+	if err != nil {
+		panic(err)
+	}
+
+	rpc.Register(i)
+	go rpc.Accept(listener)
 
 	root := &Node{lock: make(chan empty, 1), label: "^", children: make([]*Node, 0)}
 	go i.enqueue(root)
 
 	done := make(chan empty, 1)
-	go i.processQueue(done)
+	sendToPeer := make(chan empty)
+	go i.processQueue(done, sendToPeer)
+	go i.monitorResources(sendToPeer)
 
 	<-root.lock
 	done <- empty{}
+}
+
+func (i *Interpreter) AddPeer(address string, reply *bool) error {
+	peer, err := rpc.Dial("tcp", address)
+	if err != nil {
+		panic(err)
+	}
+	i.peers <- peer
+	return nil
+}
+
+func (i *Interpreter) Enqueue(node *Node, transformation *Node) error {
+	go i.enqueue(node)
+	<-node.lock
+	transformation = node
+	return nil
+}
+
+func (i *Interpreter) sendToPeer(node *Node) {
+	peer := <-i.peers
+	i.peers <- peer
+
+	var transformation *Node
+	err := peer.Call("Interpreter.Enqueue", node, transformation)
+	if err != nil {
+		panic(err)
+	}
+	node.children = transformation.children
+	i.enqueue(node)
 }
 
 func (i *Interpreter) enqueue(node *Node) {
@@ -26,15 +69,25 @@ func (i *Interpreter) enqueue(node *Node) {
 	i.queue <- node
 }
 
-func (i *Interpreter) processQueue(done chan empty) {
+func (i *Interpreter) processQueue(done chan empty, sendToPeer chan empty) {
 	for {
 		select {
 		case <-done:
 			return
 		case node := <-i.queue:
-			go i.transform(node)
+			select {
+			case <-sendToPeer:
+				go i.sendToPeer(node)
+			default:
+				go i.transform(node)
+			}
 		}
 	}
+}
+
+// TODO: continuously monitor resources and use sendToPeer to say how many nodes to send away
+func (i *Interpreter) monitorResources(sendToPeer chan empty) {
+	sendToPeer <- empty{}
 }
 
 func (i *Interpreter) transform(node *Node) {
@@ -87,6 +140,7 @@ func (i *Interpreter) transform(node *Node) {
 	}
 }
 
+// TODO: this needs to work with rpc peers
 func (i *Interpreter) learnTechniques(techniques []Technique) {
 	i.techniquesLock <- empty{}
 	i.techniques = append(i.techniques, techniques...)
