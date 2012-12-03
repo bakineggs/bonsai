@@ -5,7 +5,7 @@ import "net/rpc"
 
 type Interpreter struct {
 	peers chan *rpc.Client
-	techniques []Technique
+	Techniques []Technique
 	techniquesLock chan empty
 	queue chan *Node
 }
@@ -99,9 +99,9 @@ func (i *Interpreter) monitorResources(sendToPeer chan empty) {
 func (i *Interpreter) transform(node *Node) {
 	done := make(chan empty, 1)
 	//techniquesDone := make(chan empty, len(i.techniques))
-	techniquesDone := make(chan int, len(i.techniques))
+	techniquesDone := make(chan int, len(i.Techniques))
 	go func() {
-		for index := range i.techniques {
+		for index := range i.Techniques {
 			//<-techniquesDone
 			techniquesDone <- index // TODO: can we iterate over a range w/o using the var?
 		}
@@ -112,7 +112,7 @@ func (i *Interpreter) transform(node *Node) {
 	matched := make(map[*Rule]bool)
 	mismatched := make(map[*Rule]bool)
 
-	for _, technique := range i.techniques {
+	for _, technique := range i.Techniques {
 		go func() {
 			children, techniques, continueUsing := technique.Transform(node, &matched, &mismatched)
 
@@ -145,16 +145,16 @@ func (i *Interpreter) transform(node *Node) {
 // TODO: this needs to work with rpc peers
 func (i *Interpreter) learnTechniques(techniques []Technique) {
 	i.techniquesLock <- empty{}
-	i.techniques = append(i.techniques, techniques...)
+	i.Techniques = append(i.Techniques, techniques...)
 	<-i.techniquesLock
 }
 
 func (i *Interpreter) unlearnTechnique(technique *Technique) {
 	i.techniquesLock <- empty{}
-	for index, technique := range i.techniques {
-		if i.techniques[index] == technique {
-			i.techniques[index] = i.techniques[len(i.techniques) - 1]
-			i.techniques = i.techniques[:len(i.techniques) - 1]
+	for index, technique := range i.Techniques {
+		if i.Techniques[index] == technique {
+			i.Techniques[index] = i.Techniques[len(i.Techniques) - 1]
+			i.Techniques = i.Techniques[:len(i.Techniques) - 1]
 			return
 		}
 	}
