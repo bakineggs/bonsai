@@ -24,13 +24,11 @@ func (i *Interpreter) interpret() {
 	root := &Node{lock: make(chan empty, 1), label: "^", children: make([]*Node, 0)}
 	go i.enqueue(root)
 
-	done := make(chan empty, 1)
 	sendToPeer := make(chan empty)
-	go i.processQueue(done, sendToPeer)
+	go i.processQueue(sendToPeer)
 	go i.monitorResources(sendToPeer)
 
 	<-root.lock
-	done <- empty{}
 }
 
 func (i *Interpreter) AddPeer(address string, reply *bool) error {
@@ -69,18 +67,14 @@ func (i *Interpreter) enqueue(node *Node) {
 	i.queue <- node
 }
 
-func (i *Interpreter) processQueue(done chan empty, sendToPeer chan empty) {
+func (i *Interpreter) processQueue(sendToPeer chan empty) {
 	for {
+		node := <-i.queue
 		select {
-		case <-done:
-			return
-		case node := <-i.queue:
-			select {
-			case <-sendToPeer:
-				go i.sendToPeer(node)
-			default:
-				go i.transform(node)
-			}
+		case <-sendToPeer:
+			go i.sendToPeer(node)
+		default:
+			go i.transform(node)
 		}
 	}
 }
