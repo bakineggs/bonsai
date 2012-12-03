@@ -1,4 +1,4 @@
-package main
+package bonsai
 
 type Node struct {
 	lock chan empty

@@ -1,4 +1,4 @@
-package main
+package bonsai
 
 type Rule struct {
 	top_level bool

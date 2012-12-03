@@ -1,4 +1,4 @@
-package main
+package bonsai
 
 type Technique interface {
 	Learn(rules []Rule)

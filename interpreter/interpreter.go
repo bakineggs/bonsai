@@ -1,4 +1,4 @@
-package main
+package bonsai
 
 import "net"
 import "net/rpc"

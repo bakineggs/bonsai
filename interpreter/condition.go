@@ -1,4 +1,4 @@
-package main
+package bonsai
 
 type Condition struct {
 	node_type string
@@ -7,8 +7,6 @@ type Condition struct {
 	creates_node bool
 	removes_node bool
 	matches_multiple_nodes bool
-	integer_value int64
-	decimal_value float64
-	string_value string
+	value Value
 	variable string
 }
