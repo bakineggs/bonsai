@@ -128,7 +128,7 @@ func (i *Interpreter) transform(node *Node) {
 	select {
 	case children := <-transformations:
 		node.children = children
-		go i.enqueue(node)
+		i.enqueue(node)
 	case <-done:
 		node.lock <- empty{}
 	}
