@@ -10,7 +10,7 @@ type Interpreter struct {
 	queue chan *Node
 }
 
-func (i *Interpreter) interpret() {
+func (i *Interpreter) interpret() *Node {
 	i.queue = make(chan *Node)
 
 	listener, err := net.Listen("tcp", ":1234") // TODO: port should be configurable and rpc should be optional
@@ -29,6 +29,7 @@ func (i *Interpreter) interpret() {
 	go i.monitorResources(sendToPeer)
 
 	<-root.lock
+	return root
 }
 
 func (i *Interpreter) AddPeer(address string, reply *bool) error {

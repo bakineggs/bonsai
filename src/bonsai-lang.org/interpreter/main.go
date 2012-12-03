@@ -1,5 +1,8 @@
 package main
 
+import "fmt"
+import "os"
+
 func main() {
 	rules := []Rule{}
 	techniques := []Technique{}
@@ -9,5 +12,8 @@ func main() {
 	}
 
 	interpreter := Interpreter{techniques: techniques}
-	interpreter.interpret()
+	root := interpreter.interpret()
+
+	fmt.Fprint(os.Stderr, root.ToString())
+	os.Exit(1)
 }
