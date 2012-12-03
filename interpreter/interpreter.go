@@ -23,9 +23,6 @@ func (i *Interpreter) Interpret(port string, root *Node) error {
 		go rpc.Accept(listener)
 	}
 
-	root.lock = make(chan empty, 1)
-	root.label = "^"
-	root.children = make([]*Node, 0)
 	go i.enqueue(root)
 
 	sendToPeer := make(chan empty)

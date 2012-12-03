@@ -34,3 +34,7 @@ func (n *Node) toString(depth int) (str string) {
 	}
 	return
 }
+
+func MakeRootNode() (root *Node) {
+	return &Node{lock: make(chan empty, 1), label: "^", children: make([]*Node, 0)}
+}
