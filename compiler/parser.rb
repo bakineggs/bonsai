@@ -87,12 +87,14 @@ class Parser
   end
 
   def parse_condition line, depth = 0, child_lines = []
-    unless match = line.match(/^#{'  ' * depth}([!+-])?([A-Za-z0-9 ]+|\^|\*):(:)?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|([A-Za-z][A-Za-z0-9 ]*)))?$/)
+    unless match = line.match(/^#{'  ' * depth}([!+-])?([A-Za-z0-9 ]+|\^|\*):(:)?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|"(.*)"|([A-Za-z][A-Za-z0-9 ]*)))?$/)
       raise Error.new 'Condition could not be parsed', line
     end
 
-    if match[9]
-      variable = match[9]
+    if match[10]
+      variable = match[10]
+    elsif match[9]
+      value = match[9]
     elsif match[8]
       value = match[8].to_f
     elsif match[7]
