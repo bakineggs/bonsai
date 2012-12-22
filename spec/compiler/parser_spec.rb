@@ -11,31 +11,6 @@ describe Parser do
   end
 
   describe '#parse_program' do
-    describe 'header' do
-      it 'does not include a header without one' do
-        parse(:program, "")[:header].should == ""
-      end
-
-      it 'includes a header' do
-        program = parse :program, <<-EOS, 5
-          Foo:
-          %{
-          omg;
-
-          hi;
-          %}
-
-          Bar:
-        EOS
-        program[:header].should == <<-EOS.gsub(/ {10}/, '').sub("hi;\n", 'hi;')
-          omg;
-
-          hi;
-        EOS
-        program[:rules].length.should == 2
-      end
-    end
-
     describe 'syntax errors' do
       it 'includes the line of any syntax error' do
         lambda {
@@ -89,29 +64,6 @@ describe Parser do
         }
       end
 
-      it 'errors out with an invalid header' do
-        lambda {
-          parse :program, <<-EOS, 6
-            %}
-            %{
-          EOS
-        }.should raise_error(Parser::Error) { |error|
-          error.line.line_number.should == 1
-          error.line.should == "%}"
-          error.message.should == "Expected start of header to come before end of header"
-        }
-
-        lambda {
-          parse :program, <<-EOS, 6
-            %}
-          EOS
-        }.should raise_error(Parser::Error) { |error|
-          error.line.line_number.should == 1
-          error.line.should == "%}"
-          error.message.should == "Expected start of header to come before end of header"
-        }
-      end
-
       it 'does not allow nodes with values to have children' do
         lambda {
           parse :program, <<-EOS, 6
@@ -127,17 +79,17 @@ describe Parser do
     end
 
     it 'returns an empty list of rules with an empty program' do
-      parse(:program, "")[:rules].should be_empty
+      parse(:program, "").should be_empty
     end
 
     it 'ignores empty lines' do
-      parse(:program, <<-EOS, 4)[:rules].should be_empty
+      parse(:program, <<-EOS, 4).should be_empty
 
       EOS
     end
 
     it 'ignores empty lines between rules' do
-      parse(:program, <<-EOS, 4)[:rules].length.should == 2
+      parse(:program, <<-EOS, 4).length.should == 2
 
         Foo:
 
@@ -148,7 +100,7 @@ describe Parser do
     end
 
     it 'ignores comments' do
-      parse(:program, <<-EOS, 4)[:rules].length.should == 2
+      parse(:program, <<-EOS, 4).length.should == 2
         Foo: # comment
 
         # another comment
@@ -159,7 +111,7 @@ describe Parser do
     end
 
     it 'treats a whole-line comment as a rule separator' do
-      parse(:program, <<-EOS, 4)[:rules].length.should == 2
+      parse(:program, <<-EOS, 4).length.should == 2
         Foo:
         # comment
         Bar:
@@ -167,17 +119,17 @@ describe Parser do
     end
 
     it 'considers the top level rule to have unordered children' do
-      parse(:program, 'Foo:')[:rules].first.conditions_are_ordered?.should be_false
-      parse(:program, 'Foo::')[:rules].first.conditions_are_ordered?.should be_false
+      parse(:program, 'Foo:').first.conditions_are_ordered?.should be_false
+      parse(:program, 'Foo::').first.conditions_are_ordered?.should be_false
     end
 
     it 'considers the top level rule to not require all nodes to be matched' do
-      parse(:program, 'Foo:')[:rules].first.must_match_all_nodes?.should be_false
-      parse(:program, 'Foo:=')[:rules].first.must_match_all_nodes?.should be_false
+      parse(:program, 'Foo:').first.must_match_all_nodes?.should be_false
+      parse(:program, 'Foo:=').first.must_match_all_nodes?.should be_false
     end
 
     it 'includes the definitions of the rules' do
-      rules = parse(:program, <<-EOS, 4)[:rules]
+      rules = parse :program, <<-EOS, 4
         Foo:
           Bar:
 
@@ -195,7 +147,7 @@ describe Parser do
     end
 
     it 'associates code segments with rules' do
-      rules = parse(:program, <<-EOS, 4)[:rules]
+      rules = parse :program, <<-EOS, 4
         Foo:
           Bar:
         < exit(0);
@@ -293,11 +245,11 @@ describe Parser do
     end
 
     it 'considers the node type ^ to mean top level' do
-      parse(:condition, '^:').node_type.should == :root
+      parse(:condition, '^:').node_type.should == '^'
     end
 
     it 'considers the node type * to mean any node' do
-      parse(:condition, '*:').node_type.should == :any
+      parse(:condition, '*:').node_type.should == '*'
     end
 
     it 'considers a prepended + to mean creating a node' do
