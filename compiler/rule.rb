@@ -12,12 +12,16 @@ class Rule
     @definition = options[:definition]
   end
 
+  def top_level?
+    !!@top_level
+  end
+
   def conditions_are_ordered?
-    @conditions_are_ordered
+    !!@conditions_are_ordered
   end
 
   def must_match_all_nodes?
-    @must_match_all_nodes
+    !!@must_match_all_nodes
   end
 
   def conditions_can_match_in_order?

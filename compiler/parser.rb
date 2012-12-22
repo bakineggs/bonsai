@@ -26,20 +26,9 @@ class Parser
       lines.push Line.new line, i + 1
     end
 
-    if end_of_header = lines.index("%}")
-      start_of_header = lines.index "%{"
-      raise Error.new 'Expected start of header to come before end of header', lines[end_of_header] unless start_of_header && start_of_header < end_of_header
-
-      header = lines[start_of_header+1...end_of_header]
-      rule_lines = lines[0...start_of_header] + lines[end_of_header+1..-1]
-    else
-      header = []
-      rule_lines = lines
-    end
-
     rules = []
     definition = []
-    rule_lines.each do |line|
+    lines.each do |line|
       if line != ''
         definition.push line
       elsif !definition.empty?
@@ -49,10 +38,7 @@ class Parser
     end
     rules.push parse_rule definition, 0, :top_level => true unless definition.empty?
 
-    {
-      :header => header.join("\n"),
-      :rules => rules
-    }
+    rules
   end
 
   def parse_rule definition, depth = 0, options = {}
@@ -115,15 +101,11 @@ class Parser
       value = match[7].to_i
     end
 
-    node_type = match[2]
-    node_type = :root if node_type == '^'
-    node_type = :any if node_type == '*'
-
     Condition.new({
       :creates_node => match[1] == '+',
       :removes_node => match[1] == '-',
       :prevents_match => match[1] == '!',
-      :node_type => node_type,
+      :node_type => match[2],
       :matches_multiple_nodes => match[5] == '*',
       :value => value,
       :code_segment => code_segment,
