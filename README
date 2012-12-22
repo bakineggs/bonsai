@@ -76,82 +76,8 @@ Things to investigate:
 
 Example: Stable Marriage Problem
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Here is an example of how you can use Bonsai to solve the stable marriage problem (http://en.wikipedia.org/wiki/Stable_marriage_problem).
 
-# Create a node below the root to list the singles available. This is the input to our problem.
-^:
-  !Available:
-  +Available:
-    Man:
-      Name: "Bob"
-      Needs to Propose To::
-        Woman: "Vanessa"
-        Woman: "Alice"
-    Man:
-      Name: "Joe"
-      Needs to propose to::
-        Woman: "Alice"
-        Woman: "Vanessa"
-    Man:
-      Name: "Dave"
-      Needs to propose to::
-        Woman: "Alice"
-        Woman: "Vanessa"
-    Woman:
-      Name: "Alice"
-      Will accept proposals from::
-        Man: "Bob"
-        Man: "Dave"
-        Man: "Joe"
-    Woman:
-      Name: "Vanessa"
-      Will accept proposals from::
-        Man: "Bob"
-        Man: "Joe"
-        Man: "Dave"
-
-# Pair a man with his most preferred woman if she is available.
-Available:
-  -Man: M
-    Needs to propose to::
-      Woman: N
-  -Woman: W
-    Name: N
-+Engaged:
-  +Man: M
-  +Woman: W
-
-# A man proposes to a woman who prefers him more than the man she is currently engaged to.
-Engaged:
-  -Man: Dumped
-    Name: Loser
-  +Man: Newly engaged
-  Woman:
-    Will accept proposals from::
-      *:*
-      Man: Winner
-      *:*
-      Man: Loser
-Available:
-  -Man: Newly engaged
-    Name: Winner
-  +Man: Dumped
-
-# A man proposes to a woman who prefers to stick with the man she is engaged to.
-Engaged:
-  Man:
-    Name: Winner
-  Woman:
-    Will accept proposals from::
-      *:*
-      Man: Winner
-      *:*
-      Man: Loser
-Available:
-  Man:
-    Name: Loser
-    Needs to propose to::
-      -Woman:
+See http://github.com/bakineggs/stable_marriage for an example of how Bonsai can be used to solve the stable marriage problem (http://en.wikipedia.org/wiki/Stable_marriage_problem).
 
 For Writing Languages
 ^^^^^^^^^^^^^^^^^^^^^
