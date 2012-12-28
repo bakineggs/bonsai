@@ -99,12 +99,10 @@ func (i *Interpreter) monitorResources(sendToPeer chan empty) {
 
 func (i *Interpreter) transform(node *Node) {
 	done := make(chan empty, 1)
-	//techniquesDone := make(chan empty, len(i.techniques))
-	techniquesDone := make(chan int, len(i.Techniques))
+	techniquesDone := make(chan empty, len(i.Techniques))
 	go func() {
-		for index := range i.Techniques {
-			//<-techniquesDone
-			techniquesDone <- index // TODO: can we iterate over a range w/o using the var?
+		for _ = range i.Techniques {
+			<-techniquesDone
 		}
 		done <- empty{}
 	}()
@@ -118,8 +116,7 @@ func (i *Interpreter) transform(node *Node) {
 			children, techniques, continueUsing := technique.Transform(node, &matched, &mismatched)
 
 			if children == nil {
-				//techniquesDone <- empty{}
-				<-techniquesDone
+				techniquesDone <- empty{}
 			} else {
 				transformations <- children
 			}

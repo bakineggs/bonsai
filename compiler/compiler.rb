@@ -9,10 +9,10 @@ class Compiler
 
       import "./bonsai/interpreter"
 
-      func CompiledRules() []bonsai.Rule {
-        return []bonsai.Rule{#{
+      func CompiledRules() []*bonsai.Rule {
+        return []*bonsai.Rule{#{
           rules.map do |rule|
-            compile_rule rule
+            "&#{compile_rule rule}"
           end.join ','
         }}
       }
