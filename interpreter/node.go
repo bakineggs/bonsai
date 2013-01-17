@@ -7,7 +7,7 @@ type Node struct {
 
 	parent *Node
 	children []*Node
-	children_are_ordered bool
+	ChildrenAreOrdered bool
 
 	value Value
 }
@@ -22,7 +22,7 @@ func (n *Node) toString(depth int) (str string) {
 	}
 	str += n.label + ":"
 
-	if (n.children_are_ordered) {
+	if (n.ChildrenAreOrdered) {
 		str += ":"
 	} else if (n.value != nil) {
 		str += " " + n.value.ToString()

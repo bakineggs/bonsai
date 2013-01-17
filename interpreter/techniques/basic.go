@@ -16,26 +16,26 @@ func (b *Basic) Transform(node *bonsai.Node, matched *map[*bonsai.Rule]bool, mis
 	continueUsing = true
 
 	transformations := make(chan []*bonsai.Node, 1)
-	not_transformed := make(chan empty)
+	notTransformed := make(chan empty)
 
 	for _, rule := range b.rules {
 		go func() {
 			if (*matched)[rule] || (*mismatched)[rule] {
-			} else if b.matches(rule, node) {
-				(*matched)[rule] = true
+				notTransformed <- empty{}
 			} else {
-				(*mismatched)[rule] = true
-			}
-
-			if (*matched)[rule] {
-				transformation := b.transform(rule, node)
-				if transformation != nil {
-					transformations <- transformation
+				matches, matchedConditions := b.matches(rule, node)
+				if matches {
+					(*matched)[rule] = true
+					transformation := b.transform(rule, matchedConditions)
+					if transformation != nil {
+						transformations <- transformation
+					} else {
+						notTransformed <- empty{}
+					}
 				} else {
-					not_transformed <- empty{}
+					(*mismatched)[rule] = true
+					notTransformed <- empty{}
 				}
-			} else {
-				not_transformed <- empty{}
 			}
 		}()
 	}
@@ -45,17 +45,30 @@ func (b *Basic) Transform(node *bonsai.Node, matched *map[*bonsai.Rule]bool, mis
 		case transformation := <-transformations:
 			children = transformation
 			return
-		case <-not_transformed:
+		case <-notTransformed:
 		}
 	}
 
 	return
 }
 
-func (b *Basic) matches(rule *bonsai.Rule, node *bonsai.Node) (matches bool) {
+func (b *Basic) matches(rule *bonsai.Rule, node *bonsai.Node) (matches bool, matchedConditions map[*bonsai.Condition]*bonsai.Node) {
+	if rule.ConditionsAreOrdered != node.ChildrenAreOrdered && !rule.TopLevel {
+		return
+	}
+
+	if node.ChildrenAreOrdered {
+		matches, matchedConditions = b.matchesInOrder(rule, node)
+		return
+	}
+
 	return
 }
 
-func (b *Basic) transform(rule *bonsai.Rule, node *bonsai.Node) (children []*bonsai.Node) {
+func (b *Basic) matchesInOrder(rule *bonsai.Rule, node *bonsai.Node) (matches bool, matchedConditions map[*bonsai.Condition]*bonsai.Node) {
+	return
+}
+
+func (b *Basic) transform(rule *bonsai.Rule, matchedConditions map[*bonsai.Condition]*bonsai.Node) (children []*bonsai.Node) {
 	return
 }
