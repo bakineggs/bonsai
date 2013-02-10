@@ -3,10 +3,10 @@ package bonsai
 type Node struct {
 	lock chan empty
 
-	label string
+	Label string
 
 	parent *Node
-	children []*Node
+	Children []*Node
 	ChildrenAreOrdered bool
 
 	value Value
@@ -20,21 +20,21 @@ func (n *Node) toString(depth int) (str string) {
 	for i := 0; i < depth; i++ {
 		str += "  "
 	}
-	str += n.label + ":"
+	str += n.Label + ":"
 
-	if (n.ChildrenAreOrdered) {
+	if n.ChildrenAreOrdered {
 		str += ":"
 	} else if (n.value != nil) {
 		str += " " + n.value.ToString()
 	}
 	str += "\n"
 
-	for _, child := range n.children {
+	for _, child := range n.Children {
 		str += child.toString(depth + 1)
 	}
 	return
 }
 
 func MakeRootNode() (root *Node) {
-	return &Node{lock: make(chan empty, 1), label: "^", children: make([]*Node, 0)}
+	return &Node{lock: make(chan empty, 1), Label: "^", Children: make([]*Node, 0)}
 }

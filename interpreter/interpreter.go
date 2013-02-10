@@ -60,7 +60,7 @@ func (i *Interpreter) sendToPeer(node *Node) {
 			panic(err)
 		}
 
-		node.children = transformation.children
+		node.Children = transformation.Children
 		i.enqueue(node)
 
 	default:
@@ -69,7 +69,7 @@ func (i *Interpreter) sendToPeer(node *Node) {
 }
 
 func (i *Interpreter) enqueue(node *Node) {
-	for _, child := range node.children {
+	for _, child := range node.Children {
 		go i.enqueue(child)
 	}
 	i.queue <- node
@@ -79,7 +79,7 @@ func (i *Interpreter) processQueue(sendToPeer chan empty) {
 	for {
 		node := <-i.queue
 		go func() {
-			for _, child := range node.children {
+			for _, child := range node.Children {
 				<-child.lock
 			}
 			select {
@@ -133,7 +133,7 @@ func (i *Interpreter) transform(node *Node) {
 
 	select {
 	case children := <-transformations:
-		node.children = children
+		node.Children = children
 		i.enqueue(node)
 	case <-done:
 		node.lock <- empty{}
