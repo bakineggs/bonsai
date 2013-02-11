@@ -52,7 +52,7 @@ func (b *Basic) Transform(node *bonsai.Node, matched *map[*bonsai.Rule]bool, mis
 	return
 }
 
-func (b *Basic) matches(rule *bonsai.Rule, node *bonsai.Node) (matches bool, matchedConditions map[*bonsai.Condition]*bonsai.Node) {
+func (b *Basic) matches(rule *bonsai.Rule, node *bonsai.Node) (matches bool, matchedConditions map[*bonsai.Node][]chan *bonsai.Condition) {
 	if rule.ConditionsAreOrdered != node.ChildrenAreOrdered && !rule.TopLevel {
 		return
 	}
@@ -65,22 +65,22 @@ func (b *Basic) matches(rule *bonsai.Rule, node *bonsai.Node) (matches bool, mat
 	return
 }
 
-func (b *Basic) matchesInOrder(rule *bonsai.Rule, node *bonsai.Node, condition_i int, child_i int) (matches bool, matchedConditions map[*bonsai.Condition]*bonsai.Node) {
+func (b *Basic) matchesInOrder(rule *bonsai.Rule, node *bonsai.Node, condition_i int, child_i int) (matches bool, matchedConditions map[*bonsai.Node][]chan *bonsai.Condition) {
 	if condition_i == len(rule.Conditions) {
 		matches = !rule.MustMatchAllNodes || child_i == len(node.Children)
 		if matches {
-			matchedConditions = make(map[*bonsai.Condition]*bonsai.Node)
+			matchedConditions = make(map[*bonsai.Node][]chan *bonsai.Condition)
 		}
 		return
 	}
 
-	condition := rule.Conditions[condition_i]
+	condition := &rule.Conditions[condition_i]
 
 	if child_i == len(node.Children) {
 		if condition.PreventsMatch || condition.CreatesNode || condition.MatchesMultipleNodes {
 			matches, matchedConditions = b.matchesInOrder(rule, node, condition_i + 1, child_i)
 			if matches && condition.CreatesNode {
-				matchedConditions[&condition] = nil // TODO: find a way to insert node that will not have a next sibling
+				b.storeMatchedCondition(&matchedConditions, node, child_i, condition, rule)
 			}
 		}
 		return
@@ -112,7 +112,7 @@ func (b *Basic) matchesInOrder(rule *bonsai.Rule, node *bonsai.Node, condition_i
 	if condition.CreatesNode {
 		matches, matchedConditions = b.matchesInOrder(rule, node, condition_i + 1, child_i)
 		if matches {
-			matchedConditions[&condition] = child // TODO: find a way to report this such that inserting is effcient
+			b.storeMatchedCondition(&matchedConditions, node, child_i, condition, rule)
 		}
 		return
 	}
@@ -131,7 +131,7 @@ func (b *Basic) matchesInOrder(rule *bonsai.Rule, node *bonsai.Node, condition_i
 			if matches {
 				b.merge(&matchedConditions, &childMatchedConditions)
 				if condition.RemovesNode {
-					matchedConditions[&condition] = child
+					b.storeMatchedCondition(&matchedConditions, node, child_i, condition, rule)
 				}
 				return
 			}
@@ -141,7 +141,7 @@ func (b *Basic) matchesInOrder(rule *bonsai.Rule, node *bonsai.Node, condition_i
 		if matches {
 			b.merge(&matchedConditions, &childMatchedConditions)
 			if condition.RemovesNode {
-				matchedConditions[&condition] = child
+				b.storeMatchedCondition(&matchedConditions, node, child_i, condition, rule)
 			}
 		}
 		return
@@ -153,12 +153,22 @@ func (b *Basic) matchesInOrder(rule *bonsai.Rule, node *bonsai.Node, condition_i
 	return
 }
 
-func (b *Basic) transform(rule *bonsai.Rule, matchedConditions map[*bonsai.Condition]*bonsai.Node) (children []*bonsai.Node) {
+func (b *Basic) transform(rule *bonsai.Rule, matchedConditions map[*bonsai.Node][]chan *bonsai.Condition) (children []*bonsai.Node) {
 	return
 }
 
-func (b *Basic) merge(destination *map[*bonsai.Condition]*bonsai.Node, source *map[*bonsai.Condition]*bonsai.Node) {
-	for condition, node := range *source {
-		(*destination)[condition] = node
+func (b *Basic) storeMatchedCondition(matchedConditions *map[*bonsai.Node][]chan *bonsai.Condition, parent *bonsai.Node, child_i int, condition *bonsai.Condition, rule *bonsai.Rule) {
+	if (*matchedConditions)[parent] == nil {
+		(*matchedConditions)[parent] = make([]chan *bonsai.Condition, len(parent.Children) + 1)
+	}
+	if (*matchedConditions)[parent][child_i] == nil {
+		(*matchedConditions)[parent][child_i] = make(chan *bonsai.Condition, len(rule.Conditions))
+	}
+	(*matchedConditions)[parent][child_i] <- condition
+}
+
+func (b *Basic) merge(destination *map[*bonsai.Node][]chan *bonsai.Condition, source *map[*bonsai.Node][]chan *bonsai.Condition) {
+	for node, chans := range *source {
+		(*destination)[node] = chans
 	}
 }
