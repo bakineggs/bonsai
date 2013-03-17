@@ -85,7 +85,14 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 }
 
 func (b *Basic) matchesNode(condition *bonsai.Condition, node *bonsai.Node) (matches bool, matchedConditions map[*bonsai.Node][]chan *bonsai.Condition) {
-	if condition.NodeType == node.Label {
+	// TODO: document that ** means to matched either ordered conditions or unordered conditions
+	//				- can not have child conditions
+	//				- can not require matching all nodes
+	//				- useful for **:* to match any number of any kind of node
+	//				- allows *: and *:: to be used for matching only ordered or only unordered
+	if condition.NodeType == "**" {
+		matches, matchedConditions = true, make(map[*bonsai.Node][]chan *bonsai.Condition)
+	} else if condition.NodeType == node.Label || condition.NodeType == "*" {
 		matches, matchedConditions = b.matchesChildren(&condition.ChildRule, node)
 	}
 	return
