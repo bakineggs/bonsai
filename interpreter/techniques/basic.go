@@ -167,18 +167,18 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 				for _, condition := range multiplyMatchedConditions {
 					go func() {
 						if childMatches, childMatchedConditions := b.matchesNode(condition, child) ; childMatches {
+							if condition.RemovesNode || condition.Variable != "" {
+								b.storeMatchedCondition(&childMatchedConditions, node, index, condition, rule)
+							}
 							multiplyMatchedNodeChildConditions <- childMatchedConditions
 						} else {
 							conditionsDone <- empty{}
 						}
 					}()
 				}
-				for _, condition := range multiplyMatchedConditions {
+				for _ = range multiplyMatchedConditions {
 					select {
 					case childMatchedConditions := <-multiplyMatchedNodeChildConditions:
-						if condition.RemovesNode || condition.Variable != "" {
-							b.storeMatchedCondition(&childMatchedConditions, node, index, condition, rule)
-						}
 						b.merge(&matchedConditions, &childMatchedConditions)
 						break
 					case <-conditionsDone:
