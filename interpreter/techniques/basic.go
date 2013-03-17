@@ -119,7 +119,21 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 		}
 	}
 
-	pairings := b.findPairings(singlyMatchedConditions, singlyMatchedNodes)
+	singlyMatchedConditionLists := make(map[*bonsai.Node][]*bonsai.Condition)
+	for matchedNode, conditionChan := range singlyMatchedConditions {
+		select {
+		case condition := <-conditionChan:
+			conditionChan <- condition
+
+			singlyMatchedConditionLists[matchedNode] = make([]*bonsai.Condition, 0, len(rule.Conditions))
+			for condition = range conditionChan {
+				singlyMatchedConditionLists[matchedNode][len(singlyMatchedConditionLists[matchedNode])] = condition
+			}
+		default:
+		}
+	}
+
+	pairings := b.findPairings(singlyMatchedConditionLists, make(map[*bonsai.Condition]bool))
 	if pairings == nil {
 		return
 	}
@@ -171,8 +185,31 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 	return
 }
 
-func (b *Basic) findPairings(matchedConditions map[*bonsai.Node]chan *bonsai.Condition, matchedNodes map[*bonsai.Condition]chan *bonsai.Node) (pairings map[*bonsai.Node]*bonsai.Condition) {
-	// TODO: find a pairing of conditions with nodes
+func (b *Basic) findPairings(matchedConditions map[*bonsai.Node][]*bonsai.Condition, ignored map[*bonsai.Condition]bool) (pairings map[*bonsai.Node]*bonsai.Condition) {
+	pairings = make(map[*bonsai.Node]*bonsai.Condition)
+	for node, conditions := range matchedConditions {
+		matched := make([]*bonsai.Condition, len(conditions))
+		for _, condition := range conditions {
+			if !ignored[condition] {
+				matched[len(matched)] = condition
+			}
+		}
+
+		if len(matched) > 1 {
+			delete(matchedConditions, node)
+			for _, condition := range matched {
+				ignored[condition] = true
+				if pairings = b.findPairings(matchedConditions, ignored) ; pairings != nil {
+					pairings[node] = condition
+					return
+				}
+				ignored[condition] = false
+			}
+			return
+		} else if len(matched) == 1 {
+			pairings[node] = matched[0]
+		}
+	}
 	return
 }
 
