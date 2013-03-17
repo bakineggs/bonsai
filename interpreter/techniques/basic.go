@@ -24,7 +24,7 @@ func (b *Basic) Transform(node *bonsai.Node, matched *map[*bonsai.Rule]bool, mis
 				notTransformed <- empty{}
 			} else {
 				matches, matchedConditions := b.matchesChildren(rule, node)
-				if matches {
+				if matches && b.matchesVariables(matchedConditions) {
 					(*matched)[rule] = true
 					transformation := b.transform(rule, matchedConditions)
 					if transformation != nil {
@@ -62,6 +62,8 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 		return
 	}
 
+	matchedConditions = make(map[*bonsai.Node][]chan *bonsai.Condition)
+
 	preventedCount := 0
 	prevented := make(chan bool)
 
@@ -76,11 +78,22 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 
 	multiplyMatchedConditions := make([]*bonsai.Condition, 0, len(rule.Conditions))
 
+	for index := range node.Children {
+		b.initMatchedCondition(&matchedConditions, node, index, rule)
+	}
+
 	for _, condition := range rule.Conditions {
 		if condition.PreventsMatch {
-			for _, child := range node.Children {
+			for index, child := range node.Children {
 				go func() {
-					preventing, _ := b.matchesNode(&condition, child)
+					preventing, childMatchedConditions := b.matchesNode(&condition, child)
+					if preventing {
+						b.merge(&matchedConditions, &childMatchedConditions)
+						if condition.Variable != "" {
+							b.storeMatchedCondition(&matchedConditions, node, index, &condition, rule)
+							preventing = false
+						}
+					}
 					prevented <- preventing
 				}()
 				preventedCount++
@@ -115,6 +128,7 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 	}
 	for i := 0; i < preventedCount; i++ {
 		if <-prevented {
+			matchedConditions = nil
 			return
 		}
 	}
@@ -135,16 +149,15 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 
 	pairings := b.findPairings(singlyMatchedConditionLists, make(map[*bonsai.Condition]bool))
 	if pairings == nil {
+		matchedConditions = nil
 		return
 	}
-
-	matchedConditions = make(map[*bonsai.Node][]chan *bonsai.Condition)
 
 	childrenDone := make(chan empty, len(node.Children))
 	for index, child := range node.Children {
 		go func() {
 			if pairings[child] != nil {
-				if pairings[child].RemovesNode {
+				if pairings[child].RemovesNode || pairings[child].Variable != "" {
 					b.storeMatchedCondition(&matchedConditions, node, index, pairings[child], rule)
 				}
 				b.merge(&matchedConditions, singlyMatchedNodeChildConditions[child][pairings[child]])
@@ -163,7 +176,7 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 				for _, condition := range multiplyMatchedConditions {
 					select {
 					case childMatchedConditions := <-multiplyMatchedNodeChildConditions:
-						if condition.RemovesNode {
+						if condition.RemovesNode || condition.Variable != "" {
 							b.storeMatchedCondition(&childMatchedConditions, node, index, condition, rule)
 						}
 						b.merge(&matchedConditions, &childMatchedConditions)
@@ -224,6 +237,9 @@ func (b *Basic) matchesNode(condition *bonsai.Condition, node *bonsai.Node) (mat
 	} else if condition.NodeType == node.Label || condition.NodeType == "*" {
 		matches, matchedConditions = b.matchesChildren(&condition.ChildRule, node)
 	}
+
+	// TODO: compare values
+
 	return
 }
 
@@ -304,17 +320,27 @@ func (b *Basic) matchesChildrenInOrder(rule *bonsai.Rule, node *bonsai.Node, con
 	return
 }
 
-func (b *Basic) transform(rule *bonsai.Rule, matchedConditions map[*bonsai.Node][]chan *bonsai.Condition) (children []*bonsai.Node) {
+func (b *Basic) matchesVariables(matchedConditions map[*bonsai.Node][]chan *bonsai.Condition) (matches bool) {
+	// TODO: make sure variables match
 	return
 }
 
-func (b *Basic) storeMatchedCondition(matchedConditions *map[*bonsai.Node][]chan *bonsai.Condition, parent *bonsai.Node, child_i int, condition *bonsai.Condition, rule *bonsai.Rule) {
+func (b *Basic) transform(rule *bonsai.Rule, matchedConditions map[*bonsai.Node][]chan *bonsai.Condition) (children []*bonsai.Node) {
+	// TODO: transform node based on matched conditions
+	return
+}
+
+func (b *Basic) initMatchedCondition(matchedConditions *map[*bonsai.Node][]chan *bonsai.Condition, parent *bonsai.Node, child_i int, rule *bonsai.Rule) {
 	if (*matchedConditions)[parent] == nil {
 		(*matchedConditions)[parent] = make([]chan *bonsai.Condition, len(parent.Children) + 1)
 	}
 	if (*matchedConditions)[parent][child_i] == nil {
 		(*matchedConditions)[parent][child_i] = make(chan *bonsai.Condition, len(rule.Conditions))
 	}
+}
+
+func (b *Basic) storeMatchedCondition(matchedConditions *map[*bonsai.Node][]chan *bonsai.Condition, parent *bonsai.Node, child_i int, condition *bonsai.Condition, rule *bonsai.Rule) {
+	b.initMatchedCondition(matchedConditions, parent, child_i, rule)
 	(*matchedConditions)[parent][child_i] <- condition
 }
 
