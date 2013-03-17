@@ -62,8 +62,20 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 		return
 	}
 
-	count := 0
+	preventedCount := 0
 	prevented := make(chan bool)
+
+	singlyMatchedConditions := make(map[*bonsai.Node]chan *bonsai.Condition)
+	singlyMatchedNodes := make(map[*bonsai.Condition]chan *bonsai.Node)
+	singlyMatchedNodeChildConditions := make(map[*bonsai.Node]map[*bonsai.Condition]*map[*bonsai.Node][]chan *bonsai.Condition)
+
+	for _, child := range node.Children {
+		singlyMatchedConditions[child] = make(chan *bonsai.Condition, len(rule.Conditions))
+		singlyMatchedNodeChildConditions[child] = make(map[*bonsai.Condition]*map[*bonsai.Node][]chan *bonsai.Condition)
+	}
+
+	multiplyMatchedConditions := make([]*bonsai.Condition, 0, len(rule.Conditions))
+
 	for _, condition := range rule.Conditions {
 		if condition.PreventsMatch {
 			for _, child := range node.Children {
@@ -71,16 +83,96 @@ func (b *Basic) matchesChildren(rule *bonsai.Rule, node *bonsai.Node) (matches b
 					preventing, _ := b.matchesNode(&condition, child)
 					prevented <- preventing
 				}()
-				count++
+				preventedCount++
 			}
+		} else if !condition.CreatesNode && !condition.MatchesMultipleNodes {
+			singlyMatchedNodes[&condition] = make(chan *bonsai.Node, len(node.Children))
+			preventedCount++
+			go func() {
+				childrenDone := make(chan empty)
+				for _, child := range node.Children {
+					go func() {
+						if matchesNode, childMatchedConditions := b.matchesNode(&condition, child) ; matchesNode {
+							singlyMatchedNodeChildConditions[child][&condition] = &childMatchedConditions;
+							singlyMatchedConditions[child] <- &condition
+							singlyMatchedNodes[&condition] <- node
+						}
+						childrenDone <- empty{}
+					}()
+				}
+				for _ = range node.Children { <-childrenDone }
+				select {
+				case matched := <-singlyMatchedNodes[&condition]:
+					singlyMatchedNodes[&condition] <- matched
+					prevented <- false
+				default:
+					prevented <- true
+				}
+			}()
+		} else if condition.MatchesMultipleNodes {
+			multiplyMatchedConditions[len(multiplyMatchedConditions)] = &condition
 		}
 	}
-	for i := 0; i < count; i++ {
+	for i := 0; i < preventedCount; i++ {
 		if <-prevented {
 			return
 		}
 	}
 
+	pairings := b.findPairings(singlyMatchedConditions, singlyMatchedNodes)
+	if pairings == nil {
+		return
+	}
+
+	matchedConditions = make(map[*bonsai.Node][]chan *bonsai.Condition)
+
+	childrenDone := make(chan empty, len(node.Children))
+	for index, child := range node.Children {
+		go func() {
+			if pairings[child] != nil {
+				if pairings[child].RemovesNode {
+					b.storeMatchedCondition(&matchedConditions, node, index, pairings[child], rule)
+				}
+				b.merge(&matchedConditions, singlyMatchedNodeChildConditions[child][pairings[child]])
+			} else {
+				multiplyMatchedNodeChildConditions := make(chan map[*bonsai.Node][]chan *bonsai.Condition, len(multiplyMatchedConditions))
+				conditionsDone := make(chan empty, len(multiplyMatchedConditions))
+				for _, condition := range multiplyMatchedConditions {
+					go func() {
+						if childMatches, childMatchedConditions := b.matchesNode(condition, child) ; childMatches {
+							multiplyMatchedNodeChildConditions <- childMatchedConditions
+						} else {
+							conditionsDone <- empty{}
+						}
+					}()
+				}
+				for _, condition := range multiplyMatchedConditions {
+					select {
+					case childMatchedConditions := <-multiplyMatchedNodeChildConditions:
+						if condition.RemovesNode {
+							b.storeMatchedCondition(&childMatchedConditions, node, index, condition, rule)
+						}
+						b.merge(&matchedConditions, &childMatchedConditions)
+						break
+					case <-conditionsDone:
+					}
+				}
+			}
+			childrenDone <- empty{}
+		}()
+	}
+	for _ = range node.Children {
+		<-childrenDone
+	}
+
+	// TODO: include creating conditions
+	// TODO: don't match if rule.MustMatchAllNodes and we don't match all nodes
+
+	return
+}
+
+func (b *Basic) findPairings(matchedConditions map[*bonsai.Node]chan *bonsai.Condition, matchedNodes map[*bonsai.Condition]chan *bonsai.Node) (pairings map[*bonsai.Node]*bonsai.Condition) {
+	// TODO: find a pairing of conditions with nodes
 	return
 }
 
