@@ -1,6 +1,6 @@
 require 'spec'
-require File.dirname(__FILE__) + '/../../compiler/rule'
-require File.dirname(__FILE__) + '/../../compiler/parser'
+require File.dirname(__FILE__) + '/../rule'
+require File.dirname(__FILE__) + '/../parser'
 
 describe Rule do
   let(:top_level_rule) { Parser.new.parse_program("Foo:\nBar::")[:rules].first }

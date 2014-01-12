@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/rule'
+require File.dirname(__FILE__) + '/condition'
 
 class Parser
   class Line < String

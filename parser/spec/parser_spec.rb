@@ -1,5 +1,5 @@
 require 'spec'
-require File.dirname(__FILE__) + '/../../compiler/parser'
+require File.dirname(__FILE__) + '/../parser'
 
 describe Parser do
   def parse type, body, depth = 0

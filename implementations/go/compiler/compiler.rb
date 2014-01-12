@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/parser'
+require File.dirname(__FILE__) + '/../../../parser/parser'
 
 class Compiler
   def compile program

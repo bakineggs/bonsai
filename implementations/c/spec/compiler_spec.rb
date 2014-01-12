@@ -1,8 +1,8 @@
 require 'tempfile'
-require File.dirname(__FILE__) + '/../language_spec'
-require File.dirname(__FILE__) + '/../../compiler/compiler'
+require File.dirname(__FILE__) + '/../../../spec/language_spec'
+require File.dirname(__FILE__) + '/../compiler/compiler'
 
-describe Compiler do
+describe 'the C implementation' do
   def run_program options
     options.each do |_, value|
       depth = value.match(/^ */)[0].length

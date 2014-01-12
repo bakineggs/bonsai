@@ -1,5 +1,3 @@
-require File.dirname(__FILE__) + '/rule'
-
 class Condition
   attr_reader :node_type, :child_rule, :value, :variable
 
