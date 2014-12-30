@@ -1,0 +1,182 @@
+a matching is a triple of:
+  - list of nodes to remove
+  - list of triples of (creating condition, parent node, index for insertion)
+  - restriction
+
+combine_matchings(matching1, matching2):
+  return (matching1's removals + matching2's removals, matching1's creations + matching2's creations, [AND, matching1's restrictions, matching2's restrictions])
+
+restrtiction :=
+  TRUE |
+  FALSE |
+  [EQ, var, node] |
+  [NEQ, var, node] |
+  [NOT, restriction] |
+  [AND, restriction, restriction] |
+  [OR, restriction, restriction]
+
+simplify_restriction(restriction):
+  if restriction is a TRUE or FALSE or EQ or NEQ:
+    return restriction
+  if restriction is an AND with inner_restriction1 and inner_restriction2:
+    return [AND, simplify_restriction(inner_restriction1), simplify_restriction(inner_restriction2)]
+  if restriction is an OR with inner_restriction1 and inner_restriction2:
+    return [OR, simplify_restriction(inner_restriction1), simplify_restriction(inner_restriction2)]
+  if restriction is a NOT with inner_restriction:
+    if inner_restriction is a TRUE:
+      return FALSE
+    if inner_restriction is a FALSE:
+      return TRUE
+    if inner_restriction is an EQ with var and node:
+      return [NEQ, var, node]
+    if inner_restriction is an NEQ with var and node:
+      return [EQ, var, node]
+    if inner_restriction is a NOT with inner_restriction2:
+      return simplify_restriction(inner_restriction2)
+    if inner_restriction is an AND with inner_restriction2 and inner_restriction3:
+      return [OR, simplify_restriction([NOT, inner_restriction2]), simplify_restriction([NOT, inner_restriction3])]
+    if inner_restriction is an OR with inner_restriction2 and inner_restriction3:
+      return [AND, simplify_restriction([NOT, inner_restriction2]), simplify_restriction([NOT, inner_restriction3])]
+
+restriction_holds(restriction):
+  restriction = simplify_restriction(restriction)
+  // TODO
+
+matches(rule, node): // returns a list of matchings
+  if node has a value:
+    if rule has ordered conditions:
+      return []
+    if rule has unordered conditions:
+      if rule has 0 conditions:
+        return [([], {}, TRUE)]
+      if rule has 1 or more conditions:
+        return []
+  if rule has ordered conditions and node has unordered children:
+    return []
+  if rule has unordered conditions and node has ordered children:
+    return []
+  if rule has ordered conditions and node has ordered children:
+    matchings = matches_ordered(rule, node)
+  if rule has unordered conditions and node has unordered children:
+    matchings = matches_unordered(rule, node)
+  for each matching in matchings: // TODO: should this be done as a new matching is created?
+    if the matching's restriction is not met:
+      remove matching from matchings
+  return matchings
+
+matches_ordered(rule, node):
+  if rule must match all nodes:
+    return matches_ordered(rule, 0, node, 0, ([], [], TRUE))
+  if rule does not need to match all nodes:
+    matchings = []
+    for each child_index of node's children:
+      matchings += matches_ordered(rule, 0, node, child_index, ([], [], TRUE))
+    return matchings
+
+matches_ordered(rule, condition_index, node, child_index, partial_matching):
+  if condition_index is 1 past the end of the list and child_index is 1 past the end of the list:
+    return [partial_matching]
+  if condition_index is 1 past the end of the list and child_index is not 1 past the end of the list:
+    if rule must match all nodes:
+      return []
+    if rule does not need to match all nodes:
+      return [partial_matching]
+
+  matchings = []
+
+  if rule's condition at condition_index matches multiple nodes:
+    matchings += matches_ordered(rule, condition_index + 1, node, child_index, partial_matching)
+
+  if child_index is 1 past the end of the list:
+    return matchings
+
+  if rule's condition at condition_index is a matching condition:
+    if the condition matches node's child at child_index:
+      if the condition is a removing condition:
+        removing_matching = ([node's child at child_index], [], TRUE)
+      if the condition is not a removing condition:
+        removing_matching = ([], [], TRUE)
+      if the condition has an associated variable:
+        restricted_matching = ([], [], [EQ, condition's variable, node's child at child_index])
+      if the condition does not have an associated variable:
+        restricted_matching = ([], [], TRUE)
+      if the condition has a child rule:
+        for each child_mathing in the child rule's matchings:
+          matchings += matches_ordered(rule, condition_index + 1, node, child_index + 1, partial_matching + removing_matching + restricted_matching + child_matching)
+          if the condition matches multiple nodes:
+            matchings += matches_ordered(rule, condition_index, node, child_index + 1, partial_matching + removing_matching + restricted_matching + child_matching)
+      if the condition does not have a child rule:
+        matchings += matches_ordered(rule, condition_index + 1, node, child_index + 1, partial_matching + removing_matching + restricted_matching)
+        if the condition matches multiple nodes:
+          matchings += matches_ordered(rule, condition_index, node, child_index + 1, partial_matching + removing_matching + restricted_matching)
+
+  if rule's condition at condition_index is a preventing condition:
+    if the condition matches node's child at child_index:
+      if the condition has a child rule:
+        for each child_mathing in the child rule's matchings:
+          if the condition has an associated variable:
+            restricted_matching = ([], [], [OR, [NEQ, condition's variable, node's child at child_index], [NOT, child_matching's restriction]])
+          if the condition does not have an associated variable:
+            restricted_matching = ([], [], [NOT, child_matching's restriction])
+          matchings += matches_ordered(rule, condition_index + 1, node, child_index + 1, partial_matching + restricted_matching)
+          if the condition matches multiple nodes:
+            matchings += matches_ordered(rule, condition_index, node, child_index + 1, partial_matching + restricted_matching)
+    if the condition does not match node's child at child_index:
+      matchings += matches_ordered(rule, condition_index + 1, node, child_index + 1, partial_matching)
+
+  if rule's condition at condition_index is a creating condition:
+    matchings += matches_ordered(rule, condition_index + 1, node, child_index, partial_matching + ([], [(rule's condition at condition_index, node, child_index)], TRUE))
+
+  return matchings
+
+matches_unordered(rule, node):
+  return matches_unordered(rule's conditions, node's children, rule must match all, ([], [], TRUE))
+
+matches_unordered(conditions, children, must_match_all, partial_matching):
+  if conditions and children are both empty:
+    return [partial_matching]
+  if conditions is empty and children is not empty:
+    if must_match_all:
+      return []
+    if not must_match_all:
+      return [partial_matching]
+
+  matchings = []
+  pick a condition from conditions
+  if the condition matches multiple nodes:
+    matchings += matches_unordered(conditions - [condition], children, must_match_all, partial_matching)
+
+  if the condition is a matching condition:
+    for each child in children:
+      if the condition matches the child:
+        if the condition is a removing condition:
+          removing_matching = ([child], [], TRUE)
+        if the condition is not a removing condition:
+          removing_matching = ([], [], TRUE)
+        if the condition has an associated variable:
+          restricted_matching = ([], [], [EQ, condition's variable, child])
+        if the condition does not have an associated variable:
+          restricted_matching = ([], [], TRUE)
+        if the condition has a child rule:
+          for each child_mathing in the child rule's matchings:
+            matchings += matches_unordered(conditions - [condition], children - [child], must_match_all, partial_matching + removing_matching + restricted_matching + child_matching)
+            if the condition matches multiple nodes:
+              matchings += matches_unordered(conditions, children - [child], must_match_all, partial_matching + removing_matching + restricted_matching + child_matching)
+        if the condition does not have a child rule:
+          matchings += matches_unordered(conditions - [condition], children - [child], must_match_all, partial_matching + removing_matching + restricted_matching)
+          if the condition matches multiple nodes:
+            matchings += matches_unordered(conditions, children - [child], must_match_all, partial_matching + removing_matching + restricted_matching)
+
+  if the condition is a preventing condition:
+    if the condition matches matching_children in children:
+      // TODO
+    if the condition does not match any of children:
+      matchings += matches_unordered(conditions - [condition], children, must_match_all, partial_matching)
+
+  if the condition is a creating condition:
+    matchings += matches_unordered(conditions - [condition], children, must_match_all, partial_matching + ([], [(condition, node's parent, 0)], TRUE))
+
+  return matchings
+
+transform(node, matching):
+  // TODO
