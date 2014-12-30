@@ -23,7 +23,8 @@ class Parser
   def parse_program program
     lines = []
     program.split("\n").each_with_index do |line, i|
-      line.sub!(/ *#.*/, '')
+      next if line =~ /^ *#.*$/
+      line.sub!(/ *#.*$/, '')
       lines.push Line.new line, i + 1
     end
 
@@ -33,23 +34,17 @@ class Parser
       if line != ''
         definition.push line
       elsif !definition.empty?
-        rules.push parse_rule definition, 0, :top_level => true
+        rules.push parse_rule definition
         definition = []
       end
     end
-    rules.push parse_rule definition, 0, :top_level => true unless definition.empty?
+    rules.push parse_rule definition unless definition.empty?
 
     rules
   end
 
   def parse_rule definition, depth = 0, options = {}
     options[:definition] = definition.clone
-
-    if options[:top_level]
-      code_lines = []
-      code_lines.unshift definition.pop while definition.last && definition.last.match(/^< /)
-      options[:code_segment] = code_lines.map{|line| line.sub /^< /, ''}.join("\n")
-    end
 
     if !definition.empty? && definition.first.match(/^#{'  ' * depth}  /)
       if depth == 0
@@ -67,7 +62,8 @@ class Parser
   def parse_conditions lines, depth = 0
     return [] if lines.empty?
 
-    conditions = [lines.shift]
+    conditions = []
+    condition_line = lines.shift
     child_lines = []
 
     lines.each do |line|
@@ -78,11 +74,11 @@ class Parser
         raise Error.new 'Conditions can not be in between levels', line
       end
 
-      conditions.push parse_condition(conditions.pop, depth, child_lines)
-      conditions.push line
+      conditions.push parse_condition(condition_line, depth, child_lines)
+      condition_line = line
       child_lines = []
     end
-    conditions.push parse_condition(conditions.pop, depth, child_lines)
+    conditions.push parse_condition(condition_line, depth, child_lines)
 
     conditions
   end
@@ -106,7 +102,7 @@ class Parser
       :creates_node => match[1] == '+',
       :removes_node => match[1] == '-',
       :prevents_match => match[1] == '!',
-      :node_type => match[2],
+      :label => match[2],
       :matches_multiple_nodes => match[5] == '*',
       :value => value,
       :variable => variable,

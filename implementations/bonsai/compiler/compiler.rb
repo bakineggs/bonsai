@@ -4,7 +4,7 @@ class Compiler
   def compile program
     compiled = File.read File.dirname(__FILE__) + '/../rules.bonsai'
 
-    compiled += "\n^:\n  !Tree:\n  +Tree:\n  +Rules:\n"
+    compiled += "\n^:\n  !Rules:\n  +Rules:\n"
     Parser.new.parse_program(program).each do |rule|
       compiled += compile_rule rule, 2
     end
@@ -37,7 +37,7 @@ class Compiler
       compiled += '  ' * (depth + 1) + "CreatesNode:\n" if condition.creates_node?
       compiled += '  ' * (depth + 1) + "RemovesNode:\n" if condition.removes_node?
 
-      compiled += '  ' * (depth + 1) + "NodeType: #{escaped_string condition.node_type}\n"
+      compiled += '  ' * (depth + 1) + "Label: #{escaped_string condition.label}\n"
 
       compiled += '  ' * (depth + 1) + "MatchesMultipleNodes:\n" if condition.matches_multiple_nodes?
 
