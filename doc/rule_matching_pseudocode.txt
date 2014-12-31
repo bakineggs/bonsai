@@ -48,7 +48,10 @@ matches(rule, node): // returns a list of matchings
       return []
     if rule has unordered conditions:
       if rule has 0 conditions:
-        return [([], {}, TRUE)]
+        if rule must match all nodes:
+          return []
+        if rule does not need to match all node:
+          return [([], {}, TRUE)]
       if rule has 1 or more conditions:
         return []
   if rule has ordered conditions and node has unordered children:
