@@ -78,3 +78,33 @@ Tree:
     Node: N
       ReadyToBeChecked:
       Children:
+
+# A rule matches a node if it has a matching that matches
+Rule:
+  !Matches: N
+  +Matches: N
+  Matching:
+    Matches:
+    Node: N
+
+# A rule does not match a node if all of its matchings are expanded and failed to match
+Rule:
+  !DoesNotMatch: N
+  +DoesNotMatch: N
+  Matching:
+    Failed:
+    Expanded:
+    Node: N
+  !Matching:
+    Node: N
+    !Failed:
+  !Matching:
+    Node: N
+    !Expanded:
+
+# A matching fails to match a node if the restriction is not met
+Rule:
+  Matching:
+    !Failed:
+    +Failed:
+    RestrictionNotMet:
