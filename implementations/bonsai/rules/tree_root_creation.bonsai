@@ -1,0 +1,8 @@
+# We start by creating a node to store the tree to which we'll be applying rules
+^:
+  !Tree:
+  +Tree:
+    Node:
+      Label: "^"
+      Children:
+      ReadyToBeChecked:

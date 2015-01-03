@@ -1,0 +1,80 @@
+# A rule with ordered conditions does not match a node with a value
+Rules:
+  ...
+    Rule:
+      !DoesNotMatch: N
+      +DoesNotMatch: N
+      Conditions::
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      Value:
+
+# A rule with 1 or more unordered conditions does not match a node with a value
+Rules:
+  ...
+    Rule:
+      !DoesNotMatch: N
+      +DoesNotMatch: N
+      Conditions:
+        Condition:
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      Value:
+
+# A rule with 0 unordered conditions that must match all nodes does not match a node with a value
+Rules:
+  ...
+    Rule:
+      !DoesNotMatch: N
+      +DoesNotMatch: N
+      MustMatchAll:
+      Conditions:=
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      Value:
+
+# A rule with 0 unordered conditions that does not need to match all nodes matches a node with a value
+Rules:
+  ...
+    Rule:
+      !Matches: N
+      +Matches: N
+      !MustMatchAll:
+      Conditions:=
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      Value:
+
+# A rule with unordered conditions does not match a node with ordered children
+Rules:
+  ...
+    Rule:
+      !DoesNotMatch: N
+      +DoesNotMatch: N
+      Conditions:
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      Children::
+
+# A rule with ordered conditions does not match a node with unordered children
+Rules:
+  ...
+    Rule:
+      !DoesNotMatch: N
+      +DoesNotMatch: N
+      Conditions::
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      Children:

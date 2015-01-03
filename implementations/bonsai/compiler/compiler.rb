@@ -2,7 +2,11 @@ require File.dirname(__FILE__) + '/../../../parser/parser'
 
 class Compiler
   def compile program
-    compiled = File.read File.dirname(__FILE__) + '/../rules.bonsai'
+    compiled = File.read File.dirname(__FILE__) + '/../rules/tree_root_creation.bonsai'
+    compiled += File.read File.dirname(__FILE__) + '/../rules/check_state_transitions.bonsai'
+    compiled += File.read File.dirname(__FILE__) + '/../rules/node_transformation.bonsai'
+    compiled += File.read File.dirname(__FILE__) + '/../rules/condition_matching.bonsai'
+    compiled += File.read File.dirname(__FILE__) + '/../rules/rule_matching.bonsai'
 
     compiled += "\n^:\n  !Rules:\n  +Rules:\n"
     Parser.new.parse_program(program).each do |rule|

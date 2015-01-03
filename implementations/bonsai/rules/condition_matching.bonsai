@@ -1,0 +1,61 @@
+# A condition does not match a node if the condition's label does not match the node's label
+Rules:
+  ...
+    Condition:
+      !CreatesNode:
+      !DoesNotMatch: N
+      +DoesNotMatch: N
+      Label: L
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      !Label: L
+
+# A condition does not match a node if the condition's value does not match the node's value
+Rules:
+  ...
+    Condition:
+      !CreatesNode:
+      !DoesNotMatch: N
+      +DoesNotMatch: N
+      Value: V
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      !Value: V
+
+# A condition does not match a node if the condition's child rule does not match the node
+Condition:
+  !CreatesNode:
+  !DoesNotMatch: N
+  +DoesNotMatch: N
+  Rule:
+    DoesNotMatch: N
+
+# A condition matches a node if the condition's label and value match the node's label and value
+Rules:
+  ...
+    Condition:
+      !CreatesNode:
+      !Matches: N
+      +Matches: N
+      Label: L
+      Value: V
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      Label: L
+      Value: V
+
+# A condition matches a node if the condition's label and child rule match the node's label and the node itself
+Condition:
+  !CreatesNode:
+  !Matches: N
+  +Matches: N
+  Label: L
+  Rule:
+    Matches: N
+      Label: L

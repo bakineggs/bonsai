@@ -1,0 +1,10 @@
+# A node can be transformed if there is a rule that can transform it
+Tree:
+  ...
+    -Node: N
+    +Node: T
+Rules:
+  Rule:
+    Transformation:
+      From: N
+      To: T
