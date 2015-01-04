@@ -1,4 +1,4 @@
-# A condition does not match a node if the condition's label does not match the node's label
+# A condition does not match a node if the condition's label is not * and does not match the node's label
 Rules:
   ...
     Condition:
@@ -11,6 +11,7 @@ Tree:
     Node: N
       ReadyToBeChecked:
       !Label: L
+!WildcardLabel: L
 
 # A condition does not match a node if the condition's value does not match the node's value
 Rules:
@@ -50,6 +51,21 @@ Tree:
       Label: L
       Value: V
 
+# A condition matches a node if the condition's label is * and the condition's value matches the node's value
+Rules:
+  ...
+    Condition:
+      !Matches: N
+      +Matches: N
+      Label: L
+      Value: V
+Tree:
+  ...
+    Node: N
+      ReadyToBeChecked:
+      Value: V
+WildcardLabel: L
+
 # A condition matches a node if the condition's label and child rule match the node's label and the node itself
 Condition:
   !CreatesNode:
@@ -59,3 +75,14 @@ Condition:
   Rule:
     Matches: N
       Label: L
+
+# A condition matches a node if the condition's label is * and the condition's child rule natches the node
+Rules:
+  ...
+    Condition:
+      !Matches: N
+      +Matches: N
+      Label: L
+      Rule:
+        Matches: N
+WildcardLabel: L

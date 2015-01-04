@@ -1,5 +1,11 @@
-# We start by creating a node to store the tree to which we'll be applying rules
+# The wildcard label (*) is used for a condition to match a node with any label
 ^:
+  !WildcardLabel:
+  +WildcardLabel: "*"
+
+# We start with a tree root to which we'll be applying rules
+^:
+  WildcardLabel:
   !Tree:
   +Tree:
     Node:
