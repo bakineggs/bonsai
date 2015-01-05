@@ -9,7 +9,8 @@ Rules:
 Tree:
   ...
     Node: N
-      ReadyToBeChecked:
+      !ReadyToBeChecked:
+      !NeedsToBeChecked:
       !Label: L
 !WildcardLabel: L
 
@@ -24,16 +25,23 @@ Rules:
 Tree:
   ...
     Node: N
-      ReadyToBeChecked:
+      !ReadyToBeChecked:
+      !NeedsToBeChecked:
       !Value: V
 
 # A condition does not match a node if the condition's child rule does not match the node
 Condition:
   !CreatesNode:
-  !DoesNotMatch: N
+  !DoesNotMatchRule: N
+  +DoesNotMatchRule: N
   +DoesNotMatch: N
   Rule:
     DoesNotMatch: N
+
+# Conditions need to mismatch nodes without the ready flag, but the child rules mismatch nodes with the ready flag
+Condition:
+  DoesNotMatch:
+    -ReadyToBeChecked:
 
 # A condition matches a node if the condition's label and value match the node's label and value
 Rules:
@@ -47,7 +55,8 @@ Rules:
 Tree:
   ...
     Node: N
-      ReadyToBeChecked:
+      !ReadyToBeChecked:
+      !NeedsToBeChecked:
       Label: L
       Value: V
 
@@ -62,14 +71,16 @@ Rules:
 Tree:
   ...
     Node: N
-      ReadyToBeChecked:
+      !ReadyToBeChecked:
+      !NeedsToBeChecked:
       Value: V
 WildcardLabel: L
 
 # A condition matches a node if the condition's label and child rule match the node's label and the node itself
 Condition:
   !CreatesNode:
-  !Matches: N
+  !MatchesRule: N
+  +MatchesRule: N
   +Matches: N
   Label: L
   Rule:
@@ -80,9 +91,15 @@ Condition:
 Rules:
   ...
     Condition:
-      !Matches: N
+      !MatchesRule: N
+      +MatchesRule: N
       +Matches: N
       Label: L
       Rule:
         Matches: N
 WildcardLabel: L
+
+# Conditions need to match nodes without the ready flag, but the child rules match nodes with the ready flag
+Condition:
+  Matches:
+    -ReadyToBeChecked:
