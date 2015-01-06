@@ -1,19 +1,34 @@
-# An ordered matching matches if all conditions and children are matched and the restriction is met
+# An ordered matching begins with nothing
 Rules:
   ...
     Rule:
-      Conditions:: Conditions
-      Matching:
-        !Matches:
-        +Matches:
-        Node: Parent
-        ConditionsSeen:: Conditions
-        ChildrenSeen:: Children
-        RestrictionMet:
+      Conditions::
+      !Matching:
+        Node: N
+        ConditionsSeen::=
+      +Matching:
+        Node: N
+        ConditionsSeen::
+        ChildrenSeen::
+        Restriction:
+        Modifications::
 Tree:
   ...
+    Node: N
+      ReadyToBeChecked:
+      Children::
+
+# An ordered matching matches if all conditions and children are matched and the restriction is met
+Rule:
+  Conditions:: Conditions
+  Matching:
+    !Matches:
+    +Matches:
     Node: Parent
       Children:: Children
+    ConditionsSeen:: Conditions
+    ChildrenSeen:: Children
+    RestrictionMet:
 
 # An ordered matching matches if all conditions are matched, the rule does not need to match all nodes, and the restriction is met
 Rule:
@@ -35,40 +50,14 @@ Rule:
     !ConditionsSeen:: C
 
 # An ordered matching fails to match a node if the rule must match all nodes and not all nodes are matched
-Rules:
-  ...
-    Rule:
-      MustMatchAll:
-      Matching:
-        !Failed:
-        +Failed:
-        Node: Parent
-        !ChildrenSeen:: Children
-Tree:
-  ...
+Rule:
+  MustMatchAll:
+  Matching:
+    !Failed:
+    +Failed:
     Node: Parent
       Children:: Children
-
-# An ordered matching begins with nothing
-Rules:
-  ...
-    Rule:
-      Conditions::
-      !Matching:
-        Node: N
-        ConditionsSeen::=
-      +Matching:
-        Node: N
-        ConditionsSeen::
-        ChildrenSeen::
-        Restriction:
-        Modifications::
-Tree:
-  ...
-    Node: N
-      ReadyToBeChecked:
-      Children::
-
+    !ChildrenSeen:: Children
 
 # An ordered matching can continue with a matching condition and the next child node
 
