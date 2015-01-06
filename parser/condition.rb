@@ -7,6 +7,7 @@ class Condition
     @creates_node = options[:creates_node]
     @removes_node = options[:removes_node]
     @prevents_match = options[:prevents_match]
+    @matches_descendants = options[:matches_descendants]
     @matches_multiple_nodes = options[:matches_multiple_nodes]
     @value = options[:value]
     @variable = options[:variable]
@@ -22,6 +23,10 @@ class Condition
 
   def prevents_match?
     !!@prevents_match
+  end
+
+  def matches_descendants?
+    !!@matches_descendants
   end
 
   def matches_multiple_nodes?

@@ -44,6 +44,7 @@ class Compiler
 
       compiled += '  ' * (depth + 1) + "Label: #{escaped_string condition.label}\n"
 
+      compiled += '  ' * (depth + 1) + "MatchesDescendants:\n" if condition.matches_descendants?
       compiled += '  ' * (depth + 1) + "MatchesMultipleNodes:\n" if condition.matches_multiple_nodes?
 
       compiled += '  ' * (depth + 1) + "Variable: #{escaped_string condition.variable}\n" if condition.variable
