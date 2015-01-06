@@ -62,1102 +62,1010 @@ Rule:
 # An ordered matching can continue with a matching condition and the next child node
 
 ### no child rule, no variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          !PreventsMatch:
-          !CreatesNode:
-          !RemovesNode:
-          !Rule:
-          !Variable:
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction: PreviousRestriction
-        Modifications:: PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-          Node: Child
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction: PreviousRestriction
-        Modifications:: PreviousModifications
-Tree:
-  ...
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      !PreventsMatch:
+      !CreatesNode:
+      !RemovesNode:
+      !Rule:
+      !Variable:
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction: PreviousRestriction
+    Modifications:: PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction: PreviousRestriction
+    Modifications:: PreviousModifications
 
 ### no child rule, with variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          !PreventsMatch:
-          !CreatesNode:
-          !RemovesNode:
-          !Rule:
-          Variable: Variable
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications:: PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-          Node: Child
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications:: PreviousModifications
-Tree:
-  ...
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      !PreventsMatch:
+      !CreatesNode:
+      !RemovesNode:
+      !Rule:
+      Variable: Variable
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications:: PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications:: PreviousModifications
 
 ### with child rule, no variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          !PreventsMatch:
-          !CreatesNode:
-          !RemovesNode:
-          Rule:
-            Matching:
-              Matches:
-              Node: Child
-              Restriction:=
-                *:* ChildRuleRestriction
-              Modifications::=
-                *:* ChildRuleModifications
-          !Variable:
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      !PreventsMatch:
+      !CreatesNode:
+      !RemovesNode:
+      Rule:
+        Matching:
+          Matches:
           Node: Child
-        Restriction:=
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-        Modifications::=
-          *:* PreviousModifications
-          ChildModifications:=
-            ChildrenSeen::=
-              Node:* PreviousChildren
-            Node: Child
-            Modifications::=
-              *:* ChildRuleModifications
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-        Modifications::
-          *:* PreviousModifications
-          ChildModifications:
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Node: Child
-            Modifications::
-              *:* ChildRuleModifications
-Tree:
-  ...
+          Restriction:=
+            *:* ChildRuleRestriction
+          Modifications:: ChildRuleModifications
+      !Variable:
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:=
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+    Modifications::=
+      *:* PreviousModifications
+      ChildModifications:=
+        ChildrenSeen::=
+          Node:* PreviousChildren
+        Node: Child
+        Modifications:: ChildRuleModifications
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+    Modifications::
+      *:* PreviousModifications
+      ChildModifications:
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Node: Child
+        Modifications:: ChildRuleModifications
 
 ### with child rule, with variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          !PreventsMatch:
-          !CreatesNode:
-          !RemovesNode:
-          Rule:
-            Matching:
-              Matches:
-              Node: Child
-              Restriction:=
-                *:* ChildRuleRestriction
-              Modifications::=
-                *:* ChildRuleModifications
-          Variable: Variable
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      !PreventsMatch:
+      !CreatesNode:
+      !RemovesNode:
+      Rule:
+        Matching:
+          Matches:
           Node: Child
-        Restriction:=
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::=
-          *:* PreviousModifications
-          ChildModifications:=
-            ChildrenSeen::=
-              Node:* PreviousChildren
-            Node: Child
-            Modifications::=
-              *:* ChildRuleModifications
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::
-          *:* PreviousModifications
-          ChildModifications:
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Node: Child
-            Modifications::
-              *:* ChildRuleModifications
-Tree:
-  ...
+          Restriction:=
+            *:* ChildRuleRestriction
+          Modifications:: ChildRuleModifications
+      Variable: Variable
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:=
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::=
+      *:* PreviousModifications
+      ChildModifications:=
+        ChildrenSeen::=
+          Node:* PreviousChildren
+        Node: Child
+        Modifications:: ChildRuleModifications
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::
+      *:* PreviousModifications
+      ChildModifications:
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Node: Child
+        Modifications:: ChildRuleModifications
 
 # An ordered matching can continue with a multiple matching condition and the next child node
 
 ### no child rule, no variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          !PreventsMatch:
-          !CreatesNode:
-          !RemovesNode:
-          MatchesMultipleNodes:
-          !Rule:
-          !Variable:
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction: PreviousRestriction
-        Modifications:: PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-          Node: Child
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction: PreviousRestriction
-        Modifications:: PreviousModifications
-Tree:
-  ...
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      !PreventsMatch:
+      !CreatesNode:
+      !RemovesNode:
+      MatchesMultipleNodes:
+      !Rule:
+      !Variable:
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction: PreviousRestriction
+    Modifications:: PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction: PreviousRestriction
+    Modifications:: PreviousModifications
 
 ### no child rule, with variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          !PreventsMatch:
-          !CreatesNode:
-          !RemovesNode:
-          MatchesMultipleNodes:
-          !Rule:
-          Variable: Variable
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications:: PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-          Node: Child
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications:: PreviousModifications
-Tree:
-  ...
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      !PreventsMatch:
+      !CreatesNode:
+      !RemovesNode:
+      MatchesMultipleNodes:
+      !Rule:
+      Variable: Variable
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications:: PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications:: PreviousModifications
 
 ### with child rule, no variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          !PreventsMatch:
-          !CreatesNode:
-          !RemovesNode:
-          MatchesMultipleNodes:
-          Rule:
-            Matching:
-              Matches:
-              Node: Child
-              Restriction:=
-                *:* ChildRuleRestriction
-              Modifications::=
-                *:* ChildRuleModifications
-          !Variable:
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      !PreventsMatch:
+      !CreatesNode:
+      !RemovesNode:
+      MatchesMultipleNodes:
+      Rule:
+        Matching:
+          Matches:
           Node: Child
-        Restriction:=
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-        Modifications::=
-          *:* PreviousModifications
-          ChildModifications:=
-            ChildrenSeen::=
-              Node:* PreviousChildren
-            Node: Child
-            Modifications::=
-              *:* ChildRuleModifications
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-        Modifications::
-          *:* PreviousModifications
-          ChildModifications:
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Node: Child
-            Modifications::
-              *:* ChildRuleModifications
-Tree:
-  ...
+          Restriction:=
+            *:* ChildRuleRestriction
+          Modifications:: ChildRuleModifications
+      !Variable:
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:=
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+    Modifications::=
+      *:* PreviousModifications
+      ChildModifications:=
+        ChildrenSeen::=
+          Node:* PreviousChildren
+        Node: Child
+        Modifications:: ChildRuleModifications
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+    Modifications::
+      *:* PreviousModifications
+      ChildModifications:
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Node: Child
+        Modifications:: ChildRuleModifications
 
 ### with child rule, with variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          !PreventsMatch:
-          !CreatesNode:
-          !RemovesNode:
-          MatchesMultipleNodes:
-          Rule:
-            Matching:
-              Matches:
-              Node: Child
-              Restriction:=
-                *:* ChildRuleRestriction
-              Modifications::=
-                *:* ChildRuleModifications
-          Variable: Variable
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      !PreventsMatch:
+      !CreatesNode:
+      !RemovesNode:
+      MatchesMultipleNodes:
+      Rule:
+        Matching:
+          Matches:
           Node: Child
-        Restriction:=
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::=
-          *:* PreviousModifications
-          ChildModifications:=
-            ChildrenSeen::=
-              Node:* PreviousChildren
-            Node: Child
-            Modifications::=
-              *:* ChildRuleModifications
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::
-          *:* PreviousModifications
-          ChildModifications:
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Node: Child
-            Modifications::
-              *:* ChildRuleModifications
-Tree:
-  ...
+          Restriction:=
+            *:* ChildRuleRestriction
+          Modifications:: ChildRuleModifications
+      Variable: Variable
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:=
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::=
+      *:* PreviousModifications
+      ChildModifications:=
+        ChildrenSeen::=
+          Node:* PreviousChildren
+        Node: Child
+        Modifications:: ChildRuleModifications
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::
+      *:* PreviousModifications
+      ChildModifications:
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Node: Child
+        Modifications:: ChildRuleModifications
 
 # An ordered matching can continue with a removing condition and the next child node
 
 ### no child rule, no variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          RemovesNode:
-          !Rule:
-          !Variable:
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction: PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-          Node: Child
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction: PreviousRestriction
-        Modifications::
-          *:* PreviousModifications
-          Remove:
-            Condition: Condition
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Child: Child
-Tree:
-  ...
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      RemovesNode:
+      !Rule:
+      !Variable:
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction: PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction: PreviousRestriction
+    Modifications::
+      *:* PreviousModifications
+      Remove:
+        Condition: Condition
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Child: Child
 
 ### no child rule, with variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          RemovesNode:
-          !Rule:
-          Variable: Variable
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-          Node: Child
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::
-          *:* PreviousModifications
-          Remove:
-            Condition: Condition
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Child: Child
-Tree:
-  ...
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      RemovesNode:
+      !Rule:
+      Variable: Variable
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::
+      *:* PreviousModifications
+      Remove:
+        Condition: Condition
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Child: Child
 
 ### with child rule, no variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          RemovesNode:
-          Rule:
-            Matching:
-              Matches:
-              Node: Child
-              Restriction:=
-                *:* ChildRuleRestriction
-          !Variable:
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      RemovesNode:
+      Rule:
+        Matching:
+          Matches:
           Node: Child
-        Restriction:=
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-        Modifications::=
-          *:* PreviousModifications
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-        Modifications::
-          *:* PreviousModifications
-          Remove:
-            Condition: Condition
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Child: Child
-Tree:
-  ...
+          Restriction:=
+            *:* ChildRuleRestriction
+      !Variable:
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:=
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+    Modifications::=
+      *:* PreviousModifications
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+    Modifications::
+      *:* PreviousModifications
+      Remove:
+        Condition: Condition
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Child: Child
 
 ### with child rule, with variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          RemovesNode:
-          Rule:
-            Matching:
-              Matches:
-              Node: Child
-              Restriction:=
-                *:* ChildRuleRestriction
-          Variable: Variable
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      RemovesNode:
+      Rule:
+        Matching:
+          Matches:
           Node: Child
-        Restriction:=
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::=
-          *:* PreviousModifications
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::
-          *:* PreviousModifications
-          Remove:
-            Condition: Condition
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Child: Child
-Tree:
-  ...
+          Restriction:=
+            *:* ChildRuleRestriction
+      Variable: Variable
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:=
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::=
+      *:* PreviousModifications
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::
+      *:* PreviousModifications
+      Remove:
+        Condition: Condition
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Child: Child
 
 # An ordered matching can continue with a multiple removing condition and the next child node
 
 ### no child rule, no variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          RemovesNode:
-          MatchesMultipleNodes:
-          !Rule:
-          !Variable:
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction: PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-          Node: Child
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction: PreviousRestriction
-        Modifications::
-          *:* PreviousModifications
-          Remove:
-            Condition: Condition
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Child: Child
-Tree:
-  ...
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      RemovesNode:
+      MatchesMultipleNodes:
+      !Rule:
+      !Variable:
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction: PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction: PreviousRestriction
+    Modifications::
+      *:* PreviousModifications
+      Remove:
+        Condition: Condition
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Child: Child
 
 ### no child rule, with variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          RemovesNode:
-          MatchesMultipleNodes:
-          !Rule:
-          Variable: Variable
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-          Node: Child
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::
-          *:* PreviousModifications
-          Remove:
-            Condition: Condition
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Child: Child
-Tree:
-  ...
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      RemovesNode:
+      MatchesMultipleNodes:
+      !Rule:
+      Variable: Variable
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::
+      *:* PreviousModifications
+      Remove:
+        Condition: Condition
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Child: Child
 
 ### with child rule, no variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          RemovesNode:
-          MatchesMultipleNodes:
-          Rule:
-            Matching:
-              Matches:
-              Node: Child
-              Restriction:=
-                *:* ChildRuleRestriction
-          !Variable:
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      RemovesNode:
+      MatchesMultipleNodes:
+      Rule:
+        Matching:
+          Matches:
           Node: Child
-        Restriction:=
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-        Modifications::=
-          *:* PreviousModifications
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-        Modifications::
-          *:* PreviousModifications
-          Remove:
-            Condition: Condition
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Child: Child
-Tree:
-  ...
+          Restriction:=
+            *:* ChildRuleRestriction
+      !Variable:
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:=
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+    Modifications::=
+      *:* PreviousModifications
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+    Modifications::
+      *:* PreviousModifications
+      Remove:
+        Condition: Condition
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Child: Child
 
 ### with child rule, with variable
-Rules:
-  ...
-    Rule:
-      Conditions::=
-        Condition:* PreviousConditions
-        Condition:* Multiples
-          MatchesMultipleNodes:
-        Condition: Condition
-          RemovesNode:
-          MatchesMultipleNodes:
-          Rule:
-            Matching:
-              Matches:
-              Node: Child
-              Restriction:=
-                *:* ChildRuleRestriction
-          Variable: Variable
-          Matches: Child
-        *:*
-      Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
-        Restriction:=
-          *:* PreviousRestriction
-        Modifications::=
-          *:* PreviousModifications
-      !Matching:
-        Node: Parent
-        ConditionsSeen::=
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::=
-          Node:* PreviousChildren
+Rule:
+  Conditions::=
+    Condition:* PreviousConditions
+    Condition:* Multiples
+      MatchesMultipleNodes:
+    Condition: Condition
+      RemovesNode:
+      MatchesMultipleNodes:
+      Rule:
+        Matching:
+          Matches:
           Node: Child
-        Restriction:=
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::=
-          *:* PreviousModifications
-      +Matching:
-        Node: Parent
-        ConditionsSeen::
-          Condition:* PreviousConditions
-          Condition:* Multiples
-          Condition: Condition
-        ChildrenSeen::
-          Node:* PreviousChildren
-          Node: Child
-        Restriction:
-          *:* PreviousRestriction
-          *:* ChildRuleRestriction
-          Equal:
-            Variable: Variable
-            Node: Child
-        Modifications::
-          *:* PreviousModifications
-          Remove:
-            Condition: Condition
-            ChildrenSeen::
-              Node:* PreviousChildren
-            Child: Child
-Tree:
-  ...
+          Restriction:=
+            *:* ChildRuleRestriction
+      Variable: Variable
+      Matches: Child
+    *:*
+  Matching:
     Node: Parent
       Children::
         Node:* PreviousChildren
         Node: Child
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+    Restriction:=
+      *:* PreviousRestriction
+    Modifications::=
+      *:* PreviousModifications
+  !Matching:
+    Node: Parent
+    ConditionsSeen::=
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::=
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:=
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::=
+      *:* PreviousModifications
+  +Matching:
+    Node: Parent
+    ConditionsSeen::
+      Condition:* PreviousConditions
+      Condition:* Multiples
+      Condition: Condition
+    ChildrenSeen::
+      Node:* PreviousChildren
+      Node: Child
+    Restriction:
+      *:* PreviousRestriction
+      *:* ChildRuleRestriction
+      Equal:
+        Variable: Variable
+        Node: Child
+    Modifications::
+      *:* PreviousModifications
+      Remove:
+        Condition: Condition
+        ChildrenSeen::
+          Node:* PreviousChildren
+        Child: Child
 
 # An ordered matching can continue with a preventing condition and the next child node
 # An ordered matching can continue with a multiple preventing condition and the next child node
