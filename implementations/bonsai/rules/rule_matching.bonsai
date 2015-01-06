@@ -108,3 +108,45 @@ Rule:
     !Failed:
     +Failed:
     RestrictionNotMet:
+
+# A matching for a descendant condition's child rule propagates to all ancestors
+
+## ordered parent, ordered child
+Condition:
+  MatchesDescendants:
+  Matches: Parent
+    Children::=
+      Node:* PreviousChildren
+      Node: Child
+      Node:*
+  Matches: Child
+  Rule:
+    Matching:
+      Node: Child
+      ChildrenSeen:: GrandchildrenSeen
+      Restriction: Restriction
+      Modifications:: ChildRuleModifications
+    !Matching:
+      Node: Parent
+      ChildrenSeen::=
+        Node:* PreviousChildren
+      Restriction: Restriction
+      Modifications::=
+        ChildModifications:
+          ChildrenSeen:: GrandchildrenSeen
+          Node: Child
+          Modifications:: ChildRuleModifications
+    +Matching:
+      Node: Parent
+      ChildrenSeen::
+        Node:* PreviousChildren
+      Restriction: Restriction
+      Modifications::
+        ChildModifications:
+          ChildrenSeen:: GrandchildrenSeen
+          Node: Child
+          Modifications:: ChildRuleModifications
+
+## TODO: ordered parent, unordered child
+## TODO: unordered parent, ordered child
+## TODO: unordered parent, unordered child

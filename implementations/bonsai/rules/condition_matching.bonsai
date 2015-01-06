@@ -2,6 +2,7 @@
 Rules:
   ...
     Condition:
+      !MatchesDescendants:
       !CreatesNode:
       !DoesNotMatch: N
       +DoesNotMatch: N
@@ -18,6 +19,7 @@ Tree:
 Rules:
   ...
     Condition:
+      !MatchesDescendants:
       !CreatesNode:
       !DoesNotMatch: N
       +DoesNotMatch: N
@@ -31,6 +33,7 @@ Tree:
 
 # A condition does not match a node if the condition's child rule does not match the node
 Condition:
+  !MatchesDescendants:
   !CreatesNode:
   !DoesNotMatchRule: N
   +DoesNotMatchRule: N
@@ -98,6 +101,22 @@ Rules:
       Rule:
         Matches: N
 WildcardLabel: L
+
+# A condition that matches descendants matches a node if the condition matches a descendant of the node
+Rules:
+  ...
+    Condition:
+      MatchesDescendants:
+      !Matches: N
+      +Matches: N
+      Matches: M
+Tree:
+  ...
+    Node: N
+      !ReadyToBeChecked:
+      !NeedsToBeChecked:
+      ...
+        Node: M
 
 # Conditions need to match nodes without the ready flag, but the child rules match nodes with the ready flag
 Condition:
