@@ -41,6 +41,58 @@ Condition:
   Rule:
     DoesNotMatch: N
 
+# A condition that matches descendants does not match a node if all descendants do not match the condition and the condition's label is not * and does not match the node's label
+Rules:
+  ...
+    Condition:
+      MatchesDescendants:
+      !CreatesNode:
+      !DoesNotMatch: N
+      +DoesNotMatch: N
+      !DoesNotMatch: M
+      Label: L
+Tree:
+  ...
+    Node: N
+      !ReadyToBeChecked:
+      !NeedsToBeChecked:
+      !...
+        Node: M
+      !Label: L
+!WildcardLabel: L
+
+# A condition that matches descendants does not match a node if all descendants do not match the condition and the condition's value does not match the node's value
+Rules:
+  ...
+    Condition:
+      MatchesDescendants:
+      !CreatesNode:
+      !DoesNotMatch: N
+      +DoesNotMatch: N
+      !DoesNotMatch: M
+      Value: V
+Tree:
+  ...
+    Node: N
+      !ReadyToBeChecked:
+      !NeedsToBeChecked:
+      !...
+        Node: M
+      !Value: V
+
+# A condition that matches descendants does not match a node if all descendants do not match the condition and the condition's child rule does not match the node
+Condition:
+  MatchesDescendants:
+  !CreatesNode:
+  !DoesNotMatchRule: N
+  +DoesNotMatchRule: N
+  +DoesNotMatch: N
+  !DoesNotMatch: M
+  Rule:
+    DoesNotMatch: N
+      !...
+        Node: M
+
 # Conditions need to mismatch nodes without the ready flag, but the child rules mismatch nodes with the ready flag
 Condition:
   DoesNotMatch:
