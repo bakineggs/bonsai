@@ -2,6 +2,7 @@ require File.dirname(__FILE__) + '/../../../parser/rule'
 require File.dirname(__FILE__) + '/../../../parser/condition'
 require File.dirname(__FILE__) + '/node'
 require File.dirname(__FILE__) + '/rule'
+require File.dirname(__FILE__) + '/condition'
 
 class Interpreter
   def initialize rules
