@@ -54,12 +54,17 @@ class Parser
       end
     end
 
-    options[:conditions] = parse_conditions definition, depth
+    options[:conditions] = parse_conditions definition, depth,
+      :ancestor_creates => options[:ancestor_creates],
+      :ancestor_removes => options[:ancestor_removes],
+      :ancestor_prevents => options[:ancestor_prevents],
+      :parent_rule_is_ordered => options[:conditions_are_ordered],
+      :parent_rule_must_match_all_nodes => options[:must_match_all_nodes]
 
     Rule.new options
   end
 
-  def parse_conditions lines, depth = 0
+  def parse_conditions lines, depth = 0, options = {}
     return [] if lines.empty?
 
     conditions = []
@@ -74,16 +79,26 @@ class Parser
         raise Error.new 'Conditions can not be in between levels', line
       end
 
-      conditions.push parse_condition(condition_line, depth, child_lines)
+      conditions.push parse_condition condition_line, depth, child_lines,
+        :ancestor_creates => options[:ancestor_creates],
+        :ancestor_removes => options[:ancestor_removes],
+        :ancestor_prevents => options[:ancestor_prevents],
+        :parent_rule_is_ordered => options[:parent_rule_is_ordered],
+        :parent_rule_must_match_all_nodes => options[:parent_rule_must_match_all_nodes]
       condition_line = line
       child_lines = []
     end
-    conditions.push parse_condition(condition_line, depth, child_lines)
+    conditions.push parse_condition condition_line, depth, child_lines,
+      :ancestor_creates => options[:ancestor_creates],
+      :ancestor_removes => options[:ancestor_removes],
+      :ancestor_prevents => options[:ancestor_prevents],
+      :parent_rule_is_ordered => options[:parent_rule_is_ordered],
+      :parent_rule_must_match_all_nodes => options[:parent_rule_must_match_all_nodes]
 
     conditions
   end
 
-  def parse_condition line, depth = 0, child_lines = []
+  def parse_condition line, depth = 0, child_lines = [], options = {}
     unless match = line.match(/^#{'  ' * depth}([!+-])?(\.\.\.)?([A-Za-z0-9 ]+|\^|\*):(:)?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|"(.*)"|([A-Za-z][A-Za-z0-9 ]*)))?$/)
       raise Error.new 'Condition could not be parsed', line
     end
@@ -107,10 +122,20 @@ class Parser
       :matches_multiple_nodes => match[6] == '*',
       :value => value,
       :variable => variable,
-      :child_rule => parse_rule(child_lines, depth + 1,
+      :child_rule => value && child_lines.empty? ? nil : parse_rule(child_lines, depth + 1,
         :conditions_are_ordered => match[4] == ':',
-        :must_match_all_nodes => match[5] == '='
-      )
+        :must_match_all_nodes => match[5] == '=',
+        :ancestor_creates => options[:ancestor_creates] || match[1] == '+',
+        :ancestor_removes => options[:ancestor_removes] || match[1] == '-',
+        :ancestor_prevents => options[:ancestor_prevents] || match[1] == '!'
+      ),
+      :ancestor_creates => options[:ancestor_creates],
+      :ancestor_removes => options[:ancestor_removes],
+      :ancestor_prevents => options[:ancestor_prevents],
+      :parent_rule_is_ordered => options[:parent_rule_is_ordered],
+      :parent_rule_must_match_all_nodes => options[:parent_rule_must_match_all_nodes]
     })
+  rescue Condition::Error => e
+    raise Error.new e.message, line
   end
 end
