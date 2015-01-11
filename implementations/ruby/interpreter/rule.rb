@@ -175,7 +175,7 @@ class Rule
     attr_reader :restriction, :modifications
 
     def initialize options = {}
-      @restriction = options[:restriction]
+      @restriction = simplify options[:restriction] || true
       @modifications = options[:modifications] || []
     end
 
@@ -191,6 +191,52 @@ class Rule
       restriction = [:and, @restriction, other.restriction]
       modifications = @modifications + other.modifications
       Matching.new :restriction => restriction, :modifications => modifications
+    end
+
+    private
+
+    def simplify restriction
+      return restriction if [true, false].include?(restriction) || [:eq, :neq].include?(restriction[0])
+      case restriction[0]
+      when :and
+        r1 = simplify restriction[1]
+        r2 = simplify restriction[2]
+        if r1 == false || r2 == false
+          false
+        elsif r1 == true
+          r2
+        elsif r2 == true
+          r1
+        else
+          [:and, r1, r2]
+        end
+      when :or
+        r1 = simplify restriction[1]
+        r2 = simplify restriction[2]
+        if r1 == true || r2 == true
+          true
+        elsif r1 == false
+          r2
+        elsif r2 == false
+          r1
+        else
+          [:or, r1, r2]
+        end
+      when :not
+        if [true, false].include? restriction[1]
+          !restriction[1]
+        elsif restriction[1][0] == :eq
+          [:neq, restriction[1][1], restriction[1][2]]
+        elsif restriction[1][0] == :neq
+          [:eq, restriction[1][1], restriction[1][2]]
+        elsif restriction[1][0] == :not
+          simplify restriction[1][1]
+        elsif restriction[1][0] == :and
+          simplify [:or, [:not, restriction[1][1]], [:not, restriction[1][2]]]
+        elsif restriction[1][0] == :or
+          simplify [:and, [:not, restriction[1][1]], [:not, restriction[1][2]]]
+        end
+      end
     end
   end
 end
