@@ -7,7 +7,7 @@ require File.dirname(__FILE__) + '/condition'
 class Interpreter
   def initialize rules
     @rules = rules
-    @tree = Node.new '^', [], false, nil
+    @tree = Node.new nil, [Node.new('^', [], false, nil)], false, nil
   end
 
   def run
