@@ -175,12 +175,21 @@ class Rule
     attr_reader :restriction, :modifications
 
     def initialize options = {}
+      @variables = {}
       @restriction = simplify options[:restriction] || true
       @modifications = options[:modifications] || []
     end
 
     def restriction_met?
-      false # TODO
+      @variables.each do |variable, hsh|
+        if hsh[:eq].empty? && !hsh[:neq].empty?
+          raise 'Can not check if a node is not equal to a variable that does not have a matching node'
+        elsif hsh[:eq].all? {|node| node == hsh[:eq][0]} && hsh[:neq].all? {|node| node != hsh[:eq][0]}
+          hsh[:node] = hsh[:eq][0]
+        end
+      end
+
+      check restriction
     end
 
     def transform node
@@ -196,8 +205,16 @@ class Rule
     private
 
     def simplify restriction
-      return restriction if [true, false].include?(restriction) || [:eq, :neq].include?(restriction[0])
+      return restriction if [true, false].include? restriction
       case restriction[0]
+      when :eq
+        @variables[restriction[1]] ||= {:eq => [], :neq => []}
+        @variables[restriction[1]][:eq].push restriction[2]
+        restriction
+      when :neq
+        @variables[restriction[1]] ||= {:eq => [], :neq => []}
+        @variables[restriction[1]][:neq].push restriction[2]
+        restriction
       when :and
         r1 = simplify restriction[1]
         r2 = simplify restriction[2]
@@ -236,6 +253,24 @@ class Rule
         elsif restriction[1][0] == :or
           simplify [:and, [:not, restriction[1][1]], [:not, restriction[1][2]]]
         end
+      else
+        raise "Don't know how to simplify #{restriction.inspect}"
+      end
+    end
+
+    def check restriction
+      return restriction if [true, false].include? restriction
+      case restriction[0]
+      when :eq
+        restriction[2] == @variables[restriction[1]][:node]
+      when :neq
+        restriction[2] != @variables[restriction[1]][:node]
+      when :and
+        check(restriction[1]) && check(restriction[2])
+      when :or
+        check(restriction[1]) || check(restriction[2])
+      else
+        raise "Don't know how to check #{restriction.inspect}"
       end
     end
   end

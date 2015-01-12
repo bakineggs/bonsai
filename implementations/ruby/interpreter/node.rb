@@ -38,4 +38,25 @@ class Node
     end
     s
   end
+
+  include Comparable
+  def <=> other
+    if label != other.label
+      label <=> other.label
+    elsif value && other.value
+      value <=> other.value
+    elsif value && !other.value
+      -1
+    elsif !value && other.value
+      1
+    elsif children_are_ordered? && other.children_are_ordered?
+      children <=> other.children
+    elsif !children_are_ordered? && !other.children_are_ordered?
+      children.sort <=> other.children.sort
+    elsif children_are_ordered? && !other.children_are_ordered?
+      -1
+    elsif !children_are_ordered? && other.children_are_ordered?
+      1
+    end
+  end
 end
