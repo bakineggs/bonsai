@@ -16,6 +16,13 @@ class Condition
 
     raise Error.new 'A preventing condition in an unordered rule can not match multiple nodes' if !options[:parent_rule_is_ordered] && @prevents_match && @matches_multiple_nodes
 
+    if @creates_node
+      raise Error.new 'A creating condition can not match descendant conditions' if @matches_descendants
+      raise Error.new 'A creating condition can not match multiple nodes' if @matches_multiple_nodes
+      raise Error.new 'A creating condition can not have a child rule that must match all child nodes' if @child_rule && @child_rule.must_match_all_nodes?
+      raise Error.new 'A creating condition with a variable can not have a child rule' if @variable && @child_rule && !@child_rule.conditions.empty?
+    end
+
     if options[:ancestor_creates]
       raise Error.new 'A creating condition can not have a descendant that is a creating condition' if @creates_node
       raise Error.new 'A creating condition can not have a descendant that is a removing condition' if @removes_node
@@ -23,6 +30,7 @@ class Condition
       raise Error.new 'A creating condition can not have a descendant condition that matches descendant conditions' if @matches_descendants
       raise Error.new 'A creating condition can not have a descendant condition that matches multiple nodes' if @matches_multiple_nodes
       raise Error.new 'A creating condition can not have a descendant rule that must match all child nodes' if options[:parent_rule_must_match_all_nodes]
+      raise Error.new 'A creating condition can not have a descendant condition with a variable that has a child rule' if @variable && @child_rule && !@child_rule.conditions.empty?
     end
 
     if options[:ancestor_removes]
