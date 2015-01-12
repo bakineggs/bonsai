@@ -9,6 +9,11 @@ class Node
     @value = value
   end
 
+  def initialize_copy original
+    super
+    @children = original.children.map &:dup if @children
+  end
+
   def children_are_ordered?
     !!@children_are_ordered
   end
@@ -37,6 +42,18 @@ class Node
       end
     end
     s
+  end
+
+  def equals_except_label? other
+    if value
+      value == other.value
+    elsif children_are_ordered? != other.children_are_ordered?
+      false
+    elsif children_are_ordered?
+      children == other.children
+    else
+      children.sort == other.children.sort
+    end
   end
 
   include Comparable

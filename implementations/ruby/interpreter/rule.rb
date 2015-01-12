@@ -8,7 +8,7 @@ class Rule
   end
 
   def matchings node
-    if node.value && !conditions_are_ordered? && !must_match_all_nodes?
+    if node.value && conditions.empty? && !conditions_are_ordered? && !must_match_all_nodes?
       [Matching.new]
     elsif node.value || conditions_are_ordered? != node.children_are_ordered?
       []
@@ -152,7 +152,7 @@ class Rule
         reduced_children = children.dup
         reduced_children.delete_at reduced_children.find_index {|c| c == child}
         if condition.child_rule
-          condition.child_rule.matchings(node).each do |child_matching|
+          condition.child_rule.matchings(child).each do |child_matching|
             matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + child_matching
             if condition.matches_multiple_nodes?
               matchings += extend_unordered_matching conditions, node, reduced_children, matching + child_matching
@@ -193,7 +193,26 @@ class Rule
     end
 
     def transform node
-      false # TODO
+      old_node = node.dup
+      (0...@modifications.length).to_a.reverse.each do |modification_index|
+        modification = @modifications[modification_index]
+        if modification[0] == :remove
+          if modification[2].is_a? Node
+            removal_index = modification[1].children.find_index {|child| child == modification[2]}
+          elsif modification[2].is_a? Fixnum
+            removal_index = modification[2]
+          else
+            raise "Don't know how to apply modification #{modification.inspect}"
+          end
+          raise 'Could not remove non-existent child' if !modification[1].children.delete_at removal_index
+        elsif modification[0] == :create
+          raise 'Tried to insert at invalid position' if modification[3] > modification[2].children.length
+          modification[2].children.insert modification[3], create(modification[1])
+        else
+          raise "Don't know how to apply modification #{modification.inspect}"
+        end
+      end
+      node != old_node
     end
 
     def + other
@@ -203,6 +222,21 @@ class Rule
     end
 
     private
+
+    def create condition
+      if condition.variable
+        copy = @variables[condition.variable][:node].dup
+        label = condition.label == '*' ? copy.label : condition.label
+        Node.new label, copy.children, copy.children_are_ordered?, copy.value
+      elsif condition.value
+        Node.new condition.label, nil, nil, condition.value
+      elsif condition.child_rule
+        children = condition.child_rule.conditions.map {|c| create c}
+        Node.new condition.label, children, condition.child_rule.conditions_are_ordered?, nil
+      else
+        raise "Don't know how to create node for #{condition.inspect}"
+      end
+    end
 
     def simplify restriction
       return restriction if [true, false].include? restriction
@@ -262,9 +296,9 @@ class Rule
       return restriction if [true, false].include? restriction
       case restriction[0]
       when :eq
-        restriction[2] == @variables[restriction[1]][:node]
+        restriction[2].equals_except_label? @variables[restriction[1]][:node]
       when :neq
-        restriction[2] != @variables[restriction[1]][:node]
+        !restriction[2].equals_except_label?(@variables[restriction[1]][:node])
       when :and
         check(restriction[1]) && check(restriction[2])
       when :or
