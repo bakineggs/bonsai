@@ -13,6 +13,7 @@ class Condition
     @variable = options[:variable]
 
     raise Error.new 'A condition can not have both a value and a child rule' if @value && @child_rule
+    raise Error.new 'A condition can not have both a value and a variable' if @value && @variable
 
     raise Error.new 'A preventing condition in an unordered rule can not match multiple nodes' if !options[:parent_rule_is_ordered] && @prevents_match && @matches_multiple_nodes
 
