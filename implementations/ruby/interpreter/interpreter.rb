@@ -22,7 +22,8 @@ class Interpreter
       end
     end
 
-    @tree
+    root = @tree.children.find {|node| node.label == '^'}
+    root.children.map(&:to_s).reject(&:empty?).join "\n"
   end
 
   class NodeQueue

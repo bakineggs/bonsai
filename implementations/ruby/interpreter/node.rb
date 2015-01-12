@@ -29,19 +29,15 @@ class Node
   end
 
   def to_s depth = 0
-    s = ' ' * 4 * depth + "Node:\n"
-    s += ' ' * 4 * depth + "  Label: \"#{label}\"\n"
-    if children
-      s += ' ' * 4 * depth + "  Children:#{':' if children_are_ordered?}\n"
-      children.each {|child| s += child.to_s depth + 1}
+    if value && value.is_a?(String)
+      '  ' * depth + label + ': "' + value + '"'
     elsif value
-      if value.is_a? String
-        s += ' ' * 4 * depth + "  Value: \"#{value}\"\n"
-      else
-        s += ' ' * 4 * depth + "  Value: #{value}\n"
-      end
+      '  ' * depth + label + ': ' + value
+    elsif children
+      lines = ['  ' * depth + label + ':' + (children_are_ordered? ? ':' : '')]
+      lines += children.map {|child| child.to_s depth + 1}
+      lines.join "\n"
     end
-    s
   end
 
   def equals_except_label? other
