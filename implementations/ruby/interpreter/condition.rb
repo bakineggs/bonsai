@@ -9,7 +9,7 @@ class Condition
       return true if child_rule && !child_rule.matchings(node).empty?
     end
 
-    if matches_descendants? && node.children.any? {|child| matches_node? child}
+    if matches_descendants? && node.children && node.children.any? {|child| matches? child}
       return true
     end
 

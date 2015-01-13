@@ -84,6 +84,9 @@ class Rule
       matching += Matching.new :modifications => [[:remove, node, child_index]] if condition.removes_node?
       matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
       if condition.child_rule
+        if condition.matches_descendants?
+          # TODO: how to get matchings for descendant?
+        end
         condition.child_rule.matchings(node).each do |child_matching|
           matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching + child_matching
           if condition.matches_multiple_nodes?
@@ -152,6 +155,9 @@ class Rule
         reduced_children = children.dup
         reduced_children.delete_at reduced_children.find_index {|c| c == child}
         if condition.child_rule
+          if condition.matches_descendants?
+            # TODO: how to get matchings for descendant?
+          end
           condition.child_rule.matchings(child).each do |child_matching|
             matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + child_matching
             if condition.matches_multiple_nodes?

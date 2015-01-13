@@ -32,7 +32,7 @@ class Node
     if value && value.is_a?(String)
       '  ' * depth + label + ': "' + value + '"'
     elsif value
-      '  ' * depth + label + ': ' + value
+      '  ' * depth + label + ': ' + value.to_s
     elsif children
       lines = ['  ' * depth + label + ':' + (children_are_ordered? ? ':' : '')]
       lines += children.map {|child| child.to_s depth + 1}

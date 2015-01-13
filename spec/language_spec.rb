@@ -1,4 +1,8 @@
 require_relative 'language/visiting_nodes'
+require_relative 'language/matching_conditions'
+require_relative 'language/preventing_matches'
+require_relative 'language/creating_nodes'
+require_relative 'language/removing_nodes'
 
 RSpec.shared_examples 'a Bonsai implementation' do
   def self._it description, program, end_state
@@ -10,6 +14,9 @@ RSpec.shared_examples 'a Bonsai implementation' do
   end
 
   include_examples 'visiting nodes'
+  include_examples 'matching conditions'
+  include_examples 'preventing matches'
+  include_examples 'removing nodes'
 
   def parse state_str, needs_sort = true
     lines = state_str.split "\n"
