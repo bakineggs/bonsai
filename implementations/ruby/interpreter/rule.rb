@@ -53,7 +53,12 @@ class Rule
     if condition.prevents_match?
       if condition.matches? child
         if condition.child_rule
-          condition.child_rule.matchings(node).each do |child_matching|
+          if condition.matches_descendants?
+            child_matchings = child.descendants.map(&:last).map{|descendant| condition.child_rule.matchings descendant}.flatten
+          else
+            child_matchings = condition.child_rule.matchings child
+          end
+          child_matchings.each do |child_matching|
             if condition.variable
               matching = partial_matching + Matching.new(:restriction => [:or, [:neq, condition.variable, child], [:not, child_matching.restriction]])
             else
@@ -82,12 +87,15 @@ class Rule
     elsif condition.matches? child
       matching = partial_matching
       matching += Matching.new :modifications => [[:remove, node, child_index]] if condition.removes_node?
+      # TODO: don't remove a matched ancestor
       matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
       if condition.child_rule
         if condition.matches_descendants?
-          # TODO: how to get matchings for descendant?
+          child_matchings = child.descendants.map(&:last).map{|descendant| condition.child_rule.matchings descendant}.flatten
+        else
+          child_matchings = condition.child_rule.matchings child
         end
-        condition.child_rule.matchings(node).each do |child_matching|
+        child_matchings.each do |child_matching|
           matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching + child_matching
           if condition.matches_multiple_nodes?
             matchings += extend_ordered_matching condition_index, node, child_index + 1, matching + child_matching
@@ -127,7 +135,12 @@ class Rule
       children.each do |child|
         next unless condition.matches? child
         if condition.child_rule
-          condition.child_rule.matchings(child).each do |child_matching|
+          if condition.matches_descendants?
+            child_matchings = child.descendants.map(&:last).map{|descendant| condition.child_rule.matchings descendant}.flatten
+          else
+            child_matchings = condition.child_rule.matchings child
+          end
+          child_matchings.each do |child_matching|
             if condition.variable
               matching += Matching.new :restriction => [:or, [:neq, condition.variable, child], [:not, child_matching.restriction]]
             else
@@ -151,14 +164,17 @@ class Rule
         next unless condition.matches? child
         matching = partial_matching
         matching += Matching.new :modifications => [[:remove, node, child]] if condition.removes_node?
+        # TODO: don't remove a matched ancestor
         matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
         reduced_children = children.dup
         reduced_children.delete_at reduced_children.find_index {|c| c == child}
         if condition.child_rule
           if condition.matches_descendants?
-            # TODO: how to get matchings for descendant?
+            child_matchings = child.descendants.map(&:last).map{|descendant| condition.child_rule.matchings descendant}.flatten
+          else
+            child_matchings = condition.child_rule.matchings child
           end
-          condition.child_rule.matchings(child).each do |child_matching|
+          child_matchings.each do |child_matching|
             matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + child_matching
             if condition.matches_multiple_nodes?
               matchings += extend_unordered_matching conditions, node, reduced_children, matching + child_matching
