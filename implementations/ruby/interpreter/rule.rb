@@ -182,7 +182,7 @@ class Rule
 
     def initialize options = {}
       @variables = {}
-      @restriction = simplify options[:restriction] || true
+      @restriction = simplify options.has_key?(:restriction) ? options[:restriction] : true
       @modifications = options[:modifications] || []
     end
 
