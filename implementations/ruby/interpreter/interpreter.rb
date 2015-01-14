@@ -18,7 +18,7 @@ class Interpreter
       depth, node = nodes_to_visit.dequeue
 
       if @rules.any? {|rule| rule.transform node}
-        nodes_to_visit.enqueue *node.descendants.map {|ddepth, dnode| [depth + ddepth, dnode]}
+        nodes_to_visit.enqueue *node.descendants.map {|ddepth, _, dnode| [depth + ddepth, dnode]}
       end
     end
 

@@ -19,10 +19,10 @@ class Node
   end
 
   def descendants
-    descendants = [[0, self]]
+    descendants = [[0, nil, self]]
     children.each do |child|
-      child.descendants.each do |depth, node|
-        descendants.push [depth + 1, node]
+      child.descendants.each do |depth, parent, node|
+        descendants.push [depth + 1, parent || self, node]
       end
     end if children
     descendants
