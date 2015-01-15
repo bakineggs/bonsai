@@ -60,8 +60,10 @@ class Rule
           end
           child_matchings.each do |child_matching|
             if condition.variable
+              # TODO: restriction should be on the descendant for descendant conditions
               matching = partial_matching + Matching.new(:restriction => [:or, [:neq, condition.variable, child], [:not, child_matching.restriction]])
             else
+              # TODO: restriction should be on the descendant for descendant conditions
               matching = partial_matching + Matching.new(:restriction => [:not, child_matching.restriction])
             end
             matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching
@@ -70,6 +72,7 @@ class Rule
             end
           end
         elsif condition.variable
+          # TODO: restriction should be on the descendant for descendant conditions
           matching = partial_matching + Matching.new(:restriction => [:neq, condition.variable, child])
           matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching
           if condition.matches_multiple_nodes?
@@ -87,6 +90,7 @@ class Rule
     elsif condition.removes_node?
       if condition.matches? child
         matching = partial_matching
+        # TODO: restriction should be on the descendant for descendant conditions
         matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
         descendants = conditions.matches_descendants? ? child.descendants : [[nil, nil, child]]
         descendants.each do |_, descendant_parent, descendant|
@@ -123,6 +127,7 @@ class Rule
 
     elsif condition.matches? child
       matching = partial_matching
+      # TODO: restriction should be on the descendant for descendant conditions
       matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
       if condition.child_rule
         if condition.matches_descendants?
@@ -177,12 +182,15 @@ class Rule
           end
           child_matchings.each do |child_matching|
             if condition.variable
+              # TODO: restriction should be on the descendant for descendant conditions
               matching += Matching.new :restriction => [:or, [:neq, condition.variable, child], [:not, child_matching.restriction]]
             else
+              # TODO: restriction should be on the descendant for descendant conditions
               matching += Matching.new :restriction => [:not, child_matching.restriction]
             end
           end
         elsif condition.variable
+          # TODO: restriction should be on the descendant for descendant conditions
           matching += Matching.new :restriction => [:neq, condition.variable, child]
         else
           matching += Matching.new :restriction => false
@@ -198,6 +206,7 @@ class Rule
       children.each do |child|
         next unless condition.matches? child
         matching = partial_matching
+        # TODO: restriction should be on the descendant for descendant conditions
         matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
         reduced_children = children.dup
         reduced_children.delete_at reduced_children.find_index {|c| c == child}
@@ -236,6 +245,7 @@ class Rule
       children.each do |child|
         next unless condition.matches? child
         matching = partial_matching
+        # TODO: restriction should be on the descendant for descendant conditions
         matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
         reduced_children = children.dup
         reduced_children.delete_at reduced_children.find_index {|c| c == child}
