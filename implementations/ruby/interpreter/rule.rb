@@ -89,9 +89,6 @@ class Rule
 
     elsif condition.removes_node?
       if condition.matches? child
-        matching = partial_matching
-        # TODO: restriction should be on the descendant for descendant conditions
-        matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
         descendants = conditions.matches_descendants? ? child.descendants : [[nil, nil, child]]
         descendants.each do |_, descendant_parent, descendant|
           next unless condition.matches? descendant, false
@@ -107,18 +104,19 @@ class Rule
             removal_args = [descendant]
           end
           removal_args.each do |removal_arg|
-            removal_matching = Matching.new :modifications => [[:remove, descendant_parent, removal_arg]]
+            matching = partial_matching + Matching.new(:modifications => [[:remove, descendant_parent, removal_arg]])
+            matching += Matching.new :restriction => [:eq, condition.variable, descendant] if condition.variable
             if condition.child_rule
               condition.child_rule.matchings(descendant).each do |descendant_matching|
-                matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching + descendant_matching + removal_matching
+                matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching + descendant_matching
                 if condition.matches_multiple_nodes?
-                  matchings += extend_ordered_matching condition_index, node, child_index + 1, matching + descendant_matching + removal_matching
+                  matchings += extend_ordered_matching condition_index, node, child_index + 1, matching + descendant_matching
                 end
               end
             else
-              matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching + removal_matching
+              matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching
               if condition.matches_multiple_nodes?
-                matchings += extend_ordered_matching condition_index, node, child_index + 1, matching + removal_matching
+                matchings += extend_ordered_matching condition_index, node, child_index + 1, matching
               end
             end
           end
@@ -205,9 +203,6 @@ class Rule
     elsif condition.removes_node?
       children.each do |child|
         next unless condition.matches? child
-        matching = partial_matching
-        # TODO: restriction should be on the descendant for descendant conditions
-        matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
         reduced_children = children.dup
         reduced_children.delete_at reduced_children.find_index {|c| c == child}
         descendants = condition.matches_descendants? ? child.descendants : [[nil, nil, child]]
@@ -223,18 +218,19 @@ class Rule
             removal_args = [descendant]
           end
           removal_args.each do |removal_arg|
-            removal_matching = Matching.new :modifications => [[:remove, descendant_parent, removal_arg]]
+            matching = partial_matching + Matching.new(:modifications => [[:remove, descendant_parent, removal_arg]])
+            matching += Matching.new :restriction => [:eq, condition.variable, descendant] if condition.variable
             if condition.child_rule
               condition.child_rule.matchings(descendant).each do |descendant_matching|
-                matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + descendant_matching + removal_matching
+                matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + descendant_matching
                 if condition.matches_multiple_nodes?
-                  matchings += extend_unordered_matching conditions, node, reduced_children, matching + descendant_matching + removal_matching
+                  matchings += extend_unordered_matching conditions, node, reduced_children, matching + descendant_matching
                 end
               end
             else
-              matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + removal_matching
+              matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching
               if condition.matches_multiple_nodes?
-                matchings += extend_unordered_matching conditions, node, reduced_children, matching + removal_matching
+                matchings += extend_unordered_matching conditions, node, reduced_children, matching
               end
             end
           end
