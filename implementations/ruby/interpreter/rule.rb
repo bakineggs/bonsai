@@ -124,28 +124,24 @@ class Rule
       end
 
     elsif condition.matches? child
-      matching = partial_matching
-      # TODO: restriction should be on the descendant for descendant conditions
-      matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
-      if condition.child_rule
-        if condition.matches_descendants?
-          child_matchings = child.descendants.map(&:last).map{|descendant| condition.child_rule.matchings descendant}.flatten
+      descendants = conditions.matches_descendants? ? child.descendants : [[nil, nil, child]]
+      descendants.each do |_, _, descendant|
+        next unless condition.matches? descendant, false
+        matching += Matching.new :restriction => [:eq, condition.variable, descendant] if condition.variable
+        if condition.child_rule
+          condition.child_rule.matchings(descendant).each do |descendant_matching|
+            matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching + descendant_matching
+            if condition.matches_multiple_nodes?
+              matchings += extend_ordered_matching condition_index, node, child_index + 1, matching + descendant_matching
+            end
+          end
         else
-          child_matchings = condition.child_rule.matchings child
-        end
-        child_matchings.each do |child_matching|
-          matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching + child_matching
+          matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching
           if condition.matches_multiple_nodes?
-            matchings += extend_ordered_matching condition_index, node, child_index + 1, matching + child_matching
+            matchings += extend_ordered_matching condition_index, node, child_index + 1, matching
           end
         end
-      else
-        matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching
-        if condition.matches_multiple_nodes?
-          matchings += extend_ordered_matching condition_index, node, child_index + 1, matching
-        end
       end
-
     end
 
     matchings
@@ -241,26 +237,26 @@ class Rule
       children.each do |child|
         next unless condition.matches? child
         matching = partial_matching
-        # TODO: restriction should be on the descendant for descendant conditions
-        matching += Matching.new :restriction => [:eq, condition.variable, child] if condition.variable
         reduced_children = children.dup
+
         reduced_children.delete_at reduced_children.find_index {|c| c == child}
-        if condition.child_rule
-          if condition.matches_descendants?
-            child_matchings = child.descendants.map(&:last).map{|descendant| condition.child_rule.matchings descendant}.flatten
-          else
-            child_matchings = condition.child_rule.matchings child
-          end
-          child_matchings.each do |child_matching|
-            matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + child_matching
-            if condition.matches_multiple_nodes?
-              matchings += extend_unordered_matching conditions, node, reduced_children, matching + child_matching
+        descendants = condition.matches_descendants? ? child.descendants : [[nil, nil, child]]
+        descendants.each do |_, _, descendant|
+          next unless condition.matches? descendant, false
+          matching = partial_matching
+          matching += Matching.new :restriction => [:eq, condition.variable, descendant] if condition.variable
+          if condition.child_rule
+            condition.child_rule.matchings(descendant).each do |descendant_matching|
+              matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + descendant_matching
+              if condition.matches_multiple_nodes?
+                matchings += extend_unordered_matching conditions, node, reduced_children, matching + descendant_matching
+              end
             end
-          end
-        else
-          matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching
-          if condition.matches_multiple_nodes?
-            matchings += extend_unordered_matching conditions, node, reduced_children, matching
+          else
+            matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching
+            if condition.matches_multiple_nodes?
+              matchings += extend_unordered_matching conditions, node, reduced_children, matching
+            end
           end
         end
       end
