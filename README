@@ -1,12 +1,18 @@
 Bonsai Programming Language
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This is a work in progress. There is not yet a fully working implementation (although a subset of the language has been implemented so far).
-
-Bonsai is a programming language in which you define rules to match patterns in a tree and transform the matched part of the tree. These rules are applied over and over until no rules match anywhere in the tree.
+Bonsai is a programming language for transforming trees (such as abstract syntax trees used to implement programming languages). You define rules to match patterns in a tree and transform the matched part of the tree. These rules are applied over and over until no rules match anywhere in the tree.
 
 Trees are represented by indented lists. A node's children are indented 2 more spaces than their parent. The children can be either unordered or ordered. Using a single colon after the node's label denotes that the children are an unordered multiset. Using two colons after the node's label denotes that the children are an ordered list.
 
+# A node with the label Foo and two unordered children with labels Bar and Baz
+Foo:
+  Bar:
+  Baz:
+
 Nodes can either have children or have a value associated with them. Values can be either integers, decimals, or strings.
+
+# A node with the label Foo and the value 7.3
+Foo: 7.3
 
 A rule is defined by showing a part of the tree that must be matched and how it should be transformed. There are 3 operators that can precede a node's label: !, +, and -. The ! operator says that if this node matches, then the rule does not match. The + operator says that this node will be created if the rule matches and does not affect whether or not the rule matches. The - operator says that this node must match for this rule to match and that the node will be removed if this rule matches.
 
