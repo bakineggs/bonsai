@@ -4,13 +4,20 @@ class Condition
   def initialize options = {}
     @label = options[:label]
     @child_rule = options[:child_rule]
-    @creates_node = options[:creates_node]
-    @removes_node = options[:removes_node]
-    @prevents_match = options[:prevents_match]
-    @matches_descendants = options[:matches_descendants]
-    @matches_multiple_nodes = options[:matches_multiple_nodes]
+    @creates_node = !!options[:creates_node]
+    @removes_node = !!options[:removes_node]
+    @prevents_match = !!options[:prevents_match]
+    @matches_descendants = !!options[:matches_descendants]
+    @matches_multiple_nodes = !!options[:matches_multiple_nodes]
     @value = options[:value]
     @variable = options[:variable]
+
+    raise Error.new 'A condition must have a non-empty String label' unless @label.is_a?(String) && !@label.empty?
+    raise Error.new 'A condition must have a Rule child_rule' unless @child_rule.nil? || @child_rule.is_a?(Rule)
+    raise Error.new 'A condition must have a Fixnum, Float, or String value' unless @value.nil? || [Fixnum, Float, String].any? {|t| @label.is_a? t}
+    raise Error.new 'A condition must have a String variable' unless @variable.nil? || @variable.is_a?(String)
+
+    raise Error.new 'A condition must have either a child rule or a value' unless @child_rule || @value
 
     raise Error.new 'A condition can not have both a value and a child rule' if @value && @child_rule
     raise Error.new 'A condition can not have both a value and a variable' if @value && @variable
@@ -46,23 +53,23 @@ class Condition
   end
 
   def creates_node?
-    !!@creates_node
+    @creates_node
   end
 
   def removes_node?
-    !!@removes_node
+    @removes_node
   end
 
   def prevents_match?
-    !!@prevents_match
+    @prevents_match
   end
 
   def matches_descendants?
-    !!@matches_descendants
+    @matches_descendants
   end
 
   def matches_multiple_nodes?
-    !!@matches_multiple_nodes
+    @matches_multiple_nodes
   end
 
   class Error < StandardError; end
