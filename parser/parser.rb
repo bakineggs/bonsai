@@ -20,7 +20,7 @@ class Parser
     end
   end
 
-  def parse_program program
+  def parse program
     lines = []
     program.split("\n").each_with_index do |line, i|
       next if line =~ /^ *#.*$/
@@ -42,6 +42,8 @@ class Parser
 
     rules
   end
+
+  private
 
   def parse_rule definition, depth = 0, options = {}
     options[:definition] = definition.clone

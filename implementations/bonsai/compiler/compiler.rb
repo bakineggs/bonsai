@@ -10,7 +10,7 @@ class Compiler
     compiled += File.read File.dirname(__FILE__) + '/../rules/rule_matching_ordered.bonsai'
 
     compiled += "\n^:\n  !Rules:\n  +Rules:\n"
-    Parser.new.parse_program(program).each do |rule|
+    Parser.new.parse(program).each do |rule|
       compiled += compile_rule rule, 2
     end
 

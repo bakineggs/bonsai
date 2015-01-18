@@ -4,7 +4,7 @@ require_relative '../interpreter/interpreter'
 
 RSpec.describe 'The Ruby implementation of Bonsai' do
   def run program
-    Interpreter.new(Parser.new.parse_program program).run.to_s
+    Interpreter.new(Parser.new.parse program).run.to_s
   end
 
   include_examples 'a Bonsai implementation'

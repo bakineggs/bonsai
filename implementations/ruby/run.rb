@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/interpreter/interpreter'
 require File.dirname(__FILE__) + '/../../parser/parser'
 
 begin
-  puts Interpreter.new(Parser.new.parse_program File.read ARGV[0]).run
+  puts Interpreter.new(Parser.new.parse File.read ARGV[0]).run
   exit 0
 
 rescue Errno::ENOENT

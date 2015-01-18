@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/../../../parser/parser'
 
 class Compiler
   def compile program
-    rules = Parser.new.parse_program program
+    rules = Parser.new.parse program
 
     <<-EOS
       package main
