@@ -135,6 +135,8 @@ class Parser
       :parent_rule_is_ordered => options[:parent_rule_is_ordered],
       :parent_rule_must_match_all_nodes => options[:parent_rule_must_match_all_nodes]
     })
+  rescue Rule::Error => e
+    raise Error.new e.message, line
   rescue Condition::Error => e
     raise Error.new e.message, line
   end
