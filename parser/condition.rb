@@ -14,7 +14,7 @@ class Condition
 
     raise Error.new 'A condition must have a non-empty String label' unless @label.is_a?(String) && !@label.empty?
     raise Error.new 'A condition must have a Rule child_rule' unless @child_rule.nil? || @child_rule.is_a?(Rule)
-    raise Error.new 'A condition must have a Fixnum, Float, or String value' unless @value.nil? || [Fixnum, Float, String].any? {|t| @label.is_a? t}
+    raise Error.new 'A condition must have a Fixnum, Float, or String value' unless @value.nil? || [Fixnum, Float, String].any? {|t| @value.is_a? t}
     raise Error.new 'A condition must have a String variable' unless @variable.nil? || @variable.is_a?(String)
 
     raise Error.new 'A condition must have either a child rule or a value' unless @child_rule || @value

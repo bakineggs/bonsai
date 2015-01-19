@@ -2,11 +2,20 @@ class Node
   attr_reader :label, :children, :value
 
   def initialize label, children, children_are_ordered, value
-    raise 'Can\'t have node with children and value' if children && value
     @label = label
     @children = children
-    @children_are_ordered = children_are_ordered
+    @children_are_ordered = !!children_are_ordered
     @value = value
+
+    raise 'A node must have a non-empty String label' unless @label.nil? || @label.is_a?(String) && !@label.empty?
+
+    raise 'A node must have either children or a value' unless @children || @value
+    raise 'A node can not have both children and a value' if @children && @value
+
+    raise 'A node with a value can not have ordered children' if @value && @children_are_ordered
+
+    raise 'A node must have an Array of Node children' unless @children.nil? || @children.is_a?(Array) && @children.all? {|child| child.is_a? Node}
+    raise 'A node must have a Fixnum, Float, or String value' unless @value.nil? || [Fixnum, Float, String].any? {|t| @value.is_a? t}
   end
 
   def initialize_copy original
