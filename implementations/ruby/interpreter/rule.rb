@@ -22,10 +22,10 @@ class Rule
   private
 
   def ordered_matchings node
-    if must_match_all_conditions?
+    if must_match_all_nodes?
       extend_ordered_matching 0, node, 0, Matching.new
     else
-      (0...node.children.length).map do |i|
+      (0..node.children.length).map do |i|
         extend_ordered_matching 0, node, i, Matching.new
       end.flatten
     end
@@ -33,7 +33,7 @@ class Rule
 
   def extend_ordered_matching condition_index, node, child_index, partial_matching
     if condition_index == conditions.length
-      if child_index == node.children.length || !must_match_all_conditions?
+      if child_index == node.children.length || !must_match_all_nodes?
         return [partial_matching]
       else
         return []
@@ -155,7 +155,7 @@ class Rule
     return [] if conditions.empty?
 
     matchings = []
-    condition = conditions.sample
+    condition = conditions.find(&:prevents_match?) || conditions.sample
     reduced_conditions = conditions.dup
     reduced_conditions.delete_at reduced_conditions.find_index {|c| c == condition}
 
