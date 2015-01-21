@@ -109,4 +109,134 @@ RSpec.shared_examples 'matching ordered rules' do
       Bar:
       Baz:
   EOS
+
+  _it 'matches an ordered rule with ordered children that match in order starting in the middle', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz:
+        Qux:
+
+    ^:
+      Foo::
+        Baz:
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Baz:
+      Qux:
+    Matched:
+  EOS
+
+  _it 'does not match an ordered rule that must match all nodes with ordered children that match in order starting in the middle', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz:
+        Qux:
+
+    ^:
+      Foo::=
+        Baz:
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Baz:
+      Qux:
+  EOS
+
+  _it 'matches a preventing condition in an ordered rule with a non-matching ordered child', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+
+    ^:
+      Foo::
+        !Baz:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+    Matched:
+  EOS
+
+  _it 'matches a preventing condition in an ordered rule that must match all nodes with a non-matching ordered child', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+
+    ^:
+      Foo::=
+        !Baz:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+    Matched:
+  EOS
+
+  _it 'does not match a preventing condition in an ordered rule with a matching ordered child', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+
+    ^:
+      Foo::
+        !Bar:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+  EOS
+
+  _it 'matches a preventing condition in an ordered rule with a matching and a non-matching ordered child', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz:
+
+    ^:
+      Foo::
+        !Baz:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Baz:
+    Matched:
+  EOS
+
+  _it 'does not match a preventing condition in an ordered rule that must match all nodes with a matching and a non-matching ordered child', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz:
+
+    ^:
+      Foo::=
+        !Baz:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Baz:
+  EOS
 end

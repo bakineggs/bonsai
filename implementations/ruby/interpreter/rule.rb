@@ -48,7 +48,7 @@ class Rule
     end
 
     return matchings if child_index == node.children.length
-    child = node.children[condition_index]
+    child = node.children[child_index]
 
     if condition.prevents_match?
       if condition.matches? child
