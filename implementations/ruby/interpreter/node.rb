@@ -27,11 +27,11 @@ class Node
     !!@children_are_ordered
   end
 
-  def descendants
-    descendants = [[0, nil, self]]
+  def descendants parent = nil
+    descendants = [[0, parent, self]]
     children.each do |child|
-      child.descendants.each do |depth, parent, node|
-        descendants.push [depth + 1, parent || self, node]
+      child.descendants(self).each do |depth, descendant_parent, node|
+        descendants.push [depth + 1, descendant_parent, node]
       end
     end if children
     descendants
