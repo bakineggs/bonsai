@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/../../../parser/rule'
+require File.dirname(__FILE__) + '/matching'
 
 class Rule
   def transform node
@@ -76,52 +77,12 @@ class Rule
       matching = partial_matching + Matching.new(:modifications => [[:create, condition, node, child_index]])
       matchings += extend_ordered_matching condition_index + 1, node, child_index, matching
 
-    elsif condition.removes_node?
-      condition.matching_descendants(child, node).each do |_, descendant_parent, descendant|
-        if descendant_parent == node
-          removal_args = [child_index]
-        elsif descendant_parent.children_are_ordered?
-          removal_args = []
-          descendant_parent.children.each_with_index do |descendant_parent_child, index|
-            removal_args.push index if descendant_parent_child == descendant
-          end
-        else
-          removal_args = [descendant]
-        end
-        removal_args.each do |removal_arg|
-          matching = partial_matching + Matching.new(:modifications => [[:remove, descendant_parent, removal_arg]])
-          matching += Matching.new :restriction => [:eq, condition.variable, descendant] if condition.variable
-          if condition.child_rule
-            condition.child_rule.matchings(descendant).each do |descendant_matching|
-              matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching + descendant_matching
-              if condition.matches_multiple_nodes?
-                matchings += extend_ordered_matching condition_index, node, child_index + 1, matching + descendant_matching
-              end
-            end
-          else
-            matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching
-            if condition.matches_multiple_nodes?
-              matchings += extend_ordered_matching condition_index, node, child_index + 1, matching
-            end
-          end
-        end
-      end
-
     else
-      condition.matching_descendants(child, node).each do |_, _, descendant|
-        matching = partial_matching
-        matching += Matching.new :restriction => [:eq, condition.variable, descendant] if condition.variable
-        if condition.child_rule
-          condition.child_rule.matchings(descendant).each do |descendant_matching|
-            matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching + descendant_matching
-            if condition.matches_multiple_nodes?
-              matchings += extend_ordered_matching condition_index, node, child_index + 1, matching + descendant_matching
-            end
-          end
-        else
-          matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, matching
+      condition.matching_descendants(child, node).each do |_, descendant_parent, descendant|
+        condition.matchings(descendant, descendant_parent).each do |matching|
+          matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, partial_matching + matching
           if condition.matches_multiple_nodes?
-            matchings += extend_ordered_matching condition_index, node, child_index + 1, matching
+            matchings += extend_ordered_matching condition_index, node, child_index + 1, partial_matching + matching
           end
         end
       end
@@ -172,57 +133,15 @@ class Rule
       matching = partial_matching + Matching.new(:modifications => [[:create, condition, node, 0]])
       matchings += extend_unordered_matching reduced_conditions, node, children, matching
 
-    elsif condition.removes_node?
-      children.each do |child|
-        reduced_children = children.dup
-        reduced_children.delete_at reduced_children.find_index {|c| c == child}
-        condition.matching_descendants(child, node).each do |_, descendant_parent, descendant|
-          if descendant_parent.children_are_ordered?
-            removal_args = []
-            descendant_parent.children.each_with_index do |descendant_parent_child, index|
-              removal_args.push index if descendant_parent_child == descendant
-            end
-          else
-            removal_args = [descendant]
-          end
-          removal_args.each do |removal_arg|
-            matching = partial_matching + Matching.new(:modifications => [[:remove, descendant_parent, removal_arg]])
-            matching += Matching.new :restriction => [:eq, condition.variable, descendant] if condition.variable
-            if condition.child_rule
-              condition.child_rule.matchings(descendant).each do |descendant_matching|
-                matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + descendant_matching
-                if condition.matches_multiple_nodes?
-                  matchings += extend_unordered_matching conditions, node, reduced_children, matching + descendant_matching
-                end
-              end
-            else
-              matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching
-              if condition.matches_multiple_nodes?
-                matchings += extend_unordered_matching conditions, node, reduced_children, matching
-              end
-            end
-          end
-        end
-      end
-
     else
       children.each do |child|
         reduced_children = children.dup
         reduced_children.delete_at reduced_children.find_index {|c| c == child}
-        condition.matching_descendants(child, node).each do |_, _, descendant|
-          matching = partial_matching
-          matching += Matching.new :restriction => [:eq, condition.variable, descendant] if condition.variable
-          if condition.child_rule
-            condition.child_rule.matchings(descendant).each do |descendant_matching|
-              matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching + descendant_matching
-              if condition.matches_multiple_nodes?
-                matchings += extend_unordered_matching conditions, node, reduced_children, matching + descendant_matching
-              end
-            end
-          else
-            matchings += extend_unordered_matching reduced_conditions, node, reduced_children, matching
+        condition.matching_descendants(child, node).each do |_, descendant_parent, descendant|
+          condition.matchings(descendant, descendant_parent).each do |matching|
+            matchings += extend_unordered_matching reduced_conditions, node, reduced_children, partial_matching + matching
             if condition.matches_multiple_nodes?
-              matchings += extend_unordered_matching conditions, node, reduced_children, matching
+              matchings += extend_unordered_matching conditions, node, reduced_children, partial_matching + matching
             end
           end
         end
@@ -231,143 +150,5 @@ class Rule
     end
 
     matchings
-  end
-
-  class Matching
-    attr_reader :restriction, :modifications
-
-    def initialize options = {}
-      @variables = {}
-      @restriction = simplify options.has_key?(:restriction) ? options[:restriction] : true
-      @modifications = options[:modifications] || []
-    end
-
-    def restriction_met?
-      @variables.each do |variable, hsh|
-        if hsh[:eq].empty? && !hsh[:neq].empty?
-          raise 'Can not check if a node is not equal to a variable that does not have a matching node'
-        elsif hsh[:eq].all? {|node| node == hsh[:eq][0]} && hsh[:neq].all? {|node| node != hsh[:eq][0]}
-          hsh[:node] = hsh[:eq][0]
-        end
-      end
-
-      check restriction
-    end
-
-    def transform node
-      old_node = node.dup
-      (0...@modifications.length).to_a.reverse.each do |modification_index|
-        modification = @modifications[modification_index]
-        if modification[0] == :remove
-          if modification[2].is_a? Node
-            removal_index = modification[1].children.find_index {|child| child == modification[2]}
-          elsif modification[2].is_a? Fixnum
-            removal_index = modification[2]
-          else
-            raise "Don't know how to apply modification #{modification.inspect}"
-          end
-          raise 'Could not remove non-existent child' if !modification[1].children.delete_at removal_index
-        elsif modification[0] == :create
-          raise 'Tried to insert at invalid position' if modification[3] > modification[2].children.length
-          modification[2].children.insert modification[3], create(modification[1])
-        else
-          raise "Don't know how to apply modification #{modification.inspect}"
-        end
-      end
-      node != old_node
-    end
-
-    def + other
-      restriction = [:and, @restriction, other.restriction]
-      modifications = @modifications + other.modifications
-      Matching.new :restriction => restriction, :modifications => modifications
-    end
-
-    private
-
-    def create condition
-      if condition.variable
-        copy = @variables[condition.variable][:node].dup
-        label = condition.label == '*' ? copy.label : condition.label
-        Node.new label, copy.children, copy.children_are_ordered?, copy.value
-      elsif condition.value
-        Node.new condition.label, nil, nil, condition.value
-      elsif condition.child_rule
-        children = condition.child_rule.conditions.map {|c| create c}
-        Node.new condition.label, children, condition.child_rule.conditions_are_ordered?, nil
-      else
-        raise "Don't know how to create node for #{condition.inspect}"
-      end
-    end
-
-    def simplify restriction
-      return restriction if [true, false].include? restriction
-      case restriction[0]
-      when :eq
-        @variables[restriction[1]] ||= {:eq => [], :neq => []}
-        @variables[restriction[1]][:eq].push restriction[2]
-        restriction
-      when :neq
-        @variables[restriction[1]] ||= {:eq => [], :neq => []}
-        @variables[restriction[1]][:neq].push restriction[2]
-        restriction
-      when :and
-        r1 = simplify restriction[1]
-        r2 = simplify restriction[2]
-        if r1 == false || r2 == false
-          false
-        elsif r1 == true
-          r2
-        elsif r2 == true
-          r1
-        else
-          [:and, r1, r2]
-        end
-      when :or
-        r1 = simplify restriction[1]
-        r2 = simplify restriction[2]
-        if r1 == true || r2 == true
-          true
-        elsif r1 == false
-          r2
-        elsif r2 == false
-          r1
-        else
-          [:or, r1, r2]
-        end
-      when :not
-        if [true, false].include? restriction[1]
-          !restriction[1]
-        elsif restriction[1][0] == :eq
-          [:neq, restriction[1][1], restriction[1][2]]
-        elsif restriction[1][0] == :neq
-          [:eq, restriction[1][1], restriction[1][2]]
-        elsif restriction[1][0] == :not
-          simplify restriction[1][1]
-        elsif restriction[1][0] == :and
-          simplify [:or, [:not, restriction[1][1]], [:not, restriction[1][2]]]
-        elsif restriction[1][0] == :or
-          simplify [:and, [:not, restriction[1][1]], [:not, restriction[1][2]]]
-        end
-      else
-        raise "Don't know how to simplify #{restriction.inspect}"
-      end
-    end
-
-    def check restriction
-      return restriction if [true, false].include? restriction
-      case restriction[0]
-      when :eq
-        restriction[2].equals_except_label? @variables[restriction[1]][:node]
-      when :neq
-        !restriction[2].equals_except_label?(@variables[restriction[1]][:node])
-      when :and
-        check(restriction[1]) && check(restriction[2])
-      when :or
-        check(restriction[1]) || check(restriction[2])
-      else
-        raise "Don't know how to check #{restriction.inspect}"
-      end
-    end
   end
 end

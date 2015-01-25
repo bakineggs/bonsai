@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/../../../parser/condition'
+require File.dirname(__FILE__) + '/matching'
 
 class Condition
   def matches? node
@@ -20,5 +21,39 @@ class Condition
     else
       []
     end
+  end
+
+  def matchings node, parent
+    if child_rule
+      matchings = child_rule.matchings node
+    else
+      matchings = [Matching.new]
+    end
+
+    matchings.map! do |matching|
+      if variable
+        matching += Matching.new :restriction => [:eq, variable, node]
+      end
+
+      matching
+    end
+
+    if removes_node?
+      if parent.children_are_ordered?
+        removal_args = []
+        parent.children.each_with_index do |child, index|
+          removal_args.push index if child == node
+        end
+      else
+        removal_args = [node]
+      end
+      matchings.map! do |matching|
+        removal_args.map do |removal_arg|
+          matching + Matching.new(:modifications => [[:remove, parent, removal_arg]])
+        end
+      end.flatten!
+    end
+
+    matchings
   end
 end
