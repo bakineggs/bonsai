@@ -27,10 +27,14 @@ RSpec.shared_examples 'a Bonsai implementation' do
     return state if lines.empty?
     depth = lines.first.match(/^ */)[0].length
 
+    raise 'A node can not be in between levels' if depth % 2 == 1
+
     parent = nil
     child_lines = []
     lines.each do |line|
-      if line.match /^ {#{depth}} /
+      if line.match /^ {#{depth}}   /
+        'A node can not be more than one level below its parent'
+      elsif line.match /^ {#{depth}}  /
         child_lines.push line
       elsif match = line.match(/^ {#{depth}}(\^|[A-Za-z0-9 ]+):(:)?( (-?\d+|(-?\d+\.\d+)|"(.*)"))?$/)
         if parent
