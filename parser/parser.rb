@@ -3,19 +3,19 @@ require File.dirname(__FILE__) + '/condition'
 
 class Parser
   class Line < String
-    attr_accessor :line_number
+    attr_reader :line_number
 
     def initialize line, line_number
-      self.line_number = line_number
+      @line_number = line_number
       super line
     end
   end
 
   class Error < StandardError
-    attr_accessor :line
+    attr_reader :line
 
     def initialize message, line
-      self.line = line
+      @line = line
       super message
     end
   end
