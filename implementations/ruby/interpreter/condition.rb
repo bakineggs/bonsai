@@ -31,10 +31,8 @@ class Condition
     end
 
     matchings.map! do |matching|
-      if variable
-        matching += Matching.new :restriction => [:eq, variable, node]
-      end
-
+      matching += Matching.new :restriction => [:eq, variable, node] if variable
+      matching = Matching.new :restriction => [:not, matching.restriction] if prevents_match?
       matching
     end
 
