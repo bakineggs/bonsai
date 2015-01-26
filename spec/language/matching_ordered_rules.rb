@@ -239,4 +239,41 @@ RSpec.shared_examples 'matching ordered rules' do
       Bar:
       Baz:
   EOS
+
+  _it 'matches a removing condition in an ordered rule with an in order sibling', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz:
+        Qux:
+
+    ^:
+      Foo::
+        Baz:
+        -Qux:
+  EOR
+    Foo::
+      Bar:
+      Baz:
+  EOS
+
+  _it 'does not match a removing condition in an ordered rule with an out of order sibling', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz:
+        Qux:
+
+    ^:
+      Foo::
+        Baz:
+        -Bar:
+  EOR
+    Foo::
+      Bar:
+      Baz:
+      Qux:
+  EOS
 end
