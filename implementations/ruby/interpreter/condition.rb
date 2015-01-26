@@ -23,7 +23,7 @@ class Condition
     end
   end
 
-  def matchings node, parent
+  def matchings node, parent, removal_index = nil, removal_index_parent = nil
     if child_rule
       matchings = child_rule.matchings node
     else
@@ -38,9 +38,13 @@ class Condition
 
     if removes_node?
       if parent.children_are_ordered?
-        removal_args = []
-        parent.children.each_with_index do |child, index|
-          removal_args.push index if child == node
+        if removal_index && parent == removal_index_parent
+          removal_args = [removal_index]
+        else
+          removal_args = []
+          parent.children.each_with_index do |child, index|
+            removal_args.push index if child == node
+          end
         end
       else
         removal_args = [node]

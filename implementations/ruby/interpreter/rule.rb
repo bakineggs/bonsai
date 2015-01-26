@@ -69,7 +69,7 @@ class Rule
 
     else
       condition.matching_descendants(child, node).each do |_, descendant_parent, descendant|
-        condition.matchings(descendant, descendant_parent).each do |matching|
+        condition.matchings(descendant, descendant_parent, child_index, node).each do |matching|
           matchings += extend_ordered_matching condition_index + 1, node, child_index + 1, partial_matching + matching
           if condition.matches_multiple_nodes?
             matchings += extend_ordered_matching condition_index, node, child_index + 1, partial_matching + matching
@@ -126,7 +126,6 @@ class Rule
           end
         end
       end
-
     end
 
     matchings
