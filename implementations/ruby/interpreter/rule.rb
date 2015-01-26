@@ -1,5 +1,5 @@
-require File.dirname(__FILE__) + '/../../../parser/rule'
-require File.dirname(__FILE__) + '/matching'
+require_relative '../../../parser/rule'
+require_relative 'matching'
 
 class Rule
   def transform node

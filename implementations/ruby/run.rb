@@ -1,5 +1,5 @@
-require File.dirname(__FILE__) + '/interpreter/interpreter'
-require File.dirname(__FILE__) + '/../../parser/parser'
+require_relative 'interpreter/interpreter'
+require_relative '../../parser/parser'
 
 begin
   puts Interpreter.new(Parser.new.parse File.read ARGV[0]).run

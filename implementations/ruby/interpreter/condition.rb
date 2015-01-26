@@ -1,5 +1,5 @@
-require File.dirname(__FILE__) + '/../../../parser/condition'
-require File.dirname(__FILE__) + '/matching'
+require_relative '../../../parser/condition'
+require_relative 'matching'
 
 class Condition
   def matches? node

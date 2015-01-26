@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/rule'
+require_relative 'rule'
 
 class Condition
   attr_reader :node_type, :child_rule, :value, :variable

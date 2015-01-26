@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/parser'
+require_relative 'parser'
 
 class Compiler
   def compile program

@@ -1,6 +1,6 @@
 require 'tempfile'
-require File.dirname(__FILE__) + '/../../../spec/language_spec'
-require File.dirname(__FILE__) + '/../compiler/compiler'
+require_relative '../../../spec/language_spec'
+require_relative '../compiler/compiler'
 
 describe 'the C implementation' do
   def run_program options

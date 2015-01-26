@@ -1,8 +1,8 @@
-require File.dirname(__FILE__) + '/../../../parser/rule'
-require File.dirname(__FILE__) + '/../../../parser/condition'
-require File.dirname(__FILE__) + '/node'
-require File.dirname(__FILE__) + '/rule'
-require File.dirname(__FILE__) + '/condition'
+require_relative '../../../parser/rule'
+require_relative '../../../parser/condition'
+require_relative 'node'
+require_relative 'rule'
+require_relative 'condition'
 
 class Interpreter
   def initialize rules

@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/compiler/compiler'
+require_relative 'compiler/compiler'
 
 begin
   puts Compiler.new.compile File.read ARGV[0]

@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/node'
+require_relative 'node'
 
 class Matching
   attr_reader :restriction, :modifications

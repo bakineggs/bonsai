@@ -1,5 +1,5 @@
-require File.dirname(__FILE__) + '/rule'
-require File.dirname(__FILE__) + '/condition'
+require_relative 'rule'
+require_relative 'condition'
 
 class Parser
   class Line < String

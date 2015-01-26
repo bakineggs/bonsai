@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/condition'
+require_relative 'condition'
 
 class Rule
   attr_reader :conditions, :code_segment, :definition
