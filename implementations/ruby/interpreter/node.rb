@@ -50,7 +50,7 @@ class Node
   end
 
   def equals_except_label? other
-    if value
+    if value || other.value
       value == other.value
     elsif children_are_ordered? != other.children_are_ordered?
       false

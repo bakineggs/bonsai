@@ -172,6 +172,115 @@ RSpec.shared_examples 'matching ordered rules' do
       Qux:
   EOS
 
+  _it 'does not match a condition in an ordered rule with an equal sibling not in the sequence', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar: 1
+        Baz:
+        Bar: 2
+
+    ^:
+      Foo::
+        Baz:
+        Bar: X
+      !Matched: X
+      +Matched: X
+  EOR
+    Foo::
+      Bar: 1
+      Baz:
+      Bar: 2
+    Matched: 2
+  EOS
+
+  _it 'matches a descendant condition in an ordered rule with a child node', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+
+    ^:
+      Foo::
+        ...Bar:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+    Matched:
+  EOS
+
+  _it 'matches a descendant condition in an ordered rule with a child node and a descendant node', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+          Baz:
+            Bar: 1
+
+    ^:
+      Foo::
+        ...Bar: X
+      !Matched: X
+      +Matched: X
+  EOR
+    Foo::
+      Bar:
+        Baz:
+          Bar: 1
+    Matched:
+      Baz:
+        Bar: 1
+    Matched: 1
+  EOS
+
+  _it 'matches a descendant condition in an ordered rule with a descendant node', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+          Baz:
+
+    ^:
+      Foo::
+        ...Baz:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+        Baz:
+    Matched:
+  EOS
+
+  _it 'matches a descendant condition in an ordered rule with any descendant node', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+          Baz: 1
+        Qux:
+          Baz:
+            Foo: 2
+
+    ^:
+      Foo::
+        ...Baz: X
+      !Matched: X
+      +Matched: X
+  EOR
+    Foo::
+      Bar:
+        Baz: 1
+      Qux:
+        Baz:
+          Foo: 2
+    Matched: 1
+    Matched:
+      Foo: 2
+  EOS
+
   _it 'matches a preventing condition in an ordered rule with a non-matching ordered child', <<-EOR, <<-EOS
     ^:
       !Foo::
