@@ -41,4 +41,18 @@ RSpec.shared_examples 'visiting nodes' do
       Bar:
     Baz:
   EOS
+
+  _it 'does not continue to apply rules to a node that is not transformed', <<-EOR, <<-EOS
+    ^:
+      !Foo:
+      +Foo:
+        Bar:
+
+    Foo:
+      -Bar:
+      +Bar:
+  EOR
+    Foo:
+      Bar:
+  EOS
 end
