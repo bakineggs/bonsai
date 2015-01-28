@@ -34,6 +34,51 @@ RSpec.shared_examples 'preventing matches' do
       Bar:
   EOS
 
+  _it 'does not match preventing conditions with descendant nodes with the same label and value', <<-EOR, <<-EOS
+    ^:
+      !Foo:
+      +Ready:
+      +Foo:
+        Bar:
+          Baz: 7.3
+
+    ^:
+      Ready:
+      !Baz: 7.3
+      !Matched:
+      +Matched:
+  EOR
+    Ready:
+    Foo:
+      Bar:
+        Baz: 7.3
+    Matched:
+  EOS
+
+  _it 'does not match preventing conditions with descendant nodes with the same label and a matching child rule', <<-EOR, <<-EOS
+    ^:
+      !Foo:
+      +Ready:
+      +Foo:
+        Bar:
+          Baz:
+            Qux:
+
+    ^:
+      Ready:
+      !Baz:
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Ready:
+    Foo:
+      Bar:
+        Baz:
+          Qux:
+    Matched:
+  EOS
+
   _it 'matches descendant preventing conditions with nodes with the same label and value', <<-EOR, <<-EOS
     ^:
       !Foo:

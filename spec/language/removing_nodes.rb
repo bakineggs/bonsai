@@ -29,6 +29,45 @@ RSpec.shared_examples 'removing nodes' do
     Matched:
   EOS
 
+  _it 'does not match removing conditions with descendant nodes with the same label and value', <<-EOR, <<-EOS
+    ^:
+      !Matched:
+      !Foo:
+      +Foo:
+        Bar:
+          Baz: 7.3
+
+    ^:
+      -Baz: 7.3
+      !Matched:
+      +Matched:
+  EOR
+    Foo:
+      Bar:
+        Baz: 7.3
+  EOS
+
+  _it 'does not match removing conditions with descendant nodes with the same label and a matching child rule', <<-EOR, <<-EOS
+    ^:
+      !Matched:
+      !Foo:
+      +Foo:
+        Bar:
+          Baz:
+            Qux:
+
+    ^:
+      -Baz:
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Foo:
+      Bar:
+        Baz:
+          Qux:
+  EOS
+
   _it 'matches descendant removing conditions with nodes with the same label and value', <<-EOR, <<-EOS
     ^:
       !Matched:
