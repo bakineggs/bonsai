@@ -281,6 +281,124 @@ RSpec.shared_examples 'matching ordered rules' do
       Foo: 2
   EOS
 
+  _it 'does not match a singly-matched condition in an ordered rule with 0 nodes', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Qux:
+
+    ^:
+      Foo::
+        Bar:
+        Baz:
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Qux:
+  EOS
+
+  _it 'matches a multiply-matched condition in an ordered rule with 0 nodes', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Qux:
+
+    ^:
+      Foo::
+        Bar:
+        Baz:*
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Qux:
+    Matched:
+  EOS
+
+  _it 'matches a multiply-matched condition in an ordered rule with a single node', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz:
+        Qux:
+
+    ^:
+      Foo::
+        Bar:
+        Baz:*
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Baz:
+      Qux:
+    Matched:
+  EOS
+
+  _it 'does not match a singly-matched condition in an ordered rule with multiple nodes', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz: 1
+        Baz:
+          Foobar:
+        Qux:
+
+    ^:
+      Foo::
+        Bar:
+        Baz:
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Baz: 1
+      Baz:
+        Foobar:
+      Qux:
+  EOS
+
+  _it 'matches a multiply-matched condition in an ordered rule with multiple nodes', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz: 1
+        Baz:
+          Foobar:
+        Qux:
+
+    ^:
+      Foo::
+        Bar:
+        Baz:*
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Baz: 1
+      Baz:
+        Foobar:
+      Qux:
+    Matched:
+  EOS
+
+
   _it 'matches a preventing condition in an ordered rule with a non-matching ordered child', <<-EOR, <<-EOS
     ^:
       !Foo::
