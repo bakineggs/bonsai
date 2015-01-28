@@ -132,6 +132,25 @@ RSpec.shared_examples 'matching ordered rules' do
     Matched:
   EOS
 
+  _it 'does not match an ordered rule with ordered children that does not match all conditions', <<-EOR, <<-EOS
+    ^:
+      !Foo::
+      +Foo::
+        Bar:
+        Baz:
+
+    ^:
+      Foo::
+        Baz:
+        Qux:
+      !Matched:
+      +Matched:
+  EOR
+    Foo::
+      Bar:
+      Baz:
+  EOS
+
   _it 'does not match an ordered rule that must match all nodes with ordered children that match in order starting in the middle', <<-EOR, <<-EOS
     ^:
       !Foo::
