@@ -24,7 +24,7 @@ class Node
   end
 
   def children_are_ordered?
-    !!@children_are_ordered
+    @children_are_ordered
   end
 
   def descendants parent = nil
