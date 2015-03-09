@@ -106,9 +106,9 @@ class Matching
       if [true, false].include? restriction[1]
         !restriction[1]
       elsif restriction[1][0] == :eq
-        [:neq, restriction[1][1], restriction[1][2]]
+        simplify [:neq, restriction[1][1], restriction[1][2]]
       elsif restriction[1][0] == :neq
-        [:eq, restriction[1][1], restriction[1][2]]
+        simplify [:eq, restriction[1][1], restriction[1][2]]
       elsif restriction[1][0] == :not
         simplify restriction[1][1]
       elsif restriction[1][0] == :and
@@ -125,9 +125,9 @@ class Matching
     return restriction if [true, false].include? restriction
     case restriction[0]
     when :eq
-      restriction[2].equals_except_label? @variables[restriction[1]][:node]
+      @variables[restriction[1]][:eq].all? {|node| restriction[2].equals_except_label? node}
     when :neq
-      !restriction[2].equals_except_label?(@variables[restriction[1]][:node])
+      @variables[restriction[1]][:eq].all? {|node| !restriction[2].equals_except_label? node}
     when :and
       check(restriction[1]) && check(restriction[2])
     when :or
