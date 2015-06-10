@@ -96,6 +96,12 @@ class Rule
     reduced_conditions = conditions.dup
     reduced_conditions.delete_at reduced_conditions.find_index {|c| c == condition}
 
+    if condition.creates_node?
+      matching = partial_matching + Matching.new(:modifications => [[:create, condition, node, 0]])
+      matchings += extend_unordered_matching reduced_conditions, node, children, matching
+      return matchings
+    end
+
     if condition.matches_multiple_nodes?
       matchings += extend_unordered_matching reduced_conditions, node, children, partial_matching
     end
@@ -109,10 +115,6 @@ class Rule
           end
         end
       end
-      matchings += extend_unordered_matching reduced_conditions, node, children, matching
-
-    elsif condition.creates_node?
-      matching = partial_matching + Matching.new(:modifications => [[:create, condition, node, 0]])
       matchings += extend_unordered_matching reduced_conditions, node, children, matching
 
     else
