@@ -44,6 +44,12 @@ class Rule
     matchings = []
     condition = conditions[condition_index]
 
+    if condition.creates_node?
+      matching = partial_matching + Matching.new(:modifications => [[:create, condition, node, child_index]])
+      matchings += extend_ordered_matching condition_index + 1, node, child_index, matching
+      return matchings
+    end
+
     if condition.matches_multiple_nodes?
       matchings += extend_ordered_matching condition_index + 1, node, child_index, partial_matching
     end
@@ -62,10 +68,6 @@ class Rule
       if condition.matches_multiple_nodes?
         matchings += extend_ordered_matching condition_index, node, child_index + 1, matching
       end
-
-    elsif condition.creates_node?
-      matching = partial_matching + Matching.new(:modifications => [[:create, condition, node, child_index]])
-      matchings += extend_ordered_matching condition_index + 1, node, child_index, matching
 
     else
       condition.matching_descendants(child, node).each do |_, descendant_parent, descendant|
