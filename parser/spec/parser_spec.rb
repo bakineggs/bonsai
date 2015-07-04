@@ -295,4 +295,20 @@ RSpec.describe Parser do
   EOS
     Condition could not be parsed
   EOM
+
+  _it 'allows variables that match multiple nodes', <<-EOS do |rules|
+    Foo:* X
+    Foo:* [Y]
+  EOS
+    expect(rules.first.conditions[0].variable).to eq 'X'
+    expect(rules.first.conditions[0].variable_matches_multiple_nodes?).to eq false
+    expect(rules.first.conditions[1].variable).to eq 'Y'
+    expect(rules.first.conditions[1].variable_matches_multiple_nodes?).to eq true
+  end
+
+  _err 'does not allow variables that match multiple nodes assigned to conditions that do not match multiple nodes', <<-EOS, 1, <<-EOM
+    Foo: [X]
+  EOS
+    A condition can not have a variable that matches multiple nodes without matching multiple nodes
+  EOM
 end
