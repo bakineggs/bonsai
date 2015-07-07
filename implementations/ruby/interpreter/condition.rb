@@ -32,7 +32,7 @@ class Condition
 
     unless variable_matches_multiple_nodes?
       matchings.map! do |matching|
-        matching += Matching.new :restriction => [:eq, variable, node] if variable
+        matching += Matching.new :restriction => [:eq, variable, node, variable_matches_labels?] if variable
         matching = Matching.new :restriction => [:not, matching.restriction] if prevents_match?
         matching
       end

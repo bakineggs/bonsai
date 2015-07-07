@@ -101,14 +101,17 @@ class Parser
   end
 
   def parse_condition line, depth = 0, child_lines = [], options = {}
-    unless match = line.match(/^#{'  ' * depth}([!+-])?(\.\.\.)?([A-Za-z0-9 ]+|\^|\*):(:)?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|"(.*)"|([A-Za-z][A-Za-z0-9 ]*)|(\[([A-Za-z][A-Za-z0-9 ]*)\])))?$/)
+    unless match = line.match(/^#{'  ' * depth}([!+-])?(\.\.\.)?([A-Za-z0-9 ]+|\^|\*):(:)?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|"(.*)"|((=?)([A-Za-z][A-Za-z0-9 ]*))|((=?)\[([A-Za-z][A-Za-z0-9 ]*)\])))?$/)
       raise Error.new 'Condition could not be parsed', line
     end
 
-    if match[13]
-      variable = match[13]
+    if match[14]
+      variable = match[16]
+      variable_matches_labels = match[15] == '='
+      variable_matches_multiple_nodes = true
     elsif match[11]
-      variable = match[11]
+      variable = match[13]
+      variable_matches_labels = match[12] == '='
     elsif match[10]
       value = match[10]
     elsif match[9]
@@ -126,7 +129,8 @@ class Parser
       :matches_multiple_nodes => match[6] == '*',
       :value => value,
       :variable => variable,
-      :variable_matches_multiple_nodes => match[12] != nil,
+      :variable_matches_labels => variable_matches_labels,
+      :variable_matches_multiple_nodes => variable_matches_multiple_nodes,
       :child_rule => value && child_lines.empty? ? nil : parse_rule(child_lines, depth + 1,
         :conditions_are_ordered => match[4] == ':',
         :must_match_all_nodes => match[5] == '=',

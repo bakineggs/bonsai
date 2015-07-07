@@ -311,4 +311,32 @@ RSpec.describe Parser do
   EOS
     A condition can not have a variable that matches multiple nodes without matching multiple nodes
   EOM
+
+  _it 'allows variables assigned to a wildcard label to require matching labels', <<-EOS do |rules|
+    *: A
+    *: =B
+    *:* [C]
+    *:* =[D]
+  EOS
+    expect(rules.first.conditions[0].variable).to eq 'A'
+    expect(rules.first.conditions[0].variable_matches_labels?).to eq false
+    expect(rules.first.conditions[1].variable).to eq 'B'
+    expect(rules.first.conditions[1].variable_matches_labels?).to eq true
+    expect(rules.first.conditions[2].variable).to eq 'C'
+    expect(rules.first.conditions[2].variable_matches_labels?).to eq false
+    expect(rules.first.conditions[3].variable).to eq 'D'
+    expect(rules.first.conditions[3].variable_matches_labels?).to eq true
+  end
+
+  _err 'does not allow variables that require matching labels assigned to conditions that do not use a wildcard label', <<-EOS, 1, <<-EOM
+    Foo: =X
+  EOS
+    A condition can not have a variable that matches labels without a wildcard label
+  EOM
+
+  _err 'does not allow variables that require matching labels assigned to conditions matching multiple nodes that do not use a wildcard label', <<-EOS, 1, <<-EOM
+    Foo:* =[X]
+  EOS
+    A condition can not have a variable that matches labels without a wildcard label
+  EOM
 end

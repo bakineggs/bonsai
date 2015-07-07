@@ -86,12 +86,12 @@ class Rule
         multi_matched.push condition.matching_descendants(child, node).map {|_, _, descendant| descendant}
         multi_matched.combinations.each do |neq_o|
           condition.matchings(neq_o.last, nil).each do |descendant_matching|
-            matching += Matching.new :restriction => [:or, [:not, descendant_matching.restriction], [:neq_o, condition.variable, neq_o]]
+            matching += Matching.new :restriction => [:or, [:not, descendant_matching.restriction], [:neq_o, condition.variable, neq_o, condition.variable_matches_labels?]]
           end
         end
         matchings += extend_ordered_matching condition_index, node, child_index + 1, matching, multi_matched
       else
-        matchings += extend_ordered_matching condition_index + 1, node, child_index, partial_matching + Matching.new(:restriction => [:eq_o, condition.variable, multi_matched])
+        matchings += extend_ordered_matching condition_index + 1, node, child_index, partial_matching + Matching.new(:restriction => [:eq_o, condition.variable, multi_matched, condition.variable_matches_labels?])
 
         return matchings if child_index == node.children.length
         child = node.children[child_index]
@@ -167,11 +167,11 @@ class Rule
           neq_u.map {|descendant| condition.matchings(descendant, nil)}.flatten.each do |descendant_matching|
             combined_descendant_matching += descendant_matching
           end
-          matching += Matching.new :restriction => [:or, [:not, combined_descendant_matching.restriction], [:neq_u, condition.variable, neq_u.sort]]
+          matching += Matching.new :restriction => [:or, [:not, combined_descendant_matching.restriction], [:neq_u, condition.variable, neq_u.sort, condition.variable_matches_labels?]]
         end
         matchings += extend_unordered_matching reduced_conditions, node, children, matching
       else
-        matchings += extend_unordered_matching reduced_conditions, node, children, partial_matching + Matching.new(:restriction => [:eq_u, condition.variable, multi_matched])
+        matchings += extend_unordered_matching reduced_conditions, node, children, partial_matching + Matching.new(:restriction => [:eq_u, condition.variable, multi_matched, condition.variable_matches_labels?])
         children.each do |child|
           reduced_children = children.dup
           reduced_children.delete_at reduced_children.find_index {|c| c == child}

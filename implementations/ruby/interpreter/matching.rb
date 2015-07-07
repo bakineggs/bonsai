@@ -70,35 +70,41 @@ class Matching
     return restriction if [true, false].include? restriction
     case restriction[0]
     when :eq
-      @variables[restriction[1]] ||= {:eq => []}
+      @variables[restriction[1]] ||= {:eq => [], :matches_labels => restriction[3]}
       raise "Can't have the same variable match single nodes and multiple nodes" if @variables[restriction[1]][:multi]
+      raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       @variables[restriction[1]][:eq].push restriction[2]
       restriction
     when :neq
-      @variables[restriction[1]] ||= {:eq => []}
+      @variables[restriction[1]] ||= {:eq => [], :matches_labels => restriction[3]}
       raise "Can't have the same variable match single nodes and multiple nodes" if @variables[restriction[1]][:multi]
+      raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       restriction
     when :eq_o
-      @variables[restriction[1]] ||= {:multi => true, :ordered => true, :eq => []}
+      @variables[restriction[1]] ||= {:multi => true, :ordered => true, :eq => [], :matches_labels => restriction[3]}
       raise "Can't have the same variable match single nodes and multiple nodes" unless @variables[restriction[1]][:multi]
       raise "Can't have the same variable match multiple ordered nodes and multiple unordered nodes" unless @variables[restriction[1]][:ordered]
+      raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       @variables[restriction[1]][:eq].push restriction[2]
       restriction
     when :neq_o
-      @variables[restriction[1]] ||= {:multi => true, :ordered => true, :eq => []}
+      @variables[restriction[1]] ||= {:multi => true, :ordered => true, :eq => [], :matches_labels => restriction[3]}
       raise "Can't have the same variable match single nodes and multiple nodes" unless @variables[restriction[1]][:multi]
       raise "Can't have the same variable match multiple ordered nodes and multiple unordered nodes" unless @variables[restriction[1]][:ordered]
+      raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       restriction
     when :eq_u
-      @variables[restriction[1]] ||= {:multi => true, :ordered => false, :eq => []}
+      @variables[restriction[1]] ||= {:multi => true, :ordered => false, :eq => [], :matches_labels => restriction[3]}
       raise "Can't have the same variable match single nodes and multiple nodes" unless @variables[restriction[1]][:multi]
       raise "Can't have the same variable match multiple ordered nodes and multiple unordered nodes" if @variables[restriction[1]][:ordered]
+      raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       @variables[restriction[1]][:eq].push restriction[2].sort
       restriction
     when :neq_u
-      @variables[restriction[1]] ||= {:multi => true, :ordered => false, :eq => []}
+      @variables[restriction[1]] ||= {:multi => true, :ordered => false, :eq => [], :matches_labels => restriction[3]}
       raise "Can't have the same variable match single nodes and multiple nodes" unless @variables[restriction[1]][:multi]
       raise "Can't have the same variable match multiple ordered nodes and multiple unordered nodes" if @variables[restriction[1]][:ordered]
+      raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       restriction
     when :and
       r1 = simplify restriction[1]
@@ -128,17 +134,17 @@ class Matching
       if [true, false].include? restriction[1]
         !restriction[1]
       elsif restriction[1][0] == :eq
-        simplify [:neq, restriction[1][1], restriction[1][2]]
+        simplify [:neq, restriction[1][1], restriction[1][2], restriction[1][3]]
       elsif restriction[1][0] == :neq
-        simplify [:eq, restriction[1][1], restriction[1][2]]
+        simplify [:eq, restriction[1][1], restriction[1][2], restriction[1][3]]
       elsif restriction[1][0] == :eq_o
-        simplify [:neq_o, restriction[1][1], restriction[1][2]]
+        simplify [:neq_o, restriction[1][1], restriction[1][2], restriction[1][3]]
       elsif restriction[1][0] == :neq_o
-        simplify [:eq_o, restriction[1][1], restriction[1][2]]
+        simplify [:eq_o, restriction[1][1], restriction[1][2], restriction[1][3]]
       elsif restriction[1][0] == :eq_u
-        simplify [:neq_u, restriction[1][1], restriction[1][2]]
+        simplify [:neq_u, restriction[1][1], restriction[1][2], restriction[1][3]]
       elsif restriction[1][0] == :neq_u
-        simplify [:eq_u, restriction[1][1], restriction[1][2]]
+        simplify [:eq_u, restriction[1][1], restriction[1][2], restriction[1][3]]
       elsif restriction[1][0] == :not
         simplify restriction[1][1]
       elsif restriction[1][0] == :and
@@ -155,15 +161,15 @@ class Matching
     return restriction if [true, false].include? restriction
     case restriction[0]
     when :eq
-      @variables[restriction[1]][:eq].all? {|node| restriction[2].equals_except_label? node}
+      @variables[restriction[1]][:eq].all? {|node| restriction[3] ? restriction[2] == node : restriction[2].equals_except_label?(node)}
     when :neq
       raise 'Can not check if a node is not equal to a variable that does not have a matching node' if @variables[restriction[1]][:eq].empty?
-      @variables[restriction[1]][:eq].all? {|node| !restriction[2].equals_except_label? node}
+      @variables[restriction[1]][:eq].all? {|node| restriction[3] ? restriction[2] != node : !restriction[2].equals_except_label?(node)}
     when :eq_o, :eq_u
-      @variables[restriction[1]][:eq].all? {|nodes| nodes.length == restriction[2].length && nodes.zip(restriction[2]).all? {|node, expected| expected.equals_except_label? node}}
+      @variables[restriction[1]][:eq].all? {|nodes| nodes.length == restriction[2].length && nodes.zip(restriction[2]).all? {|node, expected| restriction[3] ? expected == node : expected.equals_except_label?(node)}}
     when :neq_o, :neq_u
       raise 'Can not check if nodes are not equal to a variable that does not have matching nodes' if @variables[restriction[1]][:eq].empty?
-      @variables[restriction[1]][:eq].all? {|nodes| nodes.length != restriction[2].length || nodes.zip(restriction[2]).any? {|node, expected| !expected.equals_except_label? node}}
+      @variables[restriction[1]][:eq].all? {|nodes| nodes.length != restriction[2].length || nodes.zip(restriction[2]).any? {|node, expected| restriction[3] ? expected != node : !expected.equals_except_label?(node)}}
     when :and
       check(restriction[1]) && check(restriction[2])
     when :or

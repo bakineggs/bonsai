@@ -11,6 +11,7 @@ class Condition
     @matches_multiple_nodes = !!options[:matches_multiple_nodes]
     @value = options[:value]
     @variable = options[:variable]
+    @variable_matches_labels = !!options[:variable_matches_labels]
     @variable_matches_multiple_nodes = !!options[:variable_matches_multiple_nodes]
 
     raise Error.new 'A condition must have a non-empty String label' unless @label.is_a?(String) && !@label.empty?
@@ -22,6 +23,9 @@ class Condition
 
     raise Error.new 'A condition can not have both a value and a child rule' if @value && @child_rule
     raise Error.new 'A condition can not have both a value and a variable' if @value && @variable
+
+    raise Error.new 'A condition can not have a variable that matches labels without a variable' if @variable_matches_labels && !@variable
+    raise Error.new 'A condition can not have a variable that matches labels without a wildcard label' if @variable_matches_labels && @label != '*'
 
     raise Error.new 'A condition can not have a variable that matches multiple nodes without matching multiple nodes' if @variable_matches_multiple_nodes && !@matches_multiple_nodes
     raise Error.new 'A condition can not have a variable that matches multiple nodes without a variable' if @variable_matches_multiple_nodes && !@variable
@@ -74,6 +78,10 @@ class Condition
 
   def matches_multiple_nodes?
     @matches_multiple_nodes
+  end
+
+  def variable_matches_labels?
+    @variable_matches_labels
   end
 
   def variable_matches_multiple_nodes?
