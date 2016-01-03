@@ -1,7 +1,5 @@
-class Outputter
-  def initialize state
-    @state = state
-  end
+class Outputter::Ruby < Outputter
+  @@outputters['ruby'] = self
 
   def output
     'puts "HelloWorld:"' # TODO

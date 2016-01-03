@@ -1,11 +1,11 @@
 require_relative '../../../parser/rule'
 
 class Rule
-  def proceeding_states state
-    [] # TODO
+  def prevents? rule
+    false # TODO
   end
 
-  def fingerprint
-    # TODO
+  def affects? rule
+    true # TODO
   end
 end
