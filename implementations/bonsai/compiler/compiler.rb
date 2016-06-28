@@ -2,12 +2,16 @@ require_relative '../../../parser/parser'
 
 class Compiler
   def compile program
-    compiled = File.read File.dirname(__FILE__) + '/../rules/tree_root_creation.bonsai'
-    compiled += File.read File.dirname(__FILE__) + '/../rules/check_state_transitions.bonsai'
-    compiled += File.read File.dirname(__FILE__) + '/../rules/node_transformation.bonsai'
-    compiled += File.read File.dirname(__FILE__) + '/../rules/condition_matching.bonsai'
-    compiled += File.read File.dirname(__FILE__) + '/../rules/rule_matching.bonsai'
-    compiled += File.read File.dirname(__FILE__) + '/../rules/rule_matching_ordered.bonsai'
+    compiled = %w(
+      tree_root_creation
+      check_state_transitions
+      node_transformation
+      condition_matching
+      rule_matching
+      rule_matching_ordered
+    ).map do |file|
+      File.read File.dirname(__FILE__) + "/../rules/#{file}.bonsai"
+    end.join "\n"
 
     compiled += "\n^:\n  !Rules:\n  +Rules:\n"
     Parser.new.parse(program).each do |rule|
