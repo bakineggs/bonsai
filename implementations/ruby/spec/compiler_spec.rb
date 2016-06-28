@@ -2,7 +2,7 @@ require_relative '../../../spec/language_spec'
 require_relative '../../../parser/parser'
 require_relative '../compiler/compiler'
 
-RSpec.describe 'The Ruby implementation of Bonsai' do
+RSpec.describe 'The Ruby compiled implementation of Bonsai' do
   def run program
     ruby_code = Compiler.new(Parser.new.parse program).compile 'ruby'
     Tempfile.create 'bonsai_test' do |file|

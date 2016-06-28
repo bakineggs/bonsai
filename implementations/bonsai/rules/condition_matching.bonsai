@@ -1,35 +1,31 @@
 # A condition does not match a node if the condition's label is not * and does not match the node's label
 Rules:
-  ...
-    Condition:
-      !MatchesDescendants:
-      !CreatesNode:
-      !DoesNotMatch: N
-      +DoesNotMatch: N
-      Label: L
+  ...Condition:
+    !MatchesDescendants:
+    !CreatesNode:
+    !DoesNotMatch: N
+    +DoesNotMatch: N
+    Label: L
 Tree:
-  ...
-    Node: N
-      !ReadyToBeChecked:
-      !NeedsToBeChecked:
-      !Label: L
+  ...Node: N
+    !ReadyToBeChecked:
+    !NeedsToBeChecked:
+    !Label: L
 !WildcardLabel: L
 
 # A condition does not match a node if the condition's value does not match the node's value
 Rules:
-  ...
-    Condition:
-      !MatchesDescendants:
-      !CreatesNode:
-      !DoesNotMatch: N
-      +DoesNotMatch: N
-      Value: V
+  ...Condition:
+    !MatchesDescendants:
+    !CreatesNode:
+    !DoesNotMatch: N
+    +DoesNotMatch: N
+    Value: V
 Tree:
-  ...
-    Node: N
-      !ReadyToBeChecked:
-      !NeedsToBeChecked:
-      !Value: V
+  ...Node: N
+    !ReadyToBeChecked:
+    !NeedsToBeChecked:
+    !Value: V
 
 # A condition does not match a node if the condition's child rule does not match the node
 Condition:
@@ -43,42 +39,36 @@ Condition:
 
 # A condition that matches descendants does not match a node if all descendants do not match the condition and the condition's label is not * and does not match the node's label
 Rules:
-  ...
-    Condition:
-      MatchesDescendants:
-      !CreatesNode:
-      !DoesNotMatch: N
-      +DoesNotMatch: N
-      !DoesNotMatch: M
-      Label: L
+  ...Condition:
+    MatchesDescendants:
+    !CreatesNode:
+    !DoesNotMatch: N
+    +DoesNotMatch: N
+    !DoesNotMatch: M
+    Label: L
 Tree:
-  ...
-    Node: N
-      !ReadyToBeChecked:
-      !NeedsToBeChecked:
-      !...
-        Node: M
-      !Label: L
+  ...Node: N
+    !ReadyToBeChecked:
+    !NeedsToBeChecked:
+    !...Node: M
+    !Label: L
 !WildcardLabel: L
 
 # A condition that matches descendants does not match a node if all descendants do not match the condition and the condition's value does not match the node's value
 Rules:
-  ...
-    Condition:
-      MatchesDescendants:
-      !CreatesNode:
-      !DoesNotMatch: N
-      +DoesNotMatch: N
-      !DoesNotMatch: M
-      Value: V
+  ...Condition:
+    MatchesDescendants:
+    !CreatesNode:
+    !DoesNotMatch: N
+    +DoesNotMatch: N
+    !DoesNotMatch: M
+    Value: V
 Tree:
-  ...
-    Node: N
-      !ReadyToBeChecked:
-      !NeedsToBeChecked:
-      !...
-        Node: M
-      !Value: V
+  ...Node: N
+    !ReadyToBeChecked:
+    !NeedsToBeChecked:
+    !...Node: M
+    !Value: V
 
 # A condition that matches descendants does not match a node if all descendants do not match the condition and the condition's child rule does not match the node
 Condition:
@@ -90,8 +80,7 @@ Condition:
   !DoesNotMatch: M
   Rule:
     DoesNotMatch: N
-      !...
-        Node: M
+      !...Node: M
 
 # Conditions need to mismatch nodes without the ready flag, but the child rules mismatch nodes with the ready flag
 Condition:
@@ -100,35 +89,31 @@ Condition:
 
 # A condition matches a node if the condition's label and value match the node's label and value
 Rules:
-  ...
-    Condition:
-      !CreatesNode:
-      !Matches: N
-      +Matches: N
-      Label: L
-      Value: V
+  ...Condition:
+    !CreatesNode:
+    !Matches: N
+    +Matches: N
+    Label: L
+    Value: V
 Tree:
-  ...
-    Node: N
-      !ReadyToBeChecked:
-      !NeedsToBeChecked:
-      Label: L
-      Value: V
+  ...Node: N
+    !ReadyToBeChecked:
+    !NeedsToBeChecked:
+    Label: L
+    Value: V
 
 # A condition matches a node if the condition's label is * and the condition's value matches the node's value
 Rules:
-  ...
-    Condition:
-      !Matches: N
-      +Matches: N
-      Label: L
-      Value: V
+  ...Condition:
+    !Matches: N
+    +Matches: N
+    Label: L
+    Value: V
 Tree:
-  ...
-    Node: N
-      !ReadyToBeChecked:
-      !NeedsToBeChecked:
-      Value: V
+  ...Node: N
+    !ReadyToBeChecked:
+    !NeedsToBeChecked:
+    Value: V
 WildcardLabel: L
 
 # A condition matches a node if the condition's label and child rule match the node's label and the node itself
@@ -144,31 +129,27 @@ Condition:
 
 # A condition matches a node if the condition's label is * and the condition's child rule natches the node
 Rules:
-  ...
-    Condition:
-      !MatchesRule: N
-      +MatchesRule: N
-      +Matches: N
-      Label: L
-      Rule:
-        Matches: N
+  ...Condition:
+    !MatchesRule: N
+    +MatchesRule: N
+    +Matches: N
+    Label: L
+    Rule:
+      Matches: N
 WildcardLabel: L
 
 # A condition that matches descendants matches a node if the condition matches a descendant of the node
 Rules:
-  ...
-    Condition:
-      MatchesDescendants:
-      !Matches: N
-      +Matches: N
-      Matches: M
+  ...Condition:
+    MatchesDescendants:
+    !Matches: N
+    +Matches: N
+    Matches: M
 Tree:
-  ...
-    Node: N
-      !ReadyToBeChecked:
-      !NeedsToBeChecked:
-      ...
-        Node: M
+  ...Node: N
+    !ReadyToBeChecked:
+    !NeedsToBeChecked:
+    ...Node: M
 
 # Conditions need to match nodes without the ready flag, but the child rules match nodes with the ready flag
 Condition:

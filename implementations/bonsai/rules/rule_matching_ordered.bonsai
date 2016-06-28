@@ -1,22 +1,20 @@
 # An ordered matching begins with nothing
 Rules:
-  ...
-    Rule:
-      Conditions::
-      !Matching:
-        Node: N
-        ConditionsSeen::=
-      +Matching:
-        Node: N
-        ConditionsSeen::
-        ChildrenSeen::
-        Restriction:
-        Modifications::
+  ...Rule:
+    Conditions::
+    !Matching:
+      Node: N
+      ConditionsSeen::=
+    +Matching:
+      Node: N
+      ConditionsSeen::
+      ChildrenSeen::
+      Restriction:
+      Modifications::
 Tree:
-  ...
-    Node: N
-      ReadyToBeChecked:
-      Children::
+  ...Node: N
+    ReadyToBeChecked:
+    Children::
 
 # An ordered matching matches if all conditions and children are matched and the restriction is met
 Rule:
@@ -64,8 +62,8 @@ Rule:
 ### no child rule, no variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       !PreventsMatch:
@@ -78,31 +76,31 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
+      Condition:* [PreviousConditions]
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction: PreviousRestriction
     Modifications:: PreviousModifications
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction: PreviousRestriction
     Modifications:: PreviousModifications
@@ -110,8 +108,8 @@ Rule:
 ### no child rule, with variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       !PreventsMatch:
@@ -124,35 +122,35 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
+      Condition:* [PreviousConditions]
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications:: PreviousModifications
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
       Equal:
         Variable: Variable
         Node: Child
@@ -161,8 +159,8 @@ Rule:
 ### with child rule, no variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       !PreventsMatch:
@@ -173,7 +171,7 @@ Rule:
           Matches:
           Node: Child
           Restriction:=
-            *:* ChildRuleRestriction
+            *:* [ChildRuleRestriction]
           Modifications:: ChildRuleModifications
       !Variable:
       Matches: Child
@@ -181,60 +179,60 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
+      Condition:* [PreviousConditions]
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:=
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       ChildModifications:=
         ChildrenSeen::=
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Node: Child
         Modifications:: ChildRuleModifications
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       ChildModifications:
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Node: Child
         Modifications:: ChildRuleModifications
 
 ### with child rule, with variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       !PreventsMatch:
@@ -245,7 +243,7 @@ Rule:
           Matches:
           Node: Child
           Restriction:=
-            *:* ChildRuleRestriction
+            *:* [ChildRuleRestriction]
           Modifications:: ChildRuleModifications
       Variable: Variable
       Matches: Child
@@ -253,58 +251,58 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
+      Condition:* [PreviousConditions]
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:=
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       ChildModifications:=
         ChildrenSeen::=
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Node: Child
         Modifications:: ChildRuleModifications
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       ChildModifications:
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Node: Child
         Modifications:: ChildRuleModifications
 
@@ -313,8 +311,8 @@ Rule:
 ### no child rule, no variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       !PreventsMatch:
@@ -328,33 +326,33 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction: PreviousRestriction
     Modifications:: PreviousModifications
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction: PreviousRestriction
     Modifications:: PreviousModifications
@@ -362,8 +360,8 @@ Rule:
 ### no child rule, with variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       !PreventsMatch:
@@ -377,37 +375,37 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications:: PreviousModifications
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
       Equal:
         Variable: Variable
         Node: Child
@@ -416,8 +414,8 @@ Rule:
 ### with child rule, no variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       !PreventsMatch:
@@ -429,7 +427,7 @@ Rule:
           Matches:
           Node: Child
           Restriction:=
-            *:* ChildRuleRestriction
+            *:* [ChildRuleRestriction]
           Modifications:: ChildRuleModifications
       !Variable:
       Matches: Child
@@ -437,62 +435,62 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:=
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       ChildModifications:=
         ChildrenSeen::=
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Node: Child
         Modifications:: ChildRuleModifications
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       ChildModifications:
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Node: Child
         Modifications:: ChildRuleModifications
 
 ### with child rule, with variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       !PreventsMatch:
@@ -504,7 +502,7 @@ Rule:
           Matches:
           Node: Child
           Restriction:=
-            *:* ChildRuleRestriction
+            *:* [ChildRuleRestriction]
           Modifications:: ChildRuleModifications
       Variable: Variable
       Matches: Child
@@ -512,60 +510,60 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:=
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       ChildModifications:=
         ChildrenSeen::=
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Node: Child
         Modifications:: ChildRuleModifications
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       ChildModifications:
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Node: Child
         Modifications:: ChildRuleModifications
 
@@ -574,8 +572,8 @@ Rule:
 ### no child rule, no variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       RemovesNode:
@@ -586,47 +584,47 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
+      Condition:* [PreviousConditions]
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction: PreviousRestriction
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction: PreviousRestriction
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       Remove:
         Condition: Condition
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Child: Child
 
 ### no child rule, with variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       RemovesNode:
@@ -637,52 +635,52 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
+      Condition:* [PreviousConditions]
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       Remove:
         Condition: Condition
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Child: Child
 
 ### with child rule, no variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       RemovesNode:
@@ -691,62 +689,62 @@ Rule:
           Matches:
           Node: Child
           Restriction:=
-            *:* ChildRuleRestriction
+            *:* [ChildRuleRestriction]
       !Variable:
       Matches: Child
     *:*
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
+      Condition:* [PreviousConditions]
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:=
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       Remove:
         Condition: Condition
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Child: Child
 
 ### with child rule, with variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       RemovesNode:
@@ -755,61 +753,61 @@ Rule:
           Matches:
           Node: Child
           Restriction:=
-            *:* ChildRuleRestriction
+            *:* [ChildRuleRestriction]
       Variable: Variable
       Matches: Child
     *:*
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
+      Condition:* [PreviousConditions]
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:=
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       Remove:
         Condition: Condition
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Child: Child
 
 # An ordered matching can continue with a multiple removing condition and the next child node
@@ -817,8 +815,8 @@ Rule:
 ### no child rule, no variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       RemovesNode:
@@ -830,49 +828,49 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction: PreviousRestriction
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction: PreviousRestriction
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       Remove:
         Condition: Condition
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Child: Child
 
 ### no child rule, with variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       RemovesNode:
@@ -884,54 +882,54 @@ Rule:
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       Remove:
         Condition: Condition
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Child: Child
 
 ### with child rule, no variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       RemovesNode:
@@ -941,64 +939,64 @@ Rule:
           Matches:
           Node: Child
           Restriction:=
-            *:* ChildRuleRestriction
+            *:* [ChildRuleRestriction]
       !Variable:
       Matches: Child
     *:*
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:=
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       Remove:
         Condition: Condition
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Child: Child
 
 ### with child rule, with variable
 Rule:
   Conditions::=
-    Condition:* PreviousConditions
-    Condition:* Multiples
+    Condition:* [PreviousConditions]
+    Condition:* [Multiples]
       MatchesMultipleNodes:
     Condition: Condition
       RemovesNode:
@@ -1008,63 +1006,63 @@ Rule:
           Matches:
           Node: Child
           Restriction:=
-            *:* ChildRuleRestriction
+            *:* [ChildRuleRestriction]
       Variable: Variable
       Matches: Child
     *:*
   Matching:
     Node: Parent
       Children::
-        Node:* PreviousChildren
+        Node:* [PreviousChildren]
         Node: Child
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
     Restriction:=
-      *:* PreviousRestriction
+      *:* [PreviousRestriction]
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   !Matching:
     Node: Parent
     ConditionsSeen::=
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::=
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:=
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::=
-      *:* PreviousModifications
+      *:* [PreviousModifications]
   +Matching:
     Node: Parent
     ConditionsSeen::
-      Condition:* PreviousConditions
-      Condition:* Multiples
+      Condition:* [PreviousConditions]
+      Condition:* [Multiples]
       Condition: Condition
     ChildrenSeen::
-      Node:* PreviousChildren
+      Node:* [PreviousChildren]
       Node: Child
     Restriction:
-      *:* PreviousRestriction
-      *:* ChildRuleRestriction
+      *:* [PreviousRestriction]
+      *:* [ChildRuleRestriction]
       Equal:
         Variable: Variable
         Node: Child
     Modifications::
-      *:* PreviousModifications
+      *:* [PreviousModifications]
       Remove:
         Condition: Condition
         ChildrenSeen::
-          Node:* PreviousChildren
+          Node:* [PreviousChildren]
         Child: Child
 
 # An ordered matching can continue with a preventing condition and the next child node

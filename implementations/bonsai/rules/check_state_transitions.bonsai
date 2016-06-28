@@ -17,9 +17,8 @@ Node:
 
 # A node needs no more checking if all rules did not match it
 Tree:
-  ...
-    Node: N
-      -ReadyToBeChecked:
+  ...Node: N
+    -ReadyToBeChecked:
 Rules:
   !Rule:
     !DoesNotMatch: N
