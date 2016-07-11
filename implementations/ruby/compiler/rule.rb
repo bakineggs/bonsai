@@ -1,11 +1,15 @@
 require_relative '../../../parser/rule'
 
 class Rule
-  def prevents? rule
-    false # TODO
+  def definitely_matches? matcher
+    true # TODO
   end
 
-  def affects? rule
+  def could_enable? rule
     true # TODO
+  end
+
+  def transform matcher
+    [] # TODO
   end
 end
