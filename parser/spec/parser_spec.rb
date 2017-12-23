@@ -339,4 +339,237 @@ RSpec.describe Parser do
   EOS
     A condition can not have a variable that matches labels without a wildcard label
   EOM
+
+  _it 'allows an absent action condition', <<-EOS do |rules|
+    Foo:
+  EOS
+    expect(rules.first.action_condition).to be_nil
+  end
+
+  _it 'allows an action condition as the last condition at the top level', <<-EOS do |rules|
+    -Foo: X1
+    +Foo: X2
+    $:
+      +:
+        Addend: X1
+        Addend: 1
+        Sum: X2
+  EOS
+    expect(rules.first.action_condition).to_not be_nil
+  end
+
+  _err 'only allows an action condition as the last condition', <<-EOS, 2, <<-EOM
+    -Foo: X1
+    $:
+      +:
+        Addend: X1
+        Addend: 1
+        Sum: X2
+    +Foo: X2
+  EOS
+    An action condition must be the last condition of the top level rule
+  EOM
+
+  _err 'only allows an action condition on the top level', <<-EOS, 3, <<-EOM
+    +Foo: X2
+    -Foo: X1
+      $:
+        +:
+          Addend: X1
+          Addend: 1
+          Sum: X2
+  EOS
+    An action condition must be the last condition of the top level rule
+  EOM
+
+  _it 'allows multiple actions in an action condition', <<-EOS do |rules|
+    -Foo: X
+    +Bar: Y
+    $:
+      +:
+        Addend: X
+        Addend: R
+        Sum: Y
+      Random: R
+  EOS
+    expect(rules.first.action_condition.actions.length).to eq 2
+  end
+
+  _it 'allows multiple actions of the same type in an action condition', <<-EOS do |rules|
+    -Foo:
+    +Bar: Y
+    $:
+      +:
+        Addend: R1
+        Addend: R2
+        Sum: Y
+      Random: R1
+      Random: R2
+  EOS
+    expect(rules.first.action_condition.actions.length).to eq 3
+  end
+
+  _it 'allows the addition action to be used', <<-EOS do |rules|
+    -Foo: X
+    +Bar: Y
+    $:
+      +:
+        Addend: X
+        Addend: 1
+        Sum: Y
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::Addition
+    expect(action.addends).to eq [[:var, 'X'], 1]
+    expect(action.sum).to eq [:var, 'Y']
+  end
+
+  _it 'allows the subtraction action to be used', <<-EOS do |rules|
+    -Foo: X
+    -Bar: Y
+    +Baz: Z
+    $:
+      -:
+        Minuend: X
+        Subtrahend: 1
+        Subtrahend: Y
+        Difference: Z
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::Subtraction
+    expect(action.minuend).to eq [:var, 'X']
+    expect(action.subtrahends).to eq [1, [:var, 'Y']]
+    expect(action.difference).to eq [:var, 'Z']
+  end
+
+  _it 'allows the multiplication action to be used', <<-EOS do |rules|
+    -Foo: X
+    +Bar: Y
+    $:
+      *:
+        Factor: X
+        Factor: 3
+        Product: Y
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::Multiplication
+    expect(action.factors).to eq [[:var, 'X'], 3]
+    expect(action.product).to eq [:var, 'Y']
+  end
+
+  _it 'allows the division action to be used', <<-EOS do |rules|
+    -Foo: X
+    +Bar: Y
+    $:
+      /:
+        Dividend: X
+        Divisor: 3
+        Quotient: Y
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::Division
+    expect(action.dividend).to eq [:var, 'X']
+    expect(action.divisor).to eq 3
+    expect(action.quotient).to eq [:var, 'Y']
+  end
+
+  _it 'allows the less than action to be used', <<-EOS do |rules|
+    -Foo: X
+    +Bar: Y
+    $:
+      <:
+        Left: X
+        Right: 3
+        Result: Y
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::LessThan
+    expect(action.left).to eq [:var, 'X']
+    expect(action.right).to eq 3
+    expect(action.result).to eq [:var, 'Y']
+  end
+
+  _it 'allows the greater than action to be used', <<-EOS do |rules|
+    -Foo: X
+    +Bar: Y
+    $:
+      >:
+        Left: X
+        Right: 3
+        Result: Y
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::GreaterThan
+    expect(action.left).to eq [:var, 'X']
+    expect(action.right).to eq 3
+    expect(action.result).to eq [:var, 'Y']
+  end
+
+  _it 'allows the less than or equal to action to be used', <<-EOS do |rules|
+    -Foo: X
+    +Bar: Y
+    $:
+      <=:
+        Left: X
+        Right: 3
+        Result: Y
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::LessThanOrEqualTo
+    expect(action.left).to eq [:var, 'X']
+    expect(action.right).to eq 3
+    expect(action.result).to eq [:var, 'Y']
+  end
+
+  _it 'allows the greater than or equal to action to be used', <<-EOS do |rules|
+    -Foo: X
+    +Bar: Y
+    $:
+      >=:
+        Left: X
+        Right: 3
+        Result: Y
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::GreaterThanOrEqualTo
+    expect(action.left).to eq [:var, 'X']
+    expect(action.right).to eq 3
+    expect(action.result).to eq [:var, 'Y']
+  end
+
+  _it 'allows the random action to be used', <<-EOS do |rules|
+    -Foo:
+    +Bar: X
+    $:
+      Random: X
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::Random
+    expect(action.variable).to eq 'X'
+  end
+
+  _it 'allows the stdin action to be used', <<-EOS do |rules|
+    -Foo:
+    +Bar: X
+    $:
+      Stdin: X
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::Stdin
+    expect(action.variable).to eq 'X'
+  end
+
+  _it 'allows the stdout action to be used', <<-EOS do |rules|
+    -Foo: X
+    +Bar:
+    $:
+      Stdout::
+        Value: X
+        Value: 7
+        Value: "foo"
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::Stdout
+    expect(action.values).to eq [[:var, 'X'], 7, "foo"]
+  end
 end
