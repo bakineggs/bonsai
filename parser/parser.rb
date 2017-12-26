@@ -1,5 +1,6 @@
 require_relative 'rule'
 require_relative 'condition'
+require_relative 'action_condition'
 
 class Parser
   class Line < String
@@ -90,17 +91,26 @@ class Parser
       condition_line = line
       child_lines = []
     end
-    conditions.push parse_condition condition_line, depth, child_lines,
-      :ancestor_creates => options[:ancestor_creates],
-      :ancestor_removes => options[:ancestor_removes],
-      :ancestor_prevents => options[:ancestor_prevents],
-      :parent_rule_is_ordered => options[:parent_rule_is_ordered],
-      :parent_rule_must_match_all_nodes => options[:parent_rule_must_match_all_nodes]
+
+    if condition_line == '$:'
+      conditions.push ActionCondition.new child_lines
+    else
+      conditions.push parse_condition condition_line, depth, child_lines,
+        :ancestor_creates => options[:ancestor_creates],
+        :ancestor_removes => options[:ancestor_removes],
+        :ancestor_prevents => options[:ancestor_prevents],
+        :parent_rule_is_ordered => options[:parent_rule_is_ordered],
+        :parent_rule_must_match_all_nodes => options[:parent_rule_must_match_all_nodes]
+    end
 
     conditions
   end
 
   def parse_condition line, depth = 0, child_lines = [], options = {}
+    if line.match /^#{'  ' * depth}\$:$/
+      raise Error.new 'An action condition must be the last condition of the top level rule', line
+    end
+
     unless match = line.match(/^#{'  ' * depth}([!+-])?(\.\.\.)?([A-Za-z0-9 ]+|\^|\*):(:)?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|"(.*)"|((=?)([A-Za-z][A-Za-z0-9 ]*))|((=?)\[([A-Za-z][A-Za-z0-9 ]*)\])))?$/)
       raise Error.new 'Condition could not be parsed', line
     end
