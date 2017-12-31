@@ -6,6 +6,7 @@ require_relative 'actions/less_than'
 require_relative 'actions/greater_than'
 require_relative 'actions/less_than_or_equal_to'
 require_relative 'actions/greater_than_or_equal_to'
+require_relative 'actions/random'
 
 RSpec.shared_examples 'action conditions' do
   include_examples 'addition action'
@@ -16,4 +17,5 @@ RSpec.shared_examples 'action conditions' do
   include_examples 'greater than action'
   include_examples 'less than or equal to action'
   include_examples 'greater than or equal to action'
+  include_examples 'random action'
 end
