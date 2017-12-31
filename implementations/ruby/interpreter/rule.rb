@@ -1,5 +1,6 @@
 require_relative '../../../parser/rule'
 require_relative 'matching'
+require_relative 'action_condition'
 
 class Array
   def combinations
@@ -36,7 +37,7 @@ class Rule
 
   def matchings node
     if node.value && conditions.empty? && !conditions_are_ordered? && !must_match_all_nodes?
-      [Matching.new]
+      [action_condition && action_condition.matching || Matching.new]
     elsif node.value || conditions_are_ordered? != node.children_are_ordered?
       []
     elsif conditions_are_ordered?
@@ -50,10 +51,10 @@ class Rule
 
   def ordered_matchings node
     if must_match_all_nodes?
-      extend_ordered_matching 0, node, 0, Matching.new
+      extend_ordered_matching 0, node, 0, action_condition && action_condition.matching || Matching.new
     else
       (0..node.children.length).map do |i|
-        extend_ordered_matching 0, node, i, Matching.new
+        extend_ordered_matching 0, node, i, action_condition && action_condition.matching || Matching.new
       end.flatten
     end
   end
@@ -141,7 +142,7 @@ class Rule
   end
 
   def unordered_matchings node
-    extend_unordered_matching conditions, node, node.children, Matching.new
+    extend_unordered_matching conditions, node, node.children, action_condition && action_condition.matching || Matching.new
   end
 
   def extend_unordered_matching conditions, node, children, partial_matching, condition = nil, multi_matched = []
