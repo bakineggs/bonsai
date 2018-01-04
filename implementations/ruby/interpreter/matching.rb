@@ -45,17 +45,21 @@ class Matching
   private
 
   def create condition
-    raise "Can't have a creating condition with a variable that does not match anything" if condition.variable && (@variables[condition.variable].nil? || @variables[condition.variable][:eq].empty?)
+    raise "Can't have a creating condition with a variable that does not match anything" if condition.variable && (@variables[condition.variable].nil? || (@variables[condition.variable][:eq].empty? && @variables[condition.variable][:value].nil?))
 
     if condition.variable_matches_multiple_nodes?
       @variables[condition.variable][:eq].sample.map(&:dup).map do |copy|
         label = condition.label == '*' ? copy.label : condition.label
         Node.new label, copy.children, copy.children_are_ordered?, copy.value
       end
-    elsif condition.variable
+    elsif condition.variable && !@variables[condition.variable][:eq].empty?
       copy = @variables[condition.variable][:eq].sample.dup
       label = condition.label == '*' ? copy.label : condition.label
       [Node.new(label, copy.children, copy.children_are_ordered?, copy.value)]
+    elsif condition.variable
+      value = @variables[condition.variable][:value]
+      value = value.to_i if value.to_i == value
+      [Node.new(condition.label, nil, nil, value)]
     elsif condition.value
       [Node.new(condition.label, nil, nil, condition.value)]
     elsif condition.child_rule
@@ -70,38 +74,48 @@ class Matching
     return restriction if [true, false].include? restriction
     case restriction[0]
     when :eq
-      @variables[restriction[1]] ||= {:eq => [], :matches_labels => restriction[3]}
+      @variables[restriction[1]] ||= {:eq => [], :matches_labels => restriction[3], :computations => []}
+      @variables[restriction[1]][:matches_labels] = restriction[3] if @variables[restriction[1]][:matches_labels].nil?
       raise "Can't have the same variable match single nodes and multiple nodes" if @variables[restriction[1]][:multi]
       raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       @variables[restriction[1]][:eq].push restriction[2]
       restriction
     when :neq
-      @variables[restriction[1]] ||= {:eq => [], :matches_labels => restriction[3]}
+      @variables[restriction[1]] ||= {:eq => [], :matches_labels => restriction[3], :computations => []}
+      @variables[restriction[1]][:matches_labels] = restriction[3] if @variables[restriction[1]][:matches_labels].nil?
       raise "Can't have the same variable match single nodes and multiple nodes" if @variables[restriction[1]][:multi]
       raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       restriction
     when :eq_o
-      @variables[restriction[1]] ||= {:multi => true, :ordered => true, :eq => [], :matches_labels => restriction[3]}
+      @variables[restriction[1]] ||= {:multi => true, :ordered => true, :eq => [], :matches_labels => restriction[3], :computations => []}
+      @variables[restriction[1]][:ordered] = true if @variables[restriction[1]][:ordered].nil?
+      @variables[restriction[1]][:matches_labels] = restriction[3] if @variables[restriction[1]][:matches_labels].nil?
       raise "Can't have the same variable match single nodes and multiple nodes" unless @variables[restriction[1]][:multi]
       raise "Can't have the same variable match multiple ordered nodes and multiple unordered nodes" unless @variables[restriction[1]][:ordered]
       raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       @variables[restriction[1]][:eq].push restriction[2]
       restriction
     when :neq_o
-      @variables[restriction[1]] ||= {:multi => true, :ordered => true, :eq => [], :matches_labels => restriction[3]}
+      @variables[restriction[1]] ||= {:multi => true, :ordered => true, :eq => [], :matches_labels => restriction[3], :computations => []}
+      @variables[restriction[1]][:ordered] = true if @variables[restriction[1]][:ordered].nil?
+      @variables[restriction[1]][:matches_labels] = restriction[3] if @variables[restriction[1]][:matches_labels].nil?
       raise "Can't have the same variable match single nodes and multiple nodes" unless @variables[restriction[1]][:multi]
       raise "Can't have the same variable match multiple ordered nodes and multiple unordered nodes" unless @variables[restriction[1]][:ordered]
       raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       restriction
     when :eq_u
-      @variables[restriction[1]] ||= {:multi => true, :ordered => false, :eq => [], :matches_labels => restriction[3]}
+      @variables[restriction[1]] ||= {:multi => true, :ordered => false, :eq => [], :matches_labels => restriction[3], :computations => []}
+      @variables[restriction[1]][:ordered] = false if @variables[restriction[1]][:ordered].nil?
+      @variables[restriction[1]][:matches_labels] = restriction[3] if @variables[restriction[1]][:matches_labels].nil?
       raise "Can't have the same variable match single nodes and multiple nodes" unless @variables[restriction[1]][:multi]
       raise "Can't have the same variable match multiple ordered nodes and multiple unordered nodes" if @variables[restriction[1]][:ordered]
       raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
       @variables[restriction[1]][:eq].push restriction[2].sort
       restriction
     when :neq_u
-      @variables[restriction[1]] ||= {:multi => true, :ordered => false, :eq => [], :matches_labels => restriction[3]}
+      @variables[restriction[1]] ||= {:multi => true, :ordered => false, :eq => [], :matches_labels => restriction[3], :computations => []}
+      @variables[restriction[1]][:ordered] = false if @variables[restriction[1]][:ordered].nil?
+      @variables[restriction[1]][:matches_labels] = restriction[3] if @variables[restriction[1]][:matches_labels].nil?
       raise "Can't have the same variable match single nodes and multiple nodes" unless @variables[restriction[1]][:multi]
       raise "Can't have the same variable match multiple ordered nodes and multiple unordered nodes" if @variables[restriction[1]][:ordered]
       raise "Can't have the same variable match labels and not match labels" if @variables[restriction[1]][:matches_labels] != restriction[3]
@@ -152,6 +166,22 @@ class Matching
       elsif restriction[1][0] == :or
         simplify [:and, [:not, restriction[1][1]], [:not, restriction[1][2]]]
       end
+    when :add, :subtract, :multiply, :divide
+      restriction[1...-1].each do |part|
+        if part.is_a?(Array) && part[0] == :var
+          @variables[part[1]] ||= {:eq => [], :computations => []}
+          raise "Can't have the same variable match single nodes and multiple nodes" if @variables[part[1]][:multi]
+          @variables[part[1]][:computations].push restriction
+        elsif part.is_a?(Array) && part[0] == :multivar
+          @variables[part[1]] ||= {:multi => true, :eq => [], :computations => []}
+          raise "Can't have the same variable match single nodes and multiple nodes" unless @variables[part[1]][:multi]
+          @variables[part[1]][:computations].push restriction
+        elsif part.is_a?(Fixnum) || part.is_a?(Float)
+        else
+          raise "Unrecognized computation part: #{part.inspect}"
+        end
+      end
+      restriction
     else
       raise "Don't know how to simplify #{restriction.inspect}"
     end
@@ -161,21 +191,115 @@ class Matching
     return restriction if [true, false].include? restriction
     case restriction[0]
     when :eq
-      @variables[restriction[1]][:eq].all? {|node| restriction[3] ? restriction[2] == node : restriction[2].equals_except_label?(node)}
+      @variables[restriction[1]][:eq].all? {|node| restriction[3] ? restriction[2] == node : restriction[2].equals_except_label?(node)} && @variables[restriction[1]][:computations].all? {|computation| check_computation computation}
     when :neq
-      raise 'Can not check if a node is not equal to a variable that does not have a matching node' if @variables[restriction[1]][:eq].empty?
-      @variables[restriction[1]][:eq].all? {|node| restriction[3] ? restriction[2] != node : !restriction[2].equals_except_label?(node)}
+      raise 'Can not check if a node is not equal to a variable that does not have a matching node' if @variables[restriction[1]][:eq].empty? && @variables[restriction[1]][:computations].empty?
+      @variables[restriction[1]][:eq].all? {|node| restriction[3] ? restriction[2] != node : !restriction[2].equals_except_label?(node)} && @variables[restriction[1]][:computations].none? {|computation| check_computation computation}
     when :eq_o, :eq_u
-      @variables[restriction[1]][:eq].all? {|nodes| nodes.length == restriction[2].length && nodes.zip(restriction[2]).all? {|node, expected| restriction[3] ? expected == node : expected.equals_except_label?(node)}}
+      @variables[restriction[1]][:eq].all? {|nodes| nodes.length == restriction[2].length && nodes.zip(restriction[2]).all? {|node, expected| restriction[3] ? expected == node : expected.equals_except_label?(node)}} && @variables[restriction[1]][:computations].all? {|computation| check_computation computation}
     when :neq_o, :neq_u
-      raise 'Can not check if nodes are not equal to a variable that does not have matching nodes' if @variables[restriction[1]][:eq].empty?
-      @variables[restriction[1]][:eq].all? {|nodes| nodes.length != restriction[2].length || nodes.zip(restriction[2]).any? {|node, expected| restriction[3] ? expected != node : !expected.equals_except_label?(node)}}
+      raise 'Can not check if nodes are not equal to a variable that does not have matching nodes' if @variables[restriction[1]][:eq].empty? && @variables[restriction[1]][:computations].empty?
+      @variables[restriction[1]][:eq].all? {|nodes| nodes.length != restriction[2].length || nodes.zip(restriction[2]).any? {|node, expected| restriction[3] ? expected != node : !expected.equals_except_label?(node)}} && @variables[restriction[1]][:computations].none? {|computation| check_computation computation}
     when :and
       check(restriction[1]) && check(restriction[2])
     when :or
       check(restriction[1]) || check(restriction[2])
+    when :add, :subtract, :multiply, :divide
+      check_computation restriction
     else
       raise "Don't know how to check #{restriction.inspect}"
+    end
+  end
+
+  def check_computation computation
+    supplied = computation[1..-1].select {|part| part.is_a?(Array) && part[0] == :var && (!@variables.has_key?(part[1]) || @variables[part[1]][:eq].empty?)}
+    return false if supplied.length > 1 # TODO: shouldn't this be an error?
+    supplied = supplied.first
+
+    case computation[0]
+    when :add
+      if supplied.nil?
+        computation[1...-1].inject(0) do |sum, part|
+          sum + (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(0) {|subsum, node| subsum + node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end == (computation.last.is_a?(Array) ? @variables[computation.last[1]][:eq].sample.value : computation.last)
+      elsif supplied == computation.last
+        value = computation[1...-1].inject(0) do |sum, part|
+          sum + (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(0) {|subsum, node| subsum + node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      else
+        value = (computation.last.is_a?(Array) ? @variables[computation.last[1]][:eq].sample.value : computation.last) - computation[1...-1].inject(0) do |sum, part|
+          next sum if part == supplied
+          sum + (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(0) {|subsum, node| subsum + node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      end
+    when :subtract
+      if supplied.nil?
+        (computation[1].is_a?(Array) ? @variables[computation[1][1]][:eq].sample.value : computation[1]) - computation[2...-1].inject(0) do |sum, part|
+          sum + (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(0) {|subsum, node| subsum + node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end == (computation.last.is_a?(Array) ? @variables[computation.last[1]][:eq].sample.value : computation.last)
+      elsif supplied == computation[1]
+        value = computation[2...-1].inject(0) do |sum, part|
+          sum + (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(0) {|subsum, node| subsum + node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end + (computation.last.is_a?(Array) ? @variables[computation.last[1]][:eq].sample.value : computation.last)
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      elsif supplied == computation.last
+        value = (computation[1].is_a?(Array) ? @variables[computation[1][1]][:eq].sample.value : computation[1]) - computation[2...-1].inject(0) do |sum, part|
+          sum + (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(0) {|subsum, node| subsum + node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      else
+        value = (computation[1].is_a?(Array) ? @variables[computation[1][1]][:eq].sample.value : computation[1]) - computation[2...-1].inject(0) do |sum, part|
+          next sum if part == supplied
+          sum + (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(0) {|subsum, node| subsum + node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end - (computation.last.is_a?(Array) ? @variables[computation.last[1]][:eq].sample.value : computation.last)
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      end
+    when :multiply
+      if supplied.nil?
+        computation[1...-1].inject(1) do |product, part|
+          product * (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(1) {|subproduct, node| subproduct * node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end == (computation.last.is_a?(Array) ? @variables[computation.last[1]][:eq].sample.value : computation.last)
+      elsif supplied == computation.last
+        value = computation[1...-1].inject(1) do |product, part|
+          product * (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(1) {|subproduct, node| subproduct * node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      else
+        value = (computation.last.is_a?(Array) ? @variables[computation.last[1]][:eq].sample.value : computation.last) / computation[1...-1].inject(1) do |product, part|
+          next product if part == supplied
+          product * (part.is_a?(Array) ? (part[0] == :multivar ? @variables[part[1]][:eq].sample.inject(1) {|subproduct, node| subproduct + node.value} : @variables[part[1]][:eq].sample.value) : part)
+        end
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      end
+    when :divide
+      if supplied.nil?
+        (computation[1].is_a?(Array) ? @variables[computation[1][1]][:eq].sample.value : computation[1]) / (computation[2].is_a?(Array) ? @variables[computation[2][1]][:eq].sample.value : computation[2]) == (computation[3].is_a?(Array) ? @variables[computation[3][1]][:eq].sample.value : computation[3])
+      elsif supplied == computation[1]
+        value = (computation[2].is_a?(Array) ? @variables[computation[2][1]][:eq].sample.value : computation[2]) * (computation[3].is_a?(Array) ? @variables[computation[3][1]][:eq].sample.value : computation[3])
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      elsif supplied == computation[2]
+        value = (computation[1].is_a?(Array) ? @variables[computation[1][1]][:eq].sample.value : computation[1]) / (computation[3].is_a?(Array) ? @variables[computation[3][1]][:eq].sample.value : computation[3])
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      elsif supplied == computation[3]
+        value = (computation[1].is_a?(Array) ? @variables[computation[1][1]][:eq].sample.value : computation[1]) / (computation[2].is_a?(Array) ? @variables[computation[2][1]][:eq].sample.value : computation[2])
+        (@variables[supplied[1]] ||= {:eq => []})[:value] ||= value
+        @variables[supplied[1]][:value] == value
+      else
+        raise
+      end
+    else
+      raise "Don't know how to compute #{computation.inspect}"
     end
   end
 end
