@@ -182,6 +182,12 @@ class Matching
         end
       end
       restriction
+    when :<, :<=, :>, :>=
+      if restriction.last.is_a?(Array) && restriction.last[0] == :var
+        @variables[restriction.last[1]] ||= {:eq => [], :computations => []}
+        raise "Can't have the same variable match single nodes and multiple nodes" if @variables[restriction.last[1]][:multi]
+      end
+      restriction
     else
       raise "Don't know how to simplify #{restriction.inspect}"
     end
@@ -206,6 +212,8 @@ class Matching
       check(restriction[1]) || check(restriction[2])
     when :add, :subtract, :multiply, :divide
       check_computation restriction
+    when :<, :<=, :>, :>=
+      check_comparison restriction
     else
       raise "Don't know how to check #{restriction.inspect}"
     end
@@ -300,6 +308,54 @@ class Matching
       end
     else
       raise "Don't know how to compute #{computation.inspect}"
+    end
+  end
+
+  def check_comparison comparison
+    return false if comparison[1...-1].any? {|part| part.is_a?(Array) && part[0] == :var && (!@variables.has_key?(part[1]) || @variables[part[1]][:eq].empty?)} # TODO: shouldn't this be an error?
+    case comparison[0]
+    when :<
+      if comparison[3].is_a?(Array) && comparison[3][0] == :var && (!@variables.has_key?(comparison[3][1]) || @variables[comparison[3][1]][:eq].empty?)
+        value = (comparison[1].is_a?(Array) ? @variables[comparison[1][1]][:eq].sample.value : comparison[1]) < (comparison[2].is_a?(Array) ? @variables[comparison[2][1]][:eq].sample.value : comparison[2]) ? 1 : 0
+        (@variables[comparison[3][1]] ||= {:eq => []})[:value] ||= value
+        @variables[comparison[3][1]][:value] == value
+      else
+        result = comparison[3].is_a?(Array) ? @variables[comparison[3][1]][:eq].sample.value : comparison[3]
+        raise 'Can\'t check if the result of a comparison is anything other than 0 or 1' unless [0, 1].include? result
+        (comparison[1].is_a?(Array) ? @variables[comparison[1][1]][:eq].sample.value : comparison[1]) < (comparison[2].is_a?(Array) ? @variables[comparison[2][1]][:eq].sample.value : comparison[2]) ? result == 1 : result == 0
+      end
+    when :<=
+      if comparison[3].is_a?(Array) && comparison[3][0] == :var && (!@variables.has_key?(comparison[3][1]) || @variables[comparison[3][1]][:eq].empty?)
+        value = (comparison[1].is_a?(Array) ? @variables[comparison[1][1]][:eq].sample.value : comparison[1]) <= (comparison[2].is_a?(Array) ? @variables[comparison[2][1]][:eq].sample.value : comparison[2]) ? 1 : 0
+        (@variables[comparison[3][1]] ||= {:eq => []})[:value] ||= value
+        @variables[comparison[3][1]][:value] == value
+      else
+        result = comparison[3].is_a?(Array) ? @variables[comparison[3][1]][:eq].sample.value : comparison[3]
+        raise 'Can\'t check if the result of a comparison is anything other than 0 or 1' unless [0, 1].include? result
+        (comparison[1].is_a?(Array) ? @variables[comparison[1][1]][:eq].sample.value : comparison[1]) <= (comparison[2].is_a?(Array) ? @variables[comparison[2][1]][:eq].sample.value : comparison[2]) ? result == 1 : result == 0
+      end
+    when :>
+      if comparison[3].is_a?(Array) && comparison[3][0] == :var && (!@variables.has_key?(comparison[3][1]) || @variables[comparison[3][1]][:eq].empty?)
+        value = (comparison[1].is_a?(Array) ? @variables[comparison[1][1]][:eq].sample.value : comparison[1]) > (comparison[2].is_a?(Array) ? @variables[comparison[2][1]][:eq].sample.value : comparison[2]) ? 1 : 0
+        (@variables[comparison[3][1]] ||= {:eq => []})[:value] ||= value
+        @variables[comparison[3][1]][:value] == value
+      else
+        result = comparison[3].is_a?(Array) ? @variables[comparison[3][1]][:eq].sample.value : comparison[3]
+        raise 'Can\'t check if the result of a comparison is anything other than 0 or 1' unless [0, 1].include? result
+        (comparison[1].is_a?(Array) ? @variables[comparison[1][1]][:eq].sample.value : comparison[1]) > (comparison[2].is_a?(Array) ? @variables[comparison[2][1]][:eq].sample.value : comparison[2]) ? result == 1 : result == 0
+      end
+    when :>=
+      if comparison[3].is_a?(Array) && comparison[3][0] == :var && (!@variables.has_key?(comparison[3][1]) || @variables[comparison[3][1]][:eq].empty?)
+        value = (comparison[1].is_a?(Array) ? @variables[comparison[1][1]][:eq].sample.value : comparison[1]) >= (comparison[2].is_a?(Array) ? @variables[comparison[2][1]][:eq].sample.value : comparison[2]) ? 1 : 0
+        (@variables[comparison[3][1]] ||= {:eq => []})[:value] ||= value
+        @variables[comparison[3][1]][:value] == value
+      else
+        result = comparison[3].is_a?(Array) ? @variables[comparison[3][1]][:eq].sample.value : comparison[3]
+        raise 'Can\'t check if the result of a comparison is anything other than 0 or 1' unless [0, 1].include? result
+        (comparison[1].is_a?(Array) ? @variables[comparison[1][1]][:eq].sample.value : comparison[1]) >= (comparison[2].is_a?(Array) ? @variables[comparison[2][1]][:eq].sample.value : comparison[2]) ? result == 1 : result == 0
+      end
+    else
+      raise "Don't know how to compare #{comparison.inspect}"
     end
   end
 end
