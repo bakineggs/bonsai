@@ -1,12 +1,13 @@
 require_relative 'node'
 
 class Matching
-  attr_reader :restriction, :modifications
+  attr_reader :restriction, :modifications, :actions
 
   def initialize options = {}
     @variables = {}
     @restriction = simplify options.has_key?(:restriction) ? options[:restriction] : true
     @modifications = options[:modifications] || []
+    @actions = options[:actions] || []
   end
 
   def restriction_met?
@@ -33,16 +34,22 @@ class Matching
         raise "Don't know how to apply modification #{modification.inspect}"
       end
     end
-    node != old_node
+    @actions.map {|action| instance_eval &action}.any? || node != old_node
   end
 
   def + other
     restriction = [:and, @restriction, other.restriction]
     modifications = @modifications + other.modifications
-    Matching.new :restriction => restriction, :modifications => modifications
+    actions = @actions + other.actions
+    Matching.new :restriction => restriction, :modifications => modifications, :actions => actions
   end
 
   private
+
+  def variable_value variable
+    raise "Unknown variable #{variable}" unless @variables[variable]
+    !@variables[variable][:eq].empty? ? @variables[variable][:eq].sample.value : @variables[variable][:value]
+  end
 
   def create condition
     raise "Can't have a creating condition with a variable that does not match anything" if condition.variable && (@variables[condition.variable].nil? || (@variables[condition.variable][:eq].empty? && @variables[condition.variable][:value].nil?))
