@@ -13,6 +13,8 @@ class Compiler
 
       #{setup_node_types program[:rules]}
 
+      #{File.read File.dirname(__FILE__) + '/../node_builder.c'}
+      #{File.read File.dirname(__FILE__) + '/../print.c'}
       #{File.read File.dirname(__FILE__) + '/runtime.c'}
 
       #{program[:header]}
