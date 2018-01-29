@@ -572,4 +572,14 @@ RSpec.describe Parser do
     expect(action).to be_a Action::Stdout
     expect(action.values).to eq [[:var, 'X'], 7, "foo"]
   end
+
+  _it 'allows the exit action to be used', <<-EOS do |rules|
+    Foo:
+    $:
+      Exit: 7
+  EOS
+    action = rules.first.action_condition.actions.first
+    expect(action).to be_a Action::Exit
+    expect(action.status).to eq 7
+  end
 end

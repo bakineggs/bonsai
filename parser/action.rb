@@ -19,6 +19,7 @@ class Action
     'Random' => Random,
     'Stdin' => Stdin,
     'Stdout:' => Stdout,
+    'Exit' => Exit,
   }
 
   TYPES.values.each do |type|
