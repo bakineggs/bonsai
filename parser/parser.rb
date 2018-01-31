@@ -46,7 +46,8 @@ class Parser
 
   private
 
-  def parse_rule definition, depth = 0, options = {}
+  # TODO: a creating condition can not have a descendant rule that matches both unordered and ordered children unless that rule's condition matches a variable that matches both unordered and ordered children
+  def parse_rule definition, depth = 0, options = {:matches_unordered_children => true, :matches_ordered_children => true}
     options[:definition] = definition.clone
 
     if !definition.empty? && definition.first.match(/^#{'  ' * depth}  /)
@@ -61,7 +62,8 @@ class Parser
       :ancestor_creates => options[:ancestor_creates],
       :ancestor_removes => options[:ancestor_removes],
       :ancestor_prevents => options[:ancestor_prevents],
-      :parent_rule_is_ordered => options[:conditions_are_ordered],
+      :parent_rule_matches_unordered_children => options[:matches_unordered_children],
+      :parent_rule_matches_ordered_children => options[:matches_ordered_children],
       :parent_rule_must_match_all_nodes => options[:must_match_all_nodes]
 
     Rule.new options
@@ -86,7 +88,8 @@ class Parser
         :ancestor_creates => options[:ancestor_creates],
         :ancestor_removes => options[:ancestor_removes],
         :ancestor_prevents => options[:ancestor_prevents],
-        :parent_rule_is_ordered => options[:parent_rule_is_ordered],
+        :parent_rule_matches_unordered_children => options[:parent_rule_matches_unordered_children],
+        :parent_rule_matches_ordered_children => options[:parent_rule_matches_ordered_children],
         :parent_rule_must_match_all_nodes => options[:parent_rule_must_match_all_nodes]
       condition_line = line
       child_lines = []
@@ -99,7 +102,8 @@ class Parser
         :ancestor_creates => options[:ancestor_creates],
         :ancestor_removes => options[:ancestor_removes],
         :ancestor_prevents => options[:ancestor_prevents],
-        :parent_rule_is_ordered => options[:parent_rule_is_ordered],
+        :parent_rule_matches_unordered_children => options[:parent_rule_matches_unordered_children],
+        :parent_rule_matches_ordered_children => options[:parent_rule_matches_ordered_children],
         :parent_rule_must_match_all_nodes => options[:parent_rule_must_match_all_nodes]
     end
 
@@ -111,7 +115,7 @@ class Parser
       raise Error.new 'An action condition must be the last condition of the top level rule', line
     end
 
-    unless match = line.match(/^#{'  ' * depth}([!+-])?(\.\.\.)?([A-Za-z0-9 ]+|\^|\*):(:)?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|"(.*)"|((=?)([A-Za-z][A-Za-z0-9 ]*))|((=?)\[([A-Za-z][A-Za-z0-9 ]*)\])))?$/)
+    unless match = line.match(/^#{'  ' * depth}([!+-])?(\.\.\.)?([A-Za-z0-9 ]+|\^|\*):([:.])?(=)?(\*)?( (-?\d+|(-?\d+\.\d+)|"(.*)"|((=?)([A-Za-z][A-Za-z0-9 ]*))|((=?)\[([A-Za-z][A-Za-z0-9 ]*)\])))?$/)
       raise Error.new 'Condition could not be parsed', line
     end
 
@@ -142,7 +146,8 @@ class Parser
       :variable_matches_labels => variable_matches_labels,
       :variable_matches_multiple_nodes => variable_matches_multiple_nodes,
       :child_rule => value && child_lines.empty? ? nil : parse_rule(child_lines, depth + 1,
-        :conditions_are_ordered => match[4] == ':',
+        :matches_unordered_children => match[4].nil? || match[4] == '.',
+        :matches_ordered_children => match[4] == ':' || match[4] == '.',
         :must_match_all_nodes => match[5] == '=',
         :ancestor_creates => options[:ancestor_creates] || match[1] == '+',
         :ancestor_removes => options[:ancestor_removes] || match[1] == '-',
@@ -151,7 +156,8 @@ class Parser
       :ancestor_creates => options[:ancestor_creates],
       :ancestor_removes => options[:ancestor_removes],
       :ancestor_prevents => options[:ancestor_prevents],
-      :parent_rule_is_ordered => options[:parent_rule_is_ordered],
+      :parent_rule_matches_unordered_children => options[:parent_rule_matches_unordered_children],
+      :parent_rule_matches_ordered_children => options[:parent_rule_matches_ordered_children],
       :parent_rule_must_match_all_nodes => options[:parent_rule_must_match_all_nodes]
     })
   rescue Rule::Error => e

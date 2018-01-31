@@ -30,7 +30,7 @@ class Condition
     raise Error.new 'A condition can not have a variable that matches multiple nodes without matching multiple nodes' if @variable_matches_multiple_nodes && !@matches_multiple_nodes
     raise Error.new 'A condition can not have a variable that matches multiple nodes without a variable' if @variable_matches_multiple_nodes && !@variable
 
-    raise Error.new 'A preventing condition in an unordered rule can not match multiple nodes unless it has a variable that matches multiple nodes' if !options[:parent_rule_is_ordered] && @prevents_match && @matches_multiple_nodes && !@variable_matches_multiple_nodes
+    raise Error.new 'A preventing condition in an unordered rule can not match multiple nodes unless it has a variable that matches multiple nodes' if options[:parent_rule_matches_unordered_conditions] && @prevents_match && @matches_multiple_nodes && !@variable_matches_multiple_nodes
 
     if @creates_node
       raise Error.new 'A creating condition can not match descendant conditions' if @matches_descendants

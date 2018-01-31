@@ -111,8 +111,12 @@ RSpec.describe Parser do
   end
 
   ['Foo:', 'Foo::'].each do |rules|
-    _it 'considers a top level rule to have unordered conditions', rules do |rules|
-      expect(rules.first.conditions_are_ordered?).to eq false
+    _it 'considers a top level rule to match unordered children', rules do |rules|
+      expect(rules.first.matches_unordered_children?).to eq true
+    end
+
+    _it 'considers a top level rule to match ordered children', rules do |rules|
+      expect(rules.first.matches_ordered_children?).to eq true
     end
   end
 
@@ -220,12 +224,21 @@ RSpec.describe Parser do
     expect(rules.first.conditions.last.matches_descendants?).to eq true
   end
 
-  _it 'considers conditions with an appended : to have a child rule with ordered conditions', <<-EOS do |rules|
+  _it 'considers conditions with an appended : to have a child rule that matches ordered conditions', <<-EOS do |rules|
     Foo:
     Bar::
   EOS
-    expect(rules.first.conditions.first.child_rule.conditions_are_ordered?).to eq false
-    expect(rules.first.conditions.last.child_rule.conditions_are_ordered?).to eq true
+    expect(rules.first.conditions.first.child_rule.matches_unordered_children?).to eq true
+    expect(rules.first.conditions.first.child_rule.matches_ordered_children?).to eq false
+    expect(rules.first.conditions.last.child_rule.matches_unordered_children?).to eq false
+    expect(rules.first.conditions.last.child_rule.matches_ordered_children?).to eq true
+  end
+
+  _it 'considers conditions with an appended . to have a child rule that matches ordered or unordered conditions', <<-EOS do |rules|
+    Foo:.
+  EOS
+    expect(rules.first.conditions.first.child_rule.matches_unordered_children?).to eq true
+    expect(rules.first.conditions.first.child_rule.matches_ordered_children?).to eq true
   end
 
   _it 'considers conditions with an appended = to have a child rule that must match all nodes', <<-EOS do |rules|
@@ -244,11 +257,18 @@ RSpec.describe Parser do
     expect(rules.first.conditions.last.matches_multiple_nodes?).to eq true
   end
 
-  [':=', ':*', '=*', ':=*'].each do |appendage|
-    _it 'allows the :, =, and * operators to be used together in order', <<-EOS do |rules|
+  _err 'does not allow the : and . operators to be used together', <<-EOS, 1, <<-EOM
+    Foo::.
+  EOS
+    Condition could not be parsed
+  EOM
+
+  [':=', '.=', ':*', '.*', '=*', ':=*', '.=*'].each do |appendage|
+    _it 'allows the :/., =, and * operators to be used together in order', <<-EOS do |rules|
       Foo:#{appendage}
     EOS
-      expect(rules.first.conditions.first.child_rule.conditions_are_ordered?).to eq appendage.include? ':'
+      expect(rules.first.conditions.first.child_rule.matches_unordered_children?).to eq !appendage.include?(':')
+      expect(rules.first.conditions.first.child_rule.matches_ordered_children?).to eq appendage.include?(':') || appendage.include?('.')
       expect(rules.first.conditions.first.child_rule.must_match_all_nodes?).to eq appendage.include? '='
       expect(rules.first.conditions.first.matches_multiple_nodes?).to eq appendage.include? '*'
     end
