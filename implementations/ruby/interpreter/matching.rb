@@ -71,7 +71,7 @@ class Matching
       [Node.new(condition.label, nil, nil, condition.value)]
     elsif condition.child_rule
       children = condition.child_rule.conditions.map {|c| create c}.flatten
-      [Node.new(condition.label, children, condition.child_rule.conditions_are_ordered?, nil)]
+      [Node.new(condition.label, children, condition.child_rule.matches_ordered_children?, nil)]
     else
       raise "Don't know how to create node for #{condition.inspect}"
     end

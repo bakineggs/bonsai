@@ -36,14 +36,16 @@ class Rule
   end
 
   def matchings node
-    if node.value && conditions.empty? && !conditions_are_ordered? && !must_match_all_nodes?
+    if node.value && conditions.empty? && !(matches_ordered_children? && !matches_unordered_children?) && !must_match_all_nodes?
       [action_condition && action_condition.matching || Matching.new]
-    elsif node.value || conditions_are_ordered? != node.children_are_ordered?
+    elsif node.value
       []
-    elsif conditions_are_ordered?
+    elsif matches_ordered_children? && node.children_are_ordered?
       ordered_matchings node
-    else
+    elsif matches_unordered_children? && !node.children_are_ordered?
       unordered_matchings node
+    else
+      []
     end
   end
 
