@@ -1,11 +1,11 @@
-require_relative 'graph'
+require_relative 'potential_state_graph'
 require_relative 'outputter'
 
 class Compiler
   class Error < StandardError; end
 
   def initialize rules
-    @graph = Graph.new rules
+    @potential_state_graph = PotentialStateGraph.new rules
   end
 
   def compile target_language
@@ -16,6 +16,6 @@ class Compiler
       raise Error.new "Unknown target language: #{target_language}"
     end unless Outputter[target_language]
 
-    Outputter[target_language].new(@graph).output
+    Outputter[target_language].new(@potential_state_graph).output
   end
 end
